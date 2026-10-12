@@ -4,10 +4,11 @@ import { and, asc, eq, sql } from "drizzle-orm";
 
 import { getDb } from "@/db";
 import { entries, titles, universes } from "@/db/schema";
+import type { TitleKind } from "@/lib/title-kind";
 
 import { loadEntryTagNames } from "./tags";
 
-export type TitleKind = "movie" | "show";
+export type { TitleKind };
 
 // One movie or episode, with the fields its title needs. This is the row for every list.
 export type CatalogEntry = {

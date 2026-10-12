@@ -16,7 +16,7 @@ export default function NewTitlePage() {
         accent="red"
         eyebrow="Titles · New"
         title="Add a title"
-        subtitle="A movie is one recap. A show gets its episodes on its own page next."
+        subtitle="A movie or a short is one recap. A show gets its episodes on its own page next."
       />
       <Suspense fallback={<FormSkeleton />}>
         <NewTitleContent />

@@ -17,6 +17,7 @@ import { loadCharacterDetail, loadNeighbouringCharacters } from "@/lib/data/char
 import { loadTagNames } from "@/lib/data/tags";
 import { formatCount } from "@/lib/format";
 import { importanceLabel, statusLabel } from "@/lib/labels";
+import { KIND_LABEL } from "@/lib/title-kind";
 
 export const metadata: Metadata = { title: "Character" };
 
@@ -97,9 +98,9 @@ async function CharacterContent({ params }: { params: Promise<{ id: string }> })
                       key={appearance.id}
                       className="flex flex-wrap items-center gap-x-3.5 gap-y-2 border-b-[1.5px] border-line-soft px-3.5 py-3 last:border-b-0"
                     >
-                      {appearance.isMovie ? (
-                        <Chip tone="movie" dot>
-                          Movie
+                      {appearance.titleKind !== "show" ? (
+                        <Chip tone={appearance.titleKind} dot>
+                          {KIND_LABEL[appearance.titleKind]}
                         </Chip>
                       ) : (
                         <EpisodeCode>{appearance.code}</EpisodeCode>

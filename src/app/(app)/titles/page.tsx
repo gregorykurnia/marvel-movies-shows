@@ -12,6 +12,7 @@ import { Panel } from "@/components/ui/panel";
 import { ProgressBar } from "@/components/ui/progress";
 import { loadTitleRows, type TitleRow } from "@/lib/data/catalog";
 import { formatCount, formatYear } from "@/lib/format";
+import { KIND_BAR, KIND_LABEL, hasOneRecap } from "@/lib/title-kind";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Titles" };
@@ -34,7 +35,7 @@ async function TitlesContent() {
         accent="red"
         eyebrow={`Titles · ${formatCount(titles.length, "title")}`}
         title="Titles"
-        subtitle="Movies and shows. A show’s episodes are added on its own page."
+        subtitle="Movies, shows and shorts. A show’s episodes go on its own page."
         actions={
           <>
             <Link href="/recaps" className={buttonVariants({ variant: "secondary" })}>
@@ -57,7 +58,7 @@ async function TitlesContent() {
             </Link>
           }
         >
-          Add a movie or a show to start your directory.
+          Add a movie, a show or a short to start your directory.
         </EmptyState>
       ) : (
         <ul aria-label="Titles" className="grid gap-3">
@@ -70,10 +71,10 @@ async function TitlesContent() {
   );
 }
 
-// A movie opens its recap. A show opens its episodes. Shows show their watched progress here (§2.4).
+// A movie or a short opens its recap. A show opens its episodes. Shows show their watched progress here (§2.4).
 function TitleListItem({ title }: { title: TitleRow }) {
-  const isMovie = title.kind === "movie";
-  const href = isMovie && title.movieEntryId ? `/recaps/${title.movieEntryId}` : `/titles/${title.id}`;
+  const oneRecap = hasOneRecap(title.kind);
+  const href = oneRecap && title.movieEntryId ? `/recaps/${title.movieEntryId}` : `/titles/${title.id}`;
   const year = title.releaseDate ? Number(title.releaseDate.slice(0, 4)) : null;
   const percent = title.total === 0 ? 0 : Math.round((title.watched / title.total) * 100);
 
@@ -81,22 +82,22 @@ function TitleListItem({ title }: { title: TitleRow }) {
     <li className="list-none">
       <Link href={href} className="block no-underline">
         <Panel interactive className="flex flex-wrap items-center gap-x-4 gap-y-3 py-3.5 pr-4 pl-2.5">
-          <span aria-hidden className={cn("min-h-[52px] w-1.5 shrink-0 self-stretch rounded-sm", isMovie ? "bg-movie" : "bg-show")} />
+          <span aria-hidden className={cn("min-h-[52px] w-1.5 shrink-0 self-stretch rounded-sm", KIND_BAR[title.kind])} />
           <div className="min-w-[200px] flex-1">
             <h3 className="font-display text-xl leading-tight font-bold tracking-[-0.01em]">{title.name}</h3>
             <div className="mt-2 flex flex-wrap items-center gap-2.5">
-              <Chip tone={isMovie ? "movie" : "show"} dot>
-                {isMovie ? "Movie" : "Show"}
+              <Chip tone={title.kind} dot>
+                {KIND_LABEL[title.kind]}
               </Chip>
               {year !== null ? <Year>{formatYear(year)}</Year> : null}
-              {!isMovie ? (
+              {!oneRecap ? (
                 <span className="font-mono text-[13px] font-bold tabular-nums text-ink-2">
                   {formatCount(title.total, "episode")}
                 </span>
               ) : null}
             </div>
           </div>
-          {isMovie ? (
+          {oneRecap ? (
             // Static here: the list is a link, and the toggle lives on the recap page.
             <Chip tone={title.watched > 0 ? "watched" : "unwatched"}>
               {title.watched > 0 ? "✓ Watched" : "Not watched"}

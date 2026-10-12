@@ -17,6 +17,7 @@ import { CharacterAvatar } from "@/components/characters/character-avatar";
 import { loadRecapCharacters } from "@/lib/data/characters";
 import { loadCatalog, loadEntryDetail } from "@/lib/data/catalog";
 import { formatDate, formatEpisodeCode, formatYear } from "@/lib/format";
+import { KIND_ACCENT, KIND_LABEL, hasOneRecap } from "@/lib/title-kind";
 
 export const metadata: Metadata = { title: "Recap" };
 
@@ -40,24 +41,24 @@ async function RecapContent({ params }: { params: Promise<{ entryId: string }> }
   ]);
   if (!entry) notFound();
 
-  const isMovie = entry.titleKind === "movie";
+  const oneRecap = hasOneRecap(entry.titleKind);
   const episodeName = entry.name ?? `Episode ${entry.episodeNumber}`;
-  const heading = isMovie ? entry.titleName : episodeName;
+  const heading = oneRecap ? entry.titleName : episodeName;
   const code = formatEpisodeCode(entry.seasonNumber, entry.episodeNumber);
   const position = catalog.findIndex((item) => item.id === entry.id);
   const previous = position > 0 ? catalog[position - 1] : null;
   const next = position >= 0 && position < catalog.length - 1 ? catalog[position + 1] : null;
   const label = (item: (typeof catalog)[number]) =>
-    item.titleKind === "movie" ? item.titleName : `${item.titleName} — ${item.name ?? `Episode ${item.episodeNumber}`}`;
-  const releaseDate = isMovie ? entry.titleReleaseDate : entry.releaseDate;
+    hasOneRecap(item.titleKind) ? item.titleName : `${item.titleName} — ${item.name ?? `Episode ${item.episodeNumber}`}`;
+  const releaseDate = oneRecap ? entry.titleReleaseDate : entry.releaseDate;
 
   return (
     <>
       <PageHeader
-        accent={isMovie ? "red" : "blue"}
+        accent={KIND_ACCENT[entry.titleKind]}
         eyebrow={
-          isMovie
-            ? "Movie"
+          oneRecap
+            ? KIND_LABEL[entry.titleKind]
             : `${entry.titleName} · Season ${entry.seasonNumber} · Episode ${entry.episodeNumber}`
         }
         title={heading}
@@ -68,8 +69,8 @@ async function RecapContent({ params }: { params: Promise<{ entryId: string }> }
         }
       >
         <div className="flex flex-wrap items-center gap-2.5">
-          <Chip tone={isMovie ? "movie" : "show"} dot>
-            {isMovie ? "Movie" : "Show"}
+          <Chip tone={entry.titleKind} dot>
+            {KIND_LABEL[entry.titleKind]}
           </Chip>
           {code ? <EpisodeCode>{code}</EpisodeCode> : null}
           <Year>{formatYear(entry.inUniverseYear)}</Year>

@@ -9,11 +9,12 @@ import { Chip, EpisodeCode, Year } from "@/components/ui/chip";
 import { ActionMenu } from "@/components/ui/dropdown-menu";
 import type { CatalogEntry } from "@/lib/data/catalog";
 import { formatEpisodeCode, formatYear } from "@/lib/format";
+import { KIND_BAR, KIND_LABEL, hasOneRecap } from "@/lib/title-kind";
 import { cn } from "@/lib/utils";
 
 import { WatchedControl } from "./watched-control";
 
-// One row in the recap list (DESIGN_GUIDE §7, "Recap row"). A kind bar (red for a movie, blue for a show), the
+// One row in the recap list (DESIGN_GUIDE §7, "Recap row"). A kind bar (red for a movie, blue for a show, orange for a short), the
 // title, a meta line, and the watched chip. Unwatched rows are dashed and flat. In Reorder mode the row also has
 // a drag handle and a "⋯" menu with Move up and Move down. The group label moves with its row.
 export function RecapRow({
@@ -36,9 +37,9 @@ export function RecapRow({
     disabled: !reorderable,
   });
 
-  const isMovie = entry.titleKind === "movie";
+  const oneRecap = hasOneRecap(entry.titleKind);
   const episodeName = entry.name ?? `Episode ${entry.episodeNumber}`;
-  const heading = isMovie ? entry.titleName : `${entry.titleName} — ${episodeName}`;
+  const heading = oneRecap ? entry.titleName : `${entry.titleName} — ${episodeName}`;
   const code = formatEpisodeCode(entry.seasonNumber, entry.episodeNumber);
 
   return (
@@ -76,7 +77,7 @@ export function RecapRow({
         ) : null}
         <span
           aria-hidden
-          className={cn("min-h-[52px] w-1.5 shrink-0 self-stretch rounded-sm", isMovie ? "bg-movie" : "bg-show")}
+          className={cn("min-h-[52px] w-1.5 shrink-0 self-stretch rounded-sm", KIND_BAR[entry.titleKind])}
         />
         <div className="min-w-0 flex-1">
           <h3 className="font-display text-lg leading-tight font-bold tracking-[-0.01em]">
@@ -88,8 +89,8 @@ export function RecapRow({
             </Link>
           </h3>
           <div className="mt-2 flex flex-wrap items-center gap-2.5">
-            <Chip tone={isMovie ? "movie" : "show"} dot>
-              {isMovie ? "Movie" : "Show"}
+            <Chip tone={entry.titleKind} dot>
+              {KIND_LABEL[entry.titleKind]}
             </Chip>
             {code ? <EpisodeCode>{code}</EpisodeCode> : null}
             <Year>{formatYear(entry.inUniverseYear)}</Year>

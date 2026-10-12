@@ -9,6 +9,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { FormSkeleton } from "@/components/layout/page-skeleton";
 import { TitleEditForm } from "@/components/titles/title-forms";
 import { loadMovieEntryId, loadTitle } from "@/lib/data/catalog";
+import { hasOneRecap } from "@/lib/title-kind";
 
 export const metadata: Metadata = { title: "Edit show" };
 
@@ -26,8 +27,8 @@ async function EditShowContent({ params }: { params: Promise<{ id: string }> }) 
   const title = await loadTitle(id);
   if (!title) notFound();
 
-  // A movie is edited on its recap page, where its year lives.
-  if (title.kind === "movie") {
+  // A movie or a short is edited on its recap page, where its year lives.
+  if (hasOneRecap(title.kind)) {
     const entryId = await loadMovieEntryId(id);
     if (entryId) redirect(`/recaps/${entryId}/edit`);
     notFound();

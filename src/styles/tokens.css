@@ -28,6 +28,7 @@
   /* Semantic aliases */
   --movie: var(--red);  --movie-soft: var(--red-soft);  --movie-ink: var(--red-ink);
   --show: var(--blue);  --show-soft: var(--blue-soft);  --show-ink: var(--blue-ink);
+  --short: var(--orange);  --short-soft: var(--orange-soft);  --short-ink: var(--orange-ink);
   --focus: var(--blue);
 
   /* Type. The next/font variables (set in app/layout.tsx) are listed first, with the §3 fallbacks after them. */

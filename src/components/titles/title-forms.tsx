@@ -12,14 +12,17 @@ import { RadioPills } from "@/components/ui/radio-pills";
 import { useToast } from "@/components/ui/toast";
 import { UniverseField, withUniverse, type UniverseOption } from "@/components/universes/universe-field";
 import { cn } from "@/lib/utils";
+import { KIND_LABEL, type TitleKind } from "@/lib/title-kind";
 
-// Add a movie or a show (IMPLEMENTATION_PLAN §4). A movie is saved with its single entry, then the user goes on
-// to paste its recap. A show is saved empty, then the user goes on to add its episodes.
+const NAME_PLACEHOLDER: Record<TitleKind, string> = { movie: "e.g. Thor", show: "e.g. Loki", short: "e.g. Item 47" };
+
+// Add a movie, a show or a short (IMPLEMENTATION_PLAN §4). A movie or a short is saved with its single entry, then
+// the user goes on to paste its recap. A show is saved empty, then the user goes on to add its episodes.
 export function TitleNewForm({ universes }: { universes: UniverseOption[] }) {
   const router = useRouter();
   const toast = useToast();
   const [pending, startTransition] = useTransition();
-  const [kind, setKind] = useState<"movie" | "show">("movie");
+  const [kind, setKind] = useState<TitleKind>("movie");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [message, setMessage] = useState<string | null>(null);
   // Changing the key clears the typed fields after "Save & add another". The kind and the universe stay chosen,
@@ -70,20 +73,21 @@ export function TitleNewForm({ universes }: { universes: UniverseOption[] }) {
           <div className={wide}>
             <RadioPills
               name="kind"
-              label="Movie or show"
+              label="Movie, show or short"
               value={kind}
-              onValueChange={(value) => setKind(value as "movie" | "show")}
+              onValueChange={(value) => setKind(value as TitleKind)}
               options={[
                 { value: "movie", label: "Movie", tone: "red" },
                 { value: "show", label: "Show", tone: "blue" },
+                { value: "short", label: "Short", tone: "orange" },
               ]}
             />
             {errors.kind ? <p className="mt-1.5 text-[13px] font-semibold text-red-ink">{errors.kind}</p> : null}
           </div>
           <Input
             name="name"
-            label={kind === "movie" ? "Movie title" : "Show title"}
-            placeholder={kind === "movie" ? "e.g. Thor" : "e.g. Loki"}
+            label={kind === "show" ? "Show title" : `${KIND_LABEL[kind]} title`}
+            placeholder={NAME_PLACEHOLDER[kind]}
             autoComplete="off"
             error={errors.name}
             className={wide}
@@ -91,16 +95,16 @@ export function TitleNewForm({ universes }: { universes: UniverseOption[] }) {
           <Input
             name="releaseDate"
             type="date"
-            label={kind === "movie" ? "Release date" : "Premiere date"}
+            label={kind === "show" ? "Premiere date" : "Release date"}
             error={errors.releaseDate}
           />
-          <div className={cn("grid gap-[18px] min-[640px]:col-span-2 min-[640px]:grid-cols-2", kind !== "movie" && "hidden")}>
+          <div className={cn("grid gap-[18px] min-[640px]:col-span-2 min-[640px]:grid-cols-2", kind === "show" && "hidden")}>
             <Input
               name="inUniverseYear"
               label="In-universe year"
               inputMode="numeric"
               placeholder="e.g. 2011"
-              hint="Seeds where the movie lands in the recap order. Use − for years before 1 AD."
+              hint="Seeds where it lands in the recap order. Use − for years before 1 AD."
               error={errors.inUniverseYear}
             />
             <UniverseField

@@ -12,6 +12,7 @@ import { Input, Textarea } from "@/components/ui/field";
 import { FormAlert, FormFooter, FormGrid, FormPanel, wide } from "@/components/ui/form-layout";
 import { useToast } from "@/components/ui/toast";
 import { formatYear } from "@/lib/format";
+import { KIND_LABEL, type TitleKind } from "@/lib/title-kind";
 
 export type EventFormValues = {
   year: string;
@@ -37,7 +38,7 @@ export const blankEvent: EventFormValues = {
 };
 
 export type EventFormOptions = {
-  titles: { id: string; name: string; kind: "movie" | "show" }[];
+  titles: { id: string; name: string; kind: TitleKind }[];
   entries: { id: string; titleId: string; label: string }[];
   events: { id: string; year: number; text: string }[];
   tagNames: string[];
@@ -86,7 +87,7 @@ export function EventForm({
     { value: NO_TITLE, label: "No title (a general event)" },
     ...options.titles.map((title) => ({
       value: title.id,
-      label: `${title.name} · ${title.kind === "movie" ? "Movie" : "Show"}`,
+      label: `${title.name} · ${KIND_LABEL[title.kind]}`,
     })),
   ];
 
@@ -209,7 +210,7 @@ export function EventForm({
             options={titleOptions}
             value={values.titleId ?? NO_TITLE}
             onValueChange={chooseTitle}
-            hint="The movie or show the event belongs to. It sets the dot's colour."
+            hint="The movie, show or short the event belongs to. It sets the dot's colour."
             error={errors.titleId}
           />
           <Combobox

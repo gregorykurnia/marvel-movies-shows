@@ -6,6 +6,7 @@ import { eq, sql } from "drizzle-orm";
 import { getDb } from "@/db";
 import { characters, characterTags, entries, entryTags, eventTags, tags, timelineEvents, titles } from "@/db/schema";
 import { toPrefixQuery } from "@/lib/search-query";
+import type { TitleKind } from "@/lib/title-kind";
 
 export const PREVIEW_LIMIT = 10;
 const SHOW_ALL_LIMIT = 500;
@@ -23,7 +24,7 @@ export type Group<T> = { total: number; items: T[] };
 export type RecapHit = {
   id: string;
   titleName: string;
-  kind: "movie" | "show";
+  kind: TitleKind;
   seasonNumber: number | null;
   episodeNumber: number | null;
   episodeName: string | null;

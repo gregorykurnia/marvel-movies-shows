@@ -33,6 +33,7 @@
 
   --movie: var(--red);  --movie-soft: var(--red-soft);  --movie-ink: var(--red-ink);
   --show: var(--blue);  --show-soft: var(--blue-soft);  --show-ink: var(--blue-ink);
+  --short: var(--orange);  --short-soft: var(--orange-soft);  --short-ink: var(--orange-ink);
   --focus: var(--blue);
 
   --font-display: "Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif;
@@ -172,6 +173,7 @@ a { color: inherit; }
 .chip .dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
 .chip-movie { background: var(--movie-soft); color: var(--movie-ink); }
 .chip-show { background: var(--show-soft); color: var(--show-ink); }
+.chip-short { background: var(--short-soft); color: var(--short-ink); }
 .chip-alive { background: var(--green-soft); color: var(--green-ink); }
 .chip-deceased { background: var(--surface-2); color: var(--ink-3); }
 .chip-unknown { background: var(--yellow-soft); color: var(--yellow-ink); }
@@ -290,6 +292,7 @@ a { color: inherit; }
 .drag { color: var(--ink-3); font-size: 18px; cursor: grab; line-height: 1; letter-spacing: -2px; user-select: none; }
 .kind-bar { align-self: stretch; border-radius: 3px; background: var(--movie); }
 .kind-bar.show { background: var(--show); }
+.kind-bar.short { background: var(--short); }
 .recap-row h3 { font-size: 18px; font-weight: 700; letter-spacing: -0.01em; }
 .recap-meta { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 6px; }
 .year { font: 700 13px/1 var(--font-mono); color: var(--ink-2); }
@@ -343,6 +346,9 @@ a { color: inherit; }
 .tl-ev.show .tl-pin::before { background: var(--show); }
 .tl-ev:hover .tl-pin, .tl-ev:focus-within .tl-pin { transform: translate(-2px, -2px); box-shadow: 5px 5px 0 var(--movie); }
 .tl-ev.show:hover .tl-pin, .tl-ev.show:focus-within .tl-pin { box-shadow: 5px 5px 0 var(--show); }
+.tl-ev.short .tl-pin { box-shadow: 3px 3px 0 var(--short); }
+.tl-ev.short .tl-pin::before { background: var(--short); }
+.tl-ev.short:hover .tl-pin, .tl-ev.short:focus-within .tl-pin { box-shadow: 5px 5px 0 var(--short); }
 /* Desktop: the card floats above everything (fixed, positioned by script) so the scroll container can't clip it — same as a portalled popover in the app. */
 .tl-pop { position: fixed; left: 0; top: 0; width: 260px; transform: translateX(-50%) translateY(6px); opacity: 0; visibility: hidden; z-index: 60; padding: 16px; border-radius: var(--radius); background: var(--surface); border: var(--border) solid var(--line); box-shadow: var(--shadow-float); transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease), visibility var(--dur); }
 .tl-ev:hover .tl-pop, .tl-ev:focus-within .tl-pop { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
@@ -554,7 +560,7 @@ footer.guide-foot { padding: 40px 0 60px; color: var(--ink-3); font-size: 14px; 
 
       <div class="panel panel-pad">
         <div class="sub-label" style="margin-top:0">Chips — one meaning each</div>
-        <div class="row"><span class="chip chip-movie"><span class="dot"></span>Movie</span><span class="chip chip-show"><span class="dot"></span>Show</span></div>
+        <div class="row"><span class="chip chip-movie"><span class="dot"></span>Movie</span><span class="chip chip-show"><span class="dot"></span>Show</span><span class="chip chip-short"><span class="dot"></span>Short</span></div>
         <div class="row" style="margin-top:10px"><span class="chip chip-watched">✓ Watched</span><span class="chip chip-unwatched">Not watched</span></div>
         <div class="row" style="margin-top:10px"><span class="chip chip-alive"><span class="dot"></span>Alive</span><span class="chip chip-deceased"><span class="dot"></span>Deceased</span><span class="chip chip-unknown"><span class="dot"></span>Unknown</span></div>
         <div class="row" style="margin-top:10px"><span class="chip chip-major">★ Major</span><span class="chip chip-minor">Minor</span></div>
@@ -604,7 +610,7 @@ footer.guide-foot { padding: 40px 0 60px; color: var(--ink-3); font-size: 14px; 
 
         <div class="toolbar">
           <div class="seg" role="group" aria-label="Watched filter"><button class="is-on">All</button><button>Watched</button><button>Not watched</button></div>
-          <div class="seg" role="group" aria-label="Type filter"><button class="is-on">All</button><button>Movies</button><button>Shows</button></div>
+          <div class="seg" role="group" aria-label="Type filter"><button class="is-on">All</button><button>Movies</button><button>Shows</button><button>Shorts</button></div>
           <span class="filter-chip">Tag <span class="car">▾</span></span>
         </div>
 
@@ -717,7 +723,7 @@ footer.guide-foot { padding: 40px 0 60px; color: var(--ink-3); font-size: 14px; 
           <div class="page-actions"><button class="btn btn-primary">＋ Add event</button></div>
         </div>
         <div class="toolbar">
-          <div class="seg" role="group" aria-label="Type filter"><button class="is-on">All</button><button>Movies</button><button>Shows</button></div>
+          <div class="seg" role="group" aria-label="Type filter"><button class="is-on">All</button><button>Movies</button><button>Shows</button><button>Shorts</button></div>
           <div class="search" style="width:180px"><span aria-hidden="true">↦</span><span class="q">Jump to year</span></div>
           <div class="seg zoom" role="group" aria-label="Zoom"><button class="is-on">Year</button><button>Decade</button><button>Century</button></div>
         </div>
@@ -866,7 +872,7 @@ footer.guide-foot { padding: 40px 0 60px; color: var(--ink-3); font-size: 14px; 
     <div class="rules">
       <div class="panel rule"><h4><span class="do">DO</span>Tokens only</h4><p>Every colour, radius and shadow comes from a token. No raw hex values in components.</p></div>
       <div class="panel rule"><h4><span class="do">DO</span>Page header on every page</h4><p>Eyebrow + title + actions, with the section accent colour. Forms and error pages included.</p></div>
-      <div class="panel rule"><h4><span class="do">DO</span>Red = movie, Blue = show</h4><p>Everywhere: chips, kind bars, timeline pins. Never swap or reuse these for anything else.</p></div>
+      <div class="panel rule"><h4><span class="do">DO</span>Red = movie, Blue = show, Orange = short</h4><p>Everywhere: chips, kind bars, timeline pins. Never swap or reuse these for anything else.</p></div>
       <div class="panel rule"><h4><span class="do">DO</span>Mono for data</h4><p>Years, S01·E01 codes, counts, universe designations always in JetBrains Mono.</p></div>
       <div class="panel rule"><h4><span class="dont">DON’T</span>White text on bright fills</h4><p>Yellow, green, cyan and orange fills always take ink text (<span class="code">--on-*</span>).</p></div>
       <div class="panel rule"><h4><span class="dont">DON’T</span>Overdo the comic</h4><p>One primary button per view. Halftone and bursts are accents, not wallpaper.</p></div>

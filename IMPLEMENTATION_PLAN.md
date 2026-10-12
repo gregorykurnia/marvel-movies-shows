@@ -59,13 +59,13 @@ The product plan's data model maps to these tables. One change from the draft: *
 
 ### 3.1 Tables
 
-**`titles`**: a movie or a show.
+**`titles`**: a movie, a show or a short.
 
 | Column | Type | Notes |
 |---|---|---|
 | id | uuid PK | |
 | name | text, not null | e.g. "Loki" |
-| kind | enum `movie` \| `show` | Drives colour and icon on the timeline. |
+| kind | enum `movie` \| `show` \| `short` | Drives colour and icon on the timeline. A movie and a short each have one entry. Added the short kind on 2026-10-12 (migration `0002`). |
 | release_date | date, nullable | For a show, the premiere date. |
 | notes | text, nullable | |
 | created_at / updated_at | timestamptz | |

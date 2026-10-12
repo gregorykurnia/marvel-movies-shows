@@ -26,7 +26,7 @@ Cross-cutting features: **watched tracking**, **global search**, **notes and tag
 **Purpose:** Keep a recap for every movie and every episode, arranged in the order I want to watch or read them.
 
 **Requirements**
-- A recap belongs to either a **movie** or a **show episode**. Episodes sit under a show and a season.
+- A recap belongs to a **movie**, a **short** or a **show episode**. Episodes sit under a show and a season. A short is one recap, like a movie.
 - Recap text is **pasted in by me** into a large text field. It is stored exactly as pasted and **displayed as Markdown**. Plain text with line breaks looks the same as pasted, and if I add Markdown (headings, **bold**, lists), it renders as formatting.
 - The custom order is **per episode**. Episodes of one show can be placed between other movies and shows, not just kept together.
 - The order is **adjustable at any time** (drag and drop, or move up and down), and the change is saved.
@@ -57,7 +57,7 @@ Cross-cutting features: **watched tracking**, **global search**, **notes and tag
 - Recap items are not separate search results, because recaps are already searchable.
 - The count at the top includes both kinds.
 - Navigation: scroll or drag along the time axis, zoom in and out on eras, and jump to a year.
-- Events from movies and shows look different (colour or icon), and I can filter by type.
+- Events from movies, shows and shorts look different (colour or icon), and I can filter by type.
 - Events are created and edited with a simple form: year, text, order, and the optional link to a title or episode.
 
 ---
@@ -145,7 +145,7 @@ Cross-cutting features: **watched tracking**, **global search**, **notes and tag
 
 ## 3. Shared Data Model (draft)
 
-- **Title**: a movie or a show. Fields: name, type, release date.
+- **Title**: a movie, a show or a short. Fields: name, type, release date.
 - **Episode**: belongs to a show, with season and episode number. Fields: name, release date, in-universe year, universe designation.
 - **Recap**: attached to a movie or an episode. Holds the pasted text. A movie's in-universe year and universe designation are kept on its recap.
 - **Recap order**: the custom position of each movie or episode. Stored separately from the content, so reordering never changes the content.
@@ -227,6 +227,7 @@ This is the high-level view. The task-by-task checklist for each phase is in [`I
 - 2026-10-12: Recaps with an in-universe year appear on the timeline automatically, for movies and episodes. They are shown, not copied. This replaces the earlier rule that timeline events are never generated from recaps.
 - 2026-10-12: Within a year, my hand-written events come first, in my order. Recap items come after them, in recap order, and can't be dragged.
 - 2026-10-12: Each recap has one optional universe designation, chosen from the universes list and entered beside the in-universe year. A universe used by a recap can't be deleted.
+- 2026-10-12: Shorts are a third title kind, next to movies and shows. A short works like a movie: one recap, no episodes, with its own in-universe year and universe. It is shown in orange (DESIGN_GUIDE §2).
 
 ---
 

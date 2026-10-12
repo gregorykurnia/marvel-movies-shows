@@ -171,7 +171,7 @@ export function RecapList({
             </Link>
           }
         >
-          Add a movie or a show. Its recaps will show up here in the order you choose.
+          Add a movie, a show or a short. Its recaps will show up here in the order you choose.
         </EmptyState>
       ) : nothingMatches ? (
         <EmptyState

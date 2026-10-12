@@ -12,6 +12,7 @@ import { Panel } from "@/components/ui/panel";
 import { useToast } from "@/components/ui/toast";
 import { UniverseField, withUniverse, type UniverseOption } from "@/components/universes/universe-field";
 import type { EntryDetail } from "@/lib/data/catalog";
+import { KIND_ACCENT, KIND_LABEL, hasOneRecap } from "@/lib/title-kind";
 import Link from "next/link";
 
 import { AppearancesPicker } from "@/components/characters/appearances-picker";
@@ -45,7 +46,7 @@ export function RecapEditForm({
   const [tagNames, setTagNames] = useState(entry.tags);
   const [universeList, setUniverseList] = useState(universeOptions);
   const [universeId, setUniverseId] = useState<string | null>(entry.universeId);
-  const isMovie = entry.titleKind === "movie";
+  const oneRecap = hasOneRecap(entry.titleKind);
 
   function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -54,7 +55,7 @@ export function RecapEditForm({
       setErrors({});
       setMessage(null);
       try {
-        const result = isMovie ? await saveMovie(entry.id, formData) : await saveEpisode(entry.id, formData);
+        const result = oneRecap ? await saveMovie(entry.id, formData) : await saveEpisode(entry.id, formData);
         if (!result.ok) {
           setErrors(result.fieldErrors ?? {});
           setMessage(result.message);
@@ -73,11 +74,11 @@ export function RecapEditForm({
       <FormPanel>
         {message ? <FormAlert>{message}</FormAlert> : null}
         <FormGrid>
-          {isMovie ? (
+          {oneRecap ? (
             <>
               <Input
                 name="name"
-                label="Movie title"
+                label={`${KIND_LABEL[entry.titleKind]} title`}
                 defaultValue={entry.titleName}
                 error={errors.name}
                 className={wide}
@@ -153,7 +154,7 @@ export function RecapEditForm({
             error={errors.recap}
           />
           <Panel aria-label="Preview" className="min-w-0 p-5">
-            <Eyebrow accent={isMovie ? "red" : "blue"}>Preview</Eyebrow>
+            <Eyebrow accent={KIND_ACCENT[entry.titleKind]}>Preview</Eyebrow>
             {recap.trim() ? (
               <RecapMarkdown text={recap} />
             ) : (

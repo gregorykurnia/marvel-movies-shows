@@ -13,9 +13,10 @@ const toneClasses = {
     "data-[state=checked]:bg-violet data-[state=checked]:text-on-violet",
   neutral:
     "data-[state=checked]:bg-surface-2 data-[state=checked]:text-ink",
-  // Movie is red and show is blue, everywhere (DESIGN_GUIDE §2).
+  // Movie is red, show is blue and short is orange, everywhere (DESIGN_GUIDE §2).
   red: "data-[state=checked]:bg-red data-[state=checked]:text-on-red",
   blue: "data-[state=checked]:bg-blue data-[state=checked]:text-on-blue",
+  orange: "data-[state=checked]:bg-orange data-[state=checked]:text-on-orange",
   // Unknown status, and the warning colour.
   yellow: "data-[state=checked]:bg-yellow data-[state=checked]:text-on-yellow",
 } as const;

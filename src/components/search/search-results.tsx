@@ -5,6 +5,7 @@ import { Chip, EpisodeCode, Year } from "@/components/ui/chip";
 import { Panel } from "@/components/ui/panel";
 import { HIGHLIGHT_START, HIGHLIGHT_STOP, type CharacterHit, type EventHit, type RecapHit, type SearchGroup, type SearchResults } from "@/lib/data/search";
 import { formatEpisodeCode, formatYear } from "@/lib/format";
+import { KIND_LABEL } from "@/lib/title-kind";
 
 // The grouped results on /search (IMPLEMENTATION_PLAN §4). Each group shows its best matches, with a "Show all" link
 // when there are more. A group on its own (from "Show all") lists every match. Snippets come from ts_headline, which
@@ -63,7 +64,7 @@ function RecapHits({ hits }: { hits: RecapHit[] }) {
             <Link href={`/recaps/${hit.id}`} className="block no-underline">
               <Panel interactive className="grid gap-1.5 p-3.5">
                 <div className="flex flex-wrap items-center gap-2.5">
-                  <Chip tone={hit.kind}>{hit.kind === "movie" ? "Movie" : "Show"}</Chip>
+                  <Chip tone={hit.kind}>{KIND_LABEL[hit.kind]}</Chip>
                   <span className="font-bold text-ink">
                     {hit.kind === "show" && hit.episodeName ? `${hit.titleName} — ${hit.episodeName}` : hit.titleName}
                   </span>

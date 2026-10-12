@@ -42,13 +42,16 @@
   --color-orange-ink: var(--orange-ink);
   --color-on-orange: var(--on-orange);
 
-  /* Semantic: red = movie, blue = show (DESIGN_GUIDE §2) */
+  /* Semantic: red = movie, blue = show, orange = short (DESIGN_GUIDE §2) */
   --color-movie: var(--movie);
   --color-movie-soft: var(--movie-soft);
   --color-movie-ink: var(--movie-ink);
   --color-show: var(--show);
   --color-show-soft: var(--show-soft);
   --color-show-ink: var(--show-ink);
+  --color-short: var(--short);
+  --color-short-soft: var(--short-soft);
+  --color-short-ink: var(--short-ink);
 
   /* shadcn/ui variable names (DESIGN_GUIDE §11), so shadcn-style classes resolve to our tokens */
   --color-background: var(--background);

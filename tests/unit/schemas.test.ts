@@ -63,7 +63,11 @@ describe("titleFormSchema", () => {
     });
   });
 
-  it("only accepts movie or show as a kind", () => {
+  it("accepts a short as a kind", () => {
+    expect(titleFormSchema.parse({ ...base, kind: "short" }).kind).toBe("short");
+  });
+
+  it("only accepts movie, show or short as a kind", () => {
     expect(errorsFor(titleFormSchema.safeParse({ ...base, kind: "comic" }))).toHaveProperty("kind");
   });
 });

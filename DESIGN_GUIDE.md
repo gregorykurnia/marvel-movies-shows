@@ -35,6 +35,7 @@ Every colour has exactly one meaning. **Never reuse a colour for something else.
 | Primary action, brand | **Hero Red** `--red` | One primary button per view, logo burst, list markers in recaps |
 | **Movie** | **Hero Red** `--movie` | Kind bar, Movie chip, timeline pins and shadows |
 | **Show** | **Shield Blue** `--show` | Kind bar, Show chip, timeline pins and shadows |
+| **Short** | **Repulsor Orange** `--short` (same fill as `--orange`) | Kind bar, Short chip, timeline pins and shadows. Orange is also the Timeline page accent, a header colour rather than a kind. |
 | Focus, secondary action | **Shield Blue** `--blue` | Focus rings, active input, "Reorder" button |
 | **Watched**, progress, success, Alive | **Gamma Green** `--green` | Watched chip, progress fill, Alive chip, success toasts |
 | Highlight, Unknown, empty states | **Infinity Gold** `--yellow` | Logo mark, bold highlighter in recaps, row hover, Unknown chip, Download backup button |
@@ -47,7 +48,7 @@ Every colour has exactly one meaning. **Never reuse a colour for something else.
 
 **Section accents** (eyebrow bar and halftone corner of the page header):
 - Recaps: red
-- Recap detail: blue if it's an episode, red if it's a movie
+- Recap detail: blue if it's an episode, red if it's a movie, orange if it's a short
 - Timeline: orange
 - Characters and universes: violet
 - Backup: green
@@ -91,6 +92,7 @@ Each bright colour has four tokens:
   /* Semantic aliases */
   --movie: var(--red);  --movie-soft: var(--red-soft);  --movie-ink: var(--red-ink);
   --show: var(--blue);  --show-soft: var(--blue-soft);  --show-ink: var(--blue-ink);
+  --short: var(--orange);  --short-soft: var(--orange-soft);  --short-ink: var(--orange-ink);
   --focus: var(--blue);
 
   /* Type */
@@ -219,13 +221,13 @@ Build these once in `src/components/ui/` (shadcn/ui restyled with the tokens), a
 | **Button: ghost** | No outline or shadow. Surface-2 background on hover. Used for Cancel and Clear all. |
 | **Button: danger** | Surface fill, `--red-ink` text, red outline, red offset shadow. Never filled red, so it can't be mistaken for primary. |
 | **Button sizes** | Default 42px. `sm` 34px. Icon-only buttons are 42px square, with an `aria-label`. |
-| **Chip** | Pill, 26px tall, 12px bold. Exact chip colours are in §2. Movie and Show chips have a leading dot. Tag chips have a `#` prefix. Universe chips use mono. |
+| **Chip** | Pill, 26px tall, 12px bold. Exact chip colours are in §2. Movie, Show and Short chips have a leading dot. Tag chips have a `#` prefix. Universe chips use mono. |
 | **Watched chip** | Green fill, "✓ Watched". **Not watched:** transparent, dashed `--ink-3` outline, `--ink-3` text. |
 | **Episode code / year** | Mono 700, 12–13px. Codes sit on a `--surface-2` rounded tag. Years are plain `--ink-2` text. |
 | **Input / select / textarea** | Surface background, 2px ink outline, 8px radius, min height 44px. On focus: blue outline, a 4px `--blue-soft` ring and a 3px blue offset shadow. On error: red outline, a `--red-soft` ring, and a message below in `--red-ink`, 600 weight. The recap paste area uses mono 14px. |
 | **Combobox** | Input plus a popover: 2px outline, `--shadow-float`. The active option is `--blue-soft` with `--blue-ink` text. The universe combobox ends with a dashed divider and "＋ Add universe '…'" in `--violet-ink`. |
 | **Segmented control** | Pill group with a 2px outline and dividers. The selected segment is ink-filled. Used for Watched/Not watched, Movies/Shows and timeline zoom. |
-| **Radio pills** | For short fixed choices (Importance, Status, Movie/Show). A row of outlined pills. The selected one is filled with its meaning's colour (Alive green, Major violet) plus a 2px shadow. Use these instead of a dropdown when there are 4 options or fewer. |
+| **Radio pills** | For short fixed choices (Importance, Status, Movie/Show/Short). A row of outlined pills. The selected one is filled with its meaning's colour (Alive green, Major violet) plus a 2px shadow. Use these instead of a dropdown when there are 4 options or fewer. |
 | **Filter chip** | 34px pill with an outline and a ▾ caret. When **active**: `--violet-soft` fill, violet outline, plus a round violet ✕ to remove it. |
 | **Search box** | Pill, 42px, outlined, with a magnifier icon and a `⌘K` key hint (the hint is hidden on phones). |
 | **Progress bar** | 14px pill track (`--surface-2`, 2px outline). The fill has green diagonal stripes, with an ink edge. The label sits next to it in mono, e.g. "4 / 6" or "38%". |
@@ -320,7 +322,7 @@ The home page `/` shows:
 **Do**
 - Use tokens for every colour, radius, shadow and font. Components contain no raw hex values.
 - Start every page with `PageHeader`, using the correct section accent.
-- Keep red for movies and blue for shows, everywhere.
+- Keep red for movies, blue for shows and orange for shorts, everywhere.
 - Set years, episode codes, counts and universe names in mono.
 - Give every list and table an empty state.
 - Check every screen at 390px and 1280px, in light and dark mode.

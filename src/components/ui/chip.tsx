@@ -3,7 +3,7 @@ import type { HTMLAttributes } from "react";
 
 import { cn } from "@/lib/utils";
 
-// DESIGN_GUIDE §2 and §7. Each colour has one meaning. Movie is red, show is blue, watched is green.
+// DESIGN_GUIDE §2 and §7. Each colour has one meaning. Movie is red, show is blue, short is orange, watched is green.
 export const chipVariants = cva(
   [
     "inline-flex h-[26px] items-center gap-1.5 whitespace-nowrap rounded-pill border-[1.5px] border-transparent",
@@ -14,6 +14,7 @@ export const chipVariants = cva(
       tone: {
         movie: "bg-movie-soft text-movie-ink",
         show: "bg-show-soft text-show-ink",
+        short: "bg-short-soft text-short-ink",
         alive: "bg-green-soft text-green-ink",
         deceased: "bg-surface-2 text-ink-3",
         unknown: "bg-yellow-soft text-yellow-ink",

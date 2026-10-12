@@ -23,7 +23,7 @@ async function TimelineContent({ searchParams }: { searchParams: SearchParams })
   await connection();
   const params = await searchParams;
   const requested = Array.isArray(params.type) ? params.type[0] : params.type;
-  const type: TypeFilter = requested === "movie" || requested === "show" ? requested : "all";
+  const type: TypeFilter = requested === "movie" || requested === "show" || requested === "short" ? requested : "all";
   const tagParam = Array.isArray(params.tag) ? params.tag[0] : params.tag;
   const tag = tagParam?.trim() ? tagParam.trim() : null;
   const events = await loadTimelineEvents();

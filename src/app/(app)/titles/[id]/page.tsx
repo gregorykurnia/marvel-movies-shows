@@ -22,11 +22,12 @@ import {
   type CatalogEntry,
 } from "@/lib/data/catalog";
 import { formatCount, formatDate, formatEpisodeCode, formatYear } from "@/lib/format";
+import { hasOneRecap } from "@/lib/title-kind";
 
 export const metadata: Metadata = { title: "Show" };
 
 // A show: its seasons and episodes, with progress for each season and for the whole show (§2.4).
-// A movie has no episode list, so its page sends you to its recap.
+// A movie or a short has no episode list, so its page sends you to its recap.
 export default function ShowPage({ params }: { params: Promise<{ id: string }> }) {
   return (
     <Suspense fallback={<PageSkeleton rows={3} />}>
@@ -41,7 +42,7 @@ async function ShowContent({ params }: { params: Promise<{ id: string }> }) {
   const title = await loadTitle(id);
   if (!title) notFound();
 
-  if (title.kind === "movie") {
+  if (hasOneRecap(title.kind)) {
     const entryId = await loadMovieEntryId(id);
     if (entryId) redirect(`/recaps/${entryId}`);
     notFound();

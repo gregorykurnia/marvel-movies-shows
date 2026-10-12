@@ -152,6 +152,7 @@ export default function StyleguidePage() {
           <Row>
             <Chip tone="movie" dot>Movie</Chip>
             <Chip tone="show" dot>Show</Chip>
+            <Chip tone="short" dot>Short</Chip>
           </Row>
           <Row>
             <Chip tone="watched">✓ Watched</Chip>
@@ -418,7 +419,7 @@ export default function StyleguidePage() {
           </Panel>
           <Panel className="flex items-center gap-2.5 p-4 text-sm text-ink-2">
             <Clapperboard aria-hidden className="size-[18px] shrink-0 text-movie-ink" />
-            Movie red and show blue are used the same way everywhere (kind bars, chips, pins).
+            Movie red, show blue and short orange are used the same way everywhere (kind bars, chips, pins).
           </Panel>
         </div>
       </Section>
@@ -435,7 +436,7 @@ const heroes = [
   { name: "Gamma Green", token: "--green", fill: "bg-green text-on-green", soft: "bg-green-soft", ink: "bg-green-ink", use: "Watched, progress, alive, success." },
   { name: "Cosmic Violet", token: "--violet", fill: "bg-violet text-on-violet", soft: "bg-violet-soft", ink: "bg-violet-ink", use: "Characters, importance, active filters." },
   { name: "Quantum Cyan", token: "--cyan", fill: "bg-cyan text-on-cyan", soft: "bg-cyan-soft", ink: "bg-cyan-ink", use: "Universe designations only." },
-  { name: "Repulsor Orange", token: "--orange", fill: "bg-orange text-on-orange", soft: "bg-orange-soft", ink: "bg-orange-ink", use: "Timeline accent, warnings." },
+  { name: "Repulsor Orange", token: "--orange", fill: "bg-orange text-on-orange", soft: "bg-orange-soft", ink: "bg-orange-ink", use: "Shorts, timeline accent, warnings." },
 ];
 
 const neutrals = [

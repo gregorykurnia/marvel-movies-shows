@@ -29,7 +29,7 @@ async function RecapsContent({ searchParams }: { searchParams: SearchParams }) {
   const watched: WatchedFilter = ["watched", "unwatched"].includes(first(params.watched) ?? "")
     ? (first(params.watched) as WatchedFilter)
     : "all";
-  const type: TypeFilter = ["movie", "show"].includes(first(params.type) ?? "")
+  const type: TypeFilter = ["movie", "show", "short"].includes(first(params.type) ?? "")
     ? (first(params.type) as TypeFilter)
     : "all";
 
@@ -57,6 +57,7 @@ async function RecapsContent({ searchParams }: { searchParams: SearchParams }) {
     { href: recapsHref({ ...filters, type: "all" }), label: "All", active: type === "all" },
     { href: recapsHref({ ...filters, type: "movie" }), label: "Movies", active: type === "movie" },
     { href: recapsHref({ ...filters, type: "show" }), label: "Shows", active: type === "show" },
+    { href: recapsHref({ ...filters, type: "short" }), label: "Shorts", active: type === "short" },
   ];
 
   return (

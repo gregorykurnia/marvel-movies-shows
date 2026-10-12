@@ -20,7 +20,7 @@ import { useMediaQuery, TIMELINE_WIDE } from "./use-media-query";
 // details open inline on tap. Popover links are not in the tab order, so a keyboard user gets the same links as
 // visually hidden links that show when focused.
 
-const KIND_COLOUR = { movie: "var(--movie)", show: "var(--show)", none: "var(--ink-3)" } as const;
+const KIND_COLOUR = { movie: "var(--movie)", show: "var(--show)", short: "var(--short)", none: "var(--ink-3)" } as const;
 
 function kindOf(event: TimelineEvent): keyof typeof KIND_COLOUR {
   return event.titleKind ?? "none";

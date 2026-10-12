@@ -8,6 +8,7 @@ import { FormSkeleton } from "@/components/layout/page-skeleton";
 import { EpisodeForm } from "@/components/titles/episode-form";
 import { loadMovieEntryId, loadTitle } from "@/lib/data/catalog";
 import { loadUniverseOptions } from "@/lib/data/characters";
+import { hasOneRecap } from "@/lib/title-kind";
 
 export const metadata: Metadata = { title: "Add episodes" };
 
@@ -24,7 +25,7 @@ async function AddEpisodesContent({ params }: { params: Promise<{ id: string }> 
   const { id } = await params;
   const [title, universes] = await Promise.all([loadTitle(id), loadUniverseOptions()]);
   if (!title) notFound();
-  if (title.kind === "movie") {
+  if (hasOneRecap(title.kind)) {
     const entryId = await loadMovieEntryId(id);
     if (entryId) redirect(`/recaps/${entryId}/edit`);
     notFound();

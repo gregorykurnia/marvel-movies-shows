@@ -73,8 +73,8 @@ const optionalUuid = z
   .transform((value) => value || null)
   .pipe(uuid.nullable());
 
-// Titles: a movie or a show. A movie's in-universe year lives on its single entry.
-export const titleKind = z.enum(["movie", "show"], { error: "Choose movie or show" });
+// Titles: a movie, a show or a short. A movie's or short's in-universe year and universe live on its single entry.
+export const titleKind = z.enum(["movie", "show", "short"], { error: "Choose movie, show or short" });
 
 export const titleFormSchema = z.object({
   kind: titleKind,

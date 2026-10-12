@@ -27,7 +27,7 @@ const tsvector = customType<{ data: string }>({
   dataType: () => "tsvector",
 });
 
-export const titleKind = pgEnum("title_kind", ["movie", "show"]);
+export const titleKind = pgEnum("title_kind", ["movie", "show", "short"]);
 export const importance = pgEnum("character_importance", ["major", "minor"]);
 export const characterStatus = pgEnum("character_status", [
   "alive",
@@ -40,7 +40,7 @@ export const backupKind = pgEnum("backup_kind", [
   "pre_restore",
 ]);
 
-// A movie or a show.
+// A movie, a show or a short. A movie and a short each have one entry. A show has episodes.
 export const titles = pgTable(
   "titles",
   {

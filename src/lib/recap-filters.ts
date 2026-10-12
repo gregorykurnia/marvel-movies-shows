@@ -1,7 +1,7 @@
 // The recap list's filters, kept in the URL (?watched=…&type=…&tag=…), so a filtered view can be bookmarked. Shared by
 // the page (which reads them) and the list (which builds the links), so every link and menu agrees.
 export type WatchedFilter = "all" | "watched" | "unwatched";
-export type TypeFilter = "all" | "movie" | "show";
+export type TypeFilter = "all" | "movie" | "show" | "short";
 export type RecapFilters = { watched: WatchedFilter; type: TypeFilter; tag: string | null };
 
 export function recapsHref(filters: RecapFilters): string {

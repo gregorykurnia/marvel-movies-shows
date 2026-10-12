@@ -13,6 +13,7 @@ import { loadCharacterPickerOptions, loadRecapCharacterIds, loadUniverseOptions 
 import { loadEntryDetail } from "@/lib/data/catalog";
 import { loadTagNames } from "@/lib/data/tags";
 import { formatEpisodeCode } from "@/lib/format";
+import { KIND_ACCENT, KIND_LABEL, hasOneRecap } from "@/lib/title-kind";
 
 export const metadata: Metadata = { title: "Edit recap" };
 
@@ -36,15 +37,16 @@ async function EditRecapContent({ params }: { params: Promise<{ entryId: string 
   ]);
   if (!entry) notFound();
 
-  const isMovie = entry.titleKind === "movie";
+  const oneRecap = hasOneRecap(entry.titleKind);
+  const kindWord = KIND_LABEL[entry.titleKind].toLowerCase();
   const code = formatEpisodeCode(entry.seasonNumber, entry.episodeNumber);
 
   return (
     <>
       <PageHeader
-        accent={isMovie ? "red" : "blue"}
-        eyebrow={isMovie ? "Recaps · Movie · Edit" : `Recaps · ${code} · Edit`}
-        title={isMovie ? entry.titleName : `${entry.titleName} — ${entry.name ?? `Episode ${entry.episodeNumber}`}`}
+        accent={KIND_ACCENT[entry.titleKind]}
+        eyebrow={oneRecap ? `Recaps · ${KIND_LABEL[entry.titleKind]} · Edit` : `Recaps · ${code} · Edit`}
+        title={oneRecap ? entry.titleName : `${entry.titleName} — ${entry.name ?? `Episode ${entry.episodeNumber}`}`}
         subtitle="Paste the recap on the left. The preview shows how it will look on the recap page."
       />
       <RecapEditForm
@@ -55,15 +57,15 @@ async function EditRecapContent({ params }: { params: Promise<{ entryId: string 
         universeOptions={universeOptions}
       />
 
-      {isMovie ? (
+      {oneRecap ? (
         <div className="mt-8">
           <DangerZone
             title={`Delete “${entry.titleName}”`}
             confirmWord="DELETE"
-            actionLabel="Delete movie"
+            actionLabel={`Delete ${kindWord}`}
             action={deleteTitle.bind(null, entry.titleId, "/recaps")}
           >
-            Deletes the movie and its recap. Its appearances on characters are removed too. This can&rsquo;t be undone.
+            Deletes the {kindWord} and its recap. Its appearances on characters are removed too. This can&rsquo;t be undone.
           </DangerZone>
         </div>
       ) : (

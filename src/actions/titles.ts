@@ -12,20 +12,21 @@ import { formStrings } from "@/lib/form";
 import { readPlaceables } from "@/lib/data/placeables";
 import { seededKey } from "@/lib/ordering";
 import { deleteConfirmSchema, titleEditSchema, titleFormSchema } from "@/lib/schemas";
+import type { TitleKind } from "@/lib/title-kind";
 
-// Server Actions for titles (movies and shows). See IMPLEMENTATION_PLAN §5.4 for the form rules.
+// Server Actions for titles (movies, shows and shorts). See IMPLEMENTATION_PLAN §5.4 for the form rules.
 const MISSING_UNIVERSE = "That universe no longer exists. Pick it again.";
 
-// A movie is one recap. Creating a movie creates its single entry, placed by its year (§3.2).
+// A movie or a short is one recap. Creating one creates its single entry, placed by its year (§3.2).
 // A show is created empty, and its episodes are added on its own page.
 export async function createTitle(
   formData: FormData,
-): Promise<ActionResult<{ id: string; kind: "movie" | "show"; entryId: string | null }>> {
+): Promise<ActionResult<{ id: string; kind: TitleKind; entryId: string | null }>> {
   const parsed = titleFormSchema.safeParse(formStrings(formData));
   if (!parsed.success) return validationFailure(parsed.error);
   const input = parsed.data;
 
-  let created: { id: string; kind: "movie" | "show"; entryId: string | null };
+  let created: { id: string; kind: TitleKind; entryId: string | null };
   try {
     created = await getDb().transaction(async (tx) => {
       const [title] = await tx
@@ -48,7 +49,7 @@ export async function createTitle(
           watched: false,
         })
         .returning({ id: entries.id });
-      return { id: title.id, kind: "movie" as const, entryId: entry.id };
+      return { id: title.id, kind: input.kind, entryId: entry.id };
     });
   } catch (error) {
     // The transaction is rolled back, so the title isn't created either.

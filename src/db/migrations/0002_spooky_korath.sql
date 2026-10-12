@@ -1,0 +1,1 @@
+ALTER TYPE "public"."title_kind" ADD VALUE 'short';

@@ -4,6 +4,8 @@ import { asc, eq, sql } from "drizzle-orm";
 import { getDb } from "@/db";
 import { appearances, characters, entries, titles, universes } from "@/db/schema";
 
+import { KIND_LABEL, hasOneRecap, type TitleKind } from "@/lib/title-kind";
+
 import { loadCatalog, loadTitleRows as loadTitleRowsForOptions, type CatalogEntry } from "./catalog";
 import { loadCharacterTagNames } from "./tags";
 
@@ -47,7 +49,7 @@ export type CharacterRecord = {
 
 // An entry's label in pickers and tables, e.g. "Loki · S01·E01 · Glorious Purpose" or "Thor · Movie".
 export function entryLabel(entry: Pick<CatalogEntry, "titleName" | "titleKind" | "seasonNumber" | "episodeNumber" | "name">) {
-  if (entry.titleKind === "movie") return `${entry.titleName} · Movie`;
+  if (hasOneRecap(entry.titleKind)) return `${entry.titleName} · ${KIND_LABEL[entry.titleKind]}`;
   const code = `S${String(entry.seasonNumber).padStart(2, "0")}·E${String(entry.episodeNumber).padStart(2, "0")}`;
   return `${entry.titleName} · ${code} · ${entry.name ?? `Episode ${entry.episodeNumber}`}`;
 }
@@ -152,7 +154,7 @@ export async function loadCharacterTable(): Promise<{ rows: CharacterTableRow[];
 // A character's page: its fields, notes, tags, and the recaps it appears in (in custom order).
 export type CharacterDetail = CharacterTableRow & {
   notes: string | null;
-  appearances: (EntryChip & { href: string; isMovie: boolean; code: string | null })[];
+  appearances: (EntryChip & { href: string; titleKind: TitleKind; code: string | null })[];
 };
 
 export async function loadCharacterDetail(id: string): Promise<CharacterDetail | null> {
@@ -176,7 +178,7 @@ export async function loadCharacterDetail(id: string): Promise<CharacterDetail |
       watched: entry.watched,
       rank: index + 1,
       href: `/recaps/${entry.id}`,
-      isMovie: entry.titleKind === "movie",
+      titleKind: entry.titleKind,
       code: entry.seasonNumber === null ? null : `S${String(entry.seasonNumber).padStart(2, "0")}·E${String(entry.episodeNumber).padStart(2, "0")}`,
     }));
 

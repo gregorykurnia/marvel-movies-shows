@@ -38,11 +38,11 @@ import { cn } from "@/lib/utils";
 
 import { EventCard, SortableEvent } from "./event-pin";
 
-export type TypeFilter = "all" | "movie" | "show";
+export type TypeFilter = "all" | "movie" | "show" | "short";
 
 const ZOOM_LABELS: Record<Zoom, string> = { year: "Year", decade: "Decade", century: "Century" };
-const TYPE_LABELS: Record<TypeFilter, string> = { all: "All", movie: "Movies", show: "Shows" };
-const TYPE_OPTIONS = (["all", "movie", "show"] as const).map((value) => ({ value, label: TYPE_LABELS[value] }));
+const TYPE_LABELS: Record<TypeFilter, string> = { all: "All", movie: "Movies", show: "Shows", short: "Shorts" };
+const TYPE_OPTIONS = (["all", "movie", "show", "short"] as const).map((value) => ({ value, label: TYPE_LABELS[value] }));
 
 // The timeline (DESIGN_GUIDE §8, Canvas; IMPLEMENTATION_PLAN §5.2). Events are placed by year on a compressed axis.
 // Empty years collapse into gap markers. Zoom groups years into decades or centuries, and clicking a group zooms
