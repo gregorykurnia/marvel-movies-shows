@@ -1,0 +1,87 @@
+/* =========================================================
+   DESIGN TOKENS: copy of DESIGN_GUIDE.md §3. Keep the values in sync with that section.
+   Components never use raw hex values. They use these tokens (via Tailwind classes).
+   ========================================================= */
+
+:root {
+  /* Neutrals */
+  --paper: #FAF7F2;      /* page background */
+  --surface: #FFFFFF;    /* panels, inputs, header */
+  --surface-2: #F3EFE7;  /* table heads, tags, progress tracks */
+  --ink: #16141C;        /* text, outlines, shadows */
+  --ink-2: #4A4756;      /* secondary text */
+  --ink-3: #6B6878;      /* hints, placeholders, meta */
+  --line: #16141C;       /* panel and input outlines */
+  --line-soft: #E6E1D8;  /* dividers, table row lines */
+  --shadow-ink: #16141C; /* pop-shadow colour */
+  --dot: rgb(22 20 28 / .10); /* halftone dots */
+
+  /* Hero colours: fill / soft tint / text shade / text-on-fill */
+  --red: #E11D3A;    --red-soft: #FFE2E7;    --red-ink: #AE1029;    --on-red: #FFFFFF;
+  --blue: #2563FF;   --blue-soft: #E2EAFF;   --blue-ink: #1A45C4;   --on-blue: #FFFFFF;
+  --yellow: #FFC61A; --yellow-soft: #FFF3C7; --yellow-ink: #7D5A00; --on-yellow: #16141C;
+  --green: #14B86E;  --green-soft: #D8F6E7;  --green-ink: #08743F;  --on-green: #16141C;
+  --violet: #7B4DFF; --violet-soft: #ECE4FF; --violet-ink: #5228D1; --on-violet: #FFFFFF;
+  --cyan: #14C3E8;   --cyan-soft: #D9F6FC;   --cyan-ink: #06718A;   --on-cyan: #16141C;
+  --orange: #FF7A1A; --orange-soft: #FFE8D5; --orange-ink: #A64700; --on-orange: #16141C;
+
+  /* Semantic aliases */
+  --movie: var(--red);  --movie-soft: var(--red-soft);  --movie-ink: var(--red-ink);
+  --show: var(--blue);  --show-soft: var(--blue-soft);  --show-ink: var(--blue-ink);
+  --focus: var(--blue);
+
+  /* Type. The next/font variables (set in app/layout.tsx) are listed first, with the §3 fallbacks after them. */
+  --font-display: var(--font-display-face), "Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif;
+  --font-body: var(--font-body-face), "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-mono-face), "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* Shape */
+  --radius-sm: 8px;   /* inputs, popovers */
+  --radius: 14px;     /* panels, cards */
+  --radius-lg: 20px;  /* large frames, modals */
+  --radius-pill: 999px; /* buttons, chips, segmented controls */
+  --border: 2px;
+
+  /* Elevation */
+  --shadow-pop: 4px 4px 0 var(--shadow-ink);    /* resting panel */
+  --shadow-pop-lg: 6px 6px 0 var(--shadow-ink); /* hovered panel, modal */
+  --shadow-float: 0 2px 4px rgb(22 20 28 / .08), 0 12px 32px rgb(22 20 28 / .14); /* popovers, menus */
+
+  /* Motion */
+  --ease: cubic-bezier(.2, .8, .2, 1);
+  --dur: 160ms;
+
+  color-scheme: light;
+}
+
+/* Dark mode: follows the system, unless overridden by data-theme. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #121118; --surface: #1C1A24; --surface-2: #26232F;
+    --ink: #F6F3EE; --ink-2: #CAC6D4; --ink-3: #9C98AA;
+    --line: #5A5670; --line-soft: #2F2C3A; --shadow-ink: #050407; --dot: rgb(246 243 238 / .07);
+    --red: #FF4560;    --red-soft: #3D1620;    --red-ink: #FF8FA0;    --on-red: #16141C;
+    --blue: #4F82FF;   --blue-soft: #152349;   --blue-ink: #9DB8FF;   --on-blue: #0F0E14;
+    --yellow: #FFD23F; --yellow-soft: #3A2E08; --yellow-ink: #FFD86A;
+    --green: #2BD38A;  --green-soft: #0F3324;  --green-ink: #6FE6B0;
+    --violet: #9673FF; --violet-soft: #261A4D; --violet-ink: #C3B0FF; --on-violet: #0F0E14;
+    --cyan: #33D3F2;   --cyan-soft: #0B3340;   --cyan-ink: #8BE6F7;
+    --orange: #FF8E3C; --orange-soft: #3D2210; --orange-ink: #FFB27A;
+    --shadow-float: 0 2px 4px rgb(0 0 0 / .4), 0 12px 32px rgb(0 0 0 / .5);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #121118; --surface: #1C1A24; --surface-2: #26232F;
+  --ink: #F6F3EE; --ink-2: #CAC6D4; --ink-3: #9C98AA;
+  --line: #5A5670; --line-soft: #2F2C3A; --shadow-ink: #050407; --dot: rgb(246 243 238 / .07);
+  --red: #FF4560;    --red-soft: #3D1620;    --red-ink: #FF8FA0;    --on-red: #16141C;
+  --blue: #4F82FF;   --blue-soft: #152349;   --blue-ink: #9DB8FF;   --on-blue: #0F0E14;
+  --yellow: #FFD23F; --yellow-soft: #3A2E08; --yellow-ink: #FFD86A;
+  --green: #2BD38A;  --green-soft: #0F3324;  --green-ink: #6FE6B0;
+  --violet: #9673FF; --violet-soft: #261A4D; --violet-ink: #C3B0FF; --on-violet: #0F0E14;
+  --cyan: #33D3F2;   --cyan-soft: #0B3340;   --cyan-ink: #8BE6F7;
+  --orange: #FF8E3C; --orange-soft: #3D2210; --orange-ink: #FFB27A;
+  --shadow-float: 0 2px 4px rgb(0 0 0 / .4), 0 12px 32px rgb(0 0 0 / .5);
+  color-scheme: dark;
+}

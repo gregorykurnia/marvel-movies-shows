@@ -1,0 +1,146 @@
+@import "tailwindcss";
+@import "../styles/tokens.css";
+
+/* Tailwind v4 bridge: tokens become classes (bg-paper, text-ink, shadow-pop, rounded-panel, font-display).
+   `inline` keeps each class pointing at the token, so a theme change updates every class. */
+@theme inline {
+  --color-paper: var(--paper);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-line: var(--line);
+  --color-line-soft: var(--line-soft);
+
+  --color-red: var(--red);
+  --color-red-soft: var(--red-soft);
+  --color-red-ink: var(--red-ink);
+  --color-on-red: var(--on-red);
+  --color-blue: var(--blue);
+  --color-blue-soft: var(--blue-soft);
+  --color-blue-ink: var(--blue-ink);
+  --color-on-blue: var(--on-blue);
+  --color-yellow: var(--yellow);
+  --color-yellow-soft: var(--yellow-soft);
+  --color-yellow-ink: var(--yellow-ink);
+  --color-on-yellow: var(--on-yellow);
+  --color-green: var(--green);
+  --color-green-soft: var(--green-soft);
+  --color-green-ink: var(--green-ink);
+  --color-on-green: var(--on-green);
+  --color-violet: var(--violet);
+  --color-violet-soft: var(--violet-soft);
+  --color-violet-ink: var(--violet-ink);
+  --color-on-violet: var(--on-violet);
+  --color-cyan: var(--cyan);
+  --color-cyan-soft: var(--cyan-soft);
+  --color-cyan-ink: var(--cyan-ink);
+  --color-on-cyan: var(--on-cyan);
+  --color-orange: var(--orange);
+  --color-orange-soft: var(--orange-soft);
+  --color-orange-ink: var(--orange-ink);
+  --color-on-orange: var(--on-orange);
+
+  /* Semantic: red = movie, blue = show (DESIGN_GUIDE §2) */
+  --color-movie: var(--movie);
+  --color-movie-soft: var(--movie-soft);
+  --color-movie-ink: var(--movie-ink);
+  --color-show: var(--show);
+  --color-show-soft: var(--show-soft);
+  --color-show-ink: var(--show-ink);
+
+  /* shadcn/ui variable names (DESIGN_GUIDE §11), so shadcn-style classes resolve to our tokens */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-popover: var(--popover);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border-color);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --font-display: var(--font-display);
+  --font-body: var(--font-body);
+  --font-mono: var(--font-mono);
+
+  --radius-input: var(--radius-sm);
+  --radius-panel: var(--radius);
+  --radius-modal: var(--radius-lg);
+
+  --shadow-pop: var(--shadow-pop);
+  --shadow-pop-lg: var(--shadow-pop-lg);
+  --shadow-float: var(--shadow-float);
+
+  --ease-token: var(--ease);
+  --duration-token: var(--dur);
+}
+
+/* shadcn/ui variables, mapped to our tokens (DESIGN_GUIDE §11). */
+:root {
+  --background: var(--paper);
+  --foreground: var(--ink);
+  --card: var(--surface);
+  --popover: var(--surface);
+  --primary: var(--red);
+  --primary-foreground: var(--on-red);
+  --secondary: var(--surface-2);
+  --muted: var(--surface-2);
+  --muted-foreground: var(--ink-3);
+  --accent: var(--yellow-soft);
+  --destructive: var(--red);
+  --border-color: var(--line);
+  --input: var(--line);
+  --ring: var(--focus);
+}
+
+@layer base {
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+  }
+  :focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+}
+
+/* Signature: halftone dots. Decoration only: page header corners, empty states, hero. */
+@utility halftone {
+  background-image: radial-gradient(var(--dot) 1.3px, transparent 1.6px);
+  background-size: 10px 10px;
+}
+
+/* Reduced motion: all transitions and animations are off (DESIGN_GUIDE §9). */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* Motion used by components. Both are switched off by the reduced-motion rule above. */
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: .55; }
+}

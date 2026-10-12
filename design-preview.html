@@ -1,0 +1,919 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Design Preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+/* =========================================================
+   DESIGN TOKENS — copy of DESIGN_GUIDE.md §3. Source of truth.
+   ========================================================= */
+:root {
+  --paper: #FAF7F2;
+  --surface: #FFFFFF;
+  --surface-2: #F3EFE7;
+  --ink: #16141C;
+  --ink-2: #4A4756;
+  --ink-3: #6B6878;
+  --line: #16141C;
+  --line-soft: #E6E1D8;
+  --shadow-ink: #16141C;
+  --dot: rgb(22 20 28 / .10);
+
+  --red: #E11D3A;    --red-soft: #FFE2E7;    --red-ink: #AE1029;    --on-red: #FFFFFF;
+  --blue: #2563FF;   --blue-soft: #E2EAFF;   --blue-ink: #1A45C4;   --on-blue: #FFFFFF;
+  --yellow: #FFC61A; --yellow-soft: #FFF3C7; --yellow-ink: #7D5A00; --on-yellow: #16141C;
+  --green: #14B86E;  --green-soft: #D8F6E7;  --green-ink: #08743F;  --on-green: #16141C;
+  --violet: #7B4DFF; --violet-soft: #ECE4FF; --violet-ink: #5228D1; --on-violet: #FFFFFF;
+  --cyan: #14C3E8;   --cyan-soft: #D9F6FC;   --cyan-ink: #06718A;   --on-cyan: #16141C;
+  --orange: #FF7A1A; --orange-soft: #FFE8D5; --orange-ink: #A64700; --on-orange: #16141C;
+
+  --movie: var(--red);  --movie-soft: var(--red-soft);  --movie-ink: var(--red-ink);
+  --show: var(--blue);  --show-soft: var(--blue-soft);  --show-ink: var(--blue-ink);
+  --focus: var(--blue);
+
+  --font-display: "Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --radius-sm: 8px; --radius: 14px; --radius-lg: 20px; --radius-pill: 999px;
+  --border: 2px;
+  --shadow-pop: 4px 4px 0 var(--shadow-ink);
+  --shadow-pop-lg: 6px 6px 0 var(--shadow-ink);
+  --shadow-float: 0 2px 4px rgb(22 20 28 / .08), 0 12px 32px rgb(22 20 28 / .14);
+  --ease: cubic-bezier(.2, .8, .2, 1);
+  --dur: 160ms;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #121118; --surface: #1C1A24; --surface-2: #26232F;
+    --ink: #F6F3EE; --ink-2: #CAC6D4; --ink-3: #9C98AA;
+    --line: #5A5670; --line-soft: #2F2C3A; --shadow-ink: #050407; --dot: rgb(246 243 238 / .07);
+    --red: #FF4560;    --red-soft: #3D1620;    --red-ink: #FF8FA0;    --on-red: #16141C;
+    --blue: #4F82FF;   --blue-soft: #152349;   --blue-ink: #9DB8FF;   --on-blue: #0F0E14;
+    --yellow: #FFD23F; --yellow-soft: #3A2E08; --yellow-ink: #FFD86A;
+    --green: #2BD38A;  --green-soft: #0F3324;  --green-ink: #6FE6B0;
+    --violet: #9673FF; --violet-soft: #261A4D; --violet-ink: #C3B0FF; --on-violet: #0F0E14;
+    --cyan: #33D3F2;   --cyan-soft: #0B3340;   --cyan-ink: #8BE6F7;
+    --orange: #FF8E3C; --orange-soft: #3D2210; --orange-ink: #FFB27A;
+    --shadow-float: 0 2px 4px rgb(0 0 0 / .4), 0 12px 32px rgb(0 0 0 / .5);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #121118; --surface: #1C1A24; --surface-2: #26232F;
+  --ink: #F6F3EE; --ink-2: #CAC6D4; --ink-3: #9C98AA;
+  --line: #5A5670; --line-soft: #2F2C3A; --shadow-ink: #050407; --dot: rgb(246 243 238 / .07);
+  --red: #FF4560;    --red-soft: #3D1620;    --red-ink: #FF8FA0;    --on-red: #16141C;
+  --blue: #4F82FF;   --blue-soft: #152349;   --blue-ink: #9DB8FF;   --on-blue: #0F0E14;
+  --yellow: #FFD23F; --yellow-soft: #3A2E08; --yellow-ink: #FFD86A;
+  --green: #2BD38A;  --green-soft: #0F3324;  --green-ink: #6FE6B0;
+  --violet: #9673FF; --violet-soft: #261A4D; --violet-ink: #C3B0FF; --on-violet: #0F0E14;
+  --cyan: #33D3F2;   --cyan-soft: #0B3340;   --cyan-ink: #8BE6F7;
+  --orange: #FF8E3C; --orange-soft: #3D2210; --orange-ink: #FFB27A;
+  --shadow-float: 0 2px 4px rgb(0 0 0 / .4), 0 12px 32px rgb(0 0 0 / .5);
+  color-scheme: dark;
+}
+
+/* =========================================================
+   BASE
+   ========================================================= */
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--paper); color: var(--ink);
+  font-family: var(--font-body); font-size: 16px; line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+h1, h2, h3, h4 { font-family: var(--font-display); line-height: 1.1; letter-spacing: -0.02em; margin: 0; }
+p { margin: 0; }
+a { color: inherit; }
+.mono { font-family: var(--font-mono); font-feature-settings: "tnum"; }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; border-radius: 6px; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+
+.wrap { max-width: 1200px; margin: 0 auto; padding: 0 16px; }
+@media (min-width: 768px) { .wrap { padding: 0 32px; } }
+
+/* Signature: 5-colour stripe */
+.stripe { display: flex; height: 6px; }
+.stripe span { flex: 1; }
+.stripe span:nth-child(1) { background: var(--red); }
+.stripe span:nth-child(2) { background: var(--yellow); }
+.stripe span:nth-child(3) { background: var(--blue); }
+.stripe span:nth-child(4) { background: var(--green); }
+.stripe span:nth-child(5) { background: var(--violet); }
+
+/* Signature: halftone */
+.halftone {
+  background-image: radial-gradient(var(--dot) 1.3px, transparent 1.6px);
+  background-size: 10px 10px;
+}
+
+/* =========================================================
+   GUIDE CHROME (only for this preview page)
+   ========================================================= */
+.guide-top { position: sticky; top: 0; z-index: 50; background: var(--paper); border-bottom: var(--border) solid var(--line); }
+.guide-top .wrap { display: flex; align-items: center; gap: 16px; height: 60px; }
+.guide-top nav { display: flex; gap: 4px; overflow-x: auto; flex: 1; scrollbar-width: none; }
+.guide-top nav a { text-decoration: none; font-weight: 600; font-size: 14px; padding: 6px 10px; border-radius: var(--radius-pill); white-space: nowrap; color: var(--ink-2); }
+.guide-top nav a:hover { background: var(--surface-2); color: var(--ink); }
+.guide-section { padding: 56px 0; border-bottom: var(--border) dashed var(--line-soft); }
+.guide-head { display: flex; align-items: baseline; gap: 14px; margin-bottom: 8px; flex-wrap: wrap; }
+.guide-num { font-family: var(--font-mono); font-weight: 700; font-size: 14px; color: var(--ink-3); }
+.guide-head h2 { font-size: clamp(28px, 4vw, 40px); font-weight: 800; }
+.guide-lede { color: var(--ink-2); max-width: 70ch; margin-bottom: 28px; }
+.sub-label { font-family: var(--font-mono); font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); margin: 32px 0 12px; }
+
+/* =========================================================
+   COMPONENTS
+   ========================================================= */
+
+/* Panel — the core surface */
+.panel {
+  background: var(--surface); border: var(--border) solid var(--line);
+  border-radius: var(--radius); box-shadow: var(--shadow-pop);
+}
+.panel-pad { padding: 20px; }
+.panel-hover { transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease); }
+.panel-hover:hover { transform: translate(-2px, -2px); box-shadow: var(--shadow-pop-lg); }
+
+/* Buttons */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 42px; padding: 0 18px; border-radius: var(--radius-pill);
+  font: 700 15px/1 var(--font-body); text-decoration: none; cursor: pointer;
+  border: var(--border) solid var(--line); background: var(--surface); color: var(--ink);
+  box-shadow: 3px 3px 0 var(--shadow-ink);
+  transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease), background var(--dur);
+}
+.btn:hover { transform: translate(-1px, -1px); box-shadow: 4px 4px 0 var(--shadow-ink); }
+.btn:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--shadow-ink); }
+.btn-primary { background: var(--red); color: var(--on-red); }
+.btn-blue { background: var(--blue); color: var(--on-blue); }
+.btn-yellow { background: var(--yellow); color: var(--on-yellow); }
+.btn-ghost { background: transparent; border-color: transparent; box-shadow: none; }
+.btn-ghost:hover { background: var(--surface-2); box-shadow: none; transform: none; }
+.btn-danger { background: var(--surface); color: var(--red-ink); border-color: var(--red); box-shadow: 3px 3px 0 var(--red); }
+.btn-sm { min-height: 34px; padding: 0 12px; font-size: 13px; }
+.btn-icon { width: 42px; padding: 0; }
+.btn[disabled] { opacity: .45; cursor: not-allowed; transform: none; box-shadow: none; }
+
+/* Chips & badges */
+.chip {
+  display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px;
+  border-radius: var(--radius-pill); font: 700 12px/1 var(--font-body); white-space: nowrap;
+  border: 1.5px solid transparent;
+}
+.chip .dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+.chip-movie { background: var(--movie-soft); color: var(--movie-ink); }
+.chip-show { background: var(--show-soft); color: var(--show-ink); }
+.chip-alive { background: var(--green-soft); color: var(--green-ink); }
+.chip-deceased { background: var(--surface-2); color: var(--ink-3); }
+.chip-unknown { background: var(--yellow-soft); color: var(--yellow-ink); }
+.chip-major { background: var(--violet); color: var(--on-violet); }
+.chip-minor { background: transparent; color: var(--violet-ink); border-color: var(--violet); }
+.chip-universe { background: var(--cyan-soft); color: var(--cyan-ink); font-family: var(--font-mono); font-weight: 700; }
+.chip-tag { background: var(--surface-2); color: var(--ink-2); }
+.chip-tag::before { content: "#"; opacity: .6; }
+.chip-watched { background: var(--green); color: var(--on-green); }
+.chip-unwatched { background: transparent; color: var(--ink-3); border: 1.5px dashed var(--ink-3); }
+.code { font-family: var(--font-mono); font-weight: 700; font-size: 12px; padding: 2px 6px; border-radius: 6px; background: var(--surface-2); color: var(--ink-2); }
+
+/* Inputs */
+.field { display: grid; gap: 6px; align-content: start; }
+.label { font-weight: 700; font-size: 14px; }
+.hint { font-size: 13px; color: var(--ink-3); }
+.error { font-size: 13px; color: var(--red-ink); font-weight: 600; }
+.input, .select, .textarea {
+  width: 100%; min-height: 44px; padding: 10px 14px; border-radius: var(--radius-sm);
+  border: var(--border) solid var(--line); background: var(--surface); color: var(--ink);
+  font: 500 15px/1.4 var(--font-body);
+  transition: box-shadow var(--dur) var(--ease);
+}
+.input::placeholder, .textarea::placeholder { color: var(--ink-3); }
+.input:focus, .select:focus, .textarea:focus { outline: none; box-shadow: 0 0 0 4px var(--blue-soft), 3px 3px 0 var(--blue); border-color: var(--blue); }
+.input.is-error { border-color: var(--red); box-shadow: 0 0 0 4px var(--red-soft); }
+.textarea { min-height: 180px; resize: vertical; font-family: var(--font-mono); font-size: 14px; line-height: 1.6; }
+.select { appearance: none; background-image: linear-gradient(45deg, transparent 50%, var(--ink) 50%), linear-gradient(135deg, var(--ink) 50%, transparent 50%); background-position: calc(100% - 20px) 50%, calc(100% - 14px) 50%; background-size: 6px 6px; background-repeat: no-repeat; padding-right: 40px; }
+
+/* Combobox (open state mock) */
+.combo-pop { margin-top: 6px; padding: 6px; border-radius: var(--radius-sm); border: var(--border) solid var(--line); background: var(--surface); box-shadow: var(--shadow-float); }
+.combo-opt { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 10px; border-radius: 6px; font-size: 14px; font-weight: 500; }
+.combo-opt.is-active { background: var(--blue-soft); color: var(--blue-ink); font-weight: 700; }
+.combo-add { color: var(--violet-ink); font-weight: 700; border-top: 1.5px dashed var(--line-soft); margin-top: 4px; padding-top: 10px; border-radius: 0; }
+
+/* Search */
+.search {
+  display: flex; align-items: center; gap: 10px; height: 42px; padding: 0 8px 0 14px; min-width: 0;
+  border: var(--border) solid var(--line); border-radius: var(--radius-pill); background: var(--surface); color: var(--ink-3);
+  font-weight: 500; font-size: 14px;
+}
+.search span.q { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ico { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 2.5; stroke-linecap: round; color: var(--ink-2); }
+.kbd { font: 700 11px/1 var(--font-mono); padding: 5px 7px; border-radius: 6px; border: 1.5px solid var(--line-soft); color: var(--ink-3); background: var(--surface-2); }
+
+/* Progress */
+.progress { height: 14px; border-radius: var(--radius-pill); border: var(--border) solid var(--line); background: var(--surface-2); overflow: hidden; }
+.progress > i {
+  display: block; height: 100%; border-right: var(--border) solid var(--line);
+  background: repeating-linear-gradient(-45deg, var(--green) 0 8px, color-mix(in srgb, var(--green) 78%, #fff) 8px 16px);
+}
+.progress-row { display: flex; align-items: center; gap: 12px; }
+.progress-row .progress { flex: 1; }
+.progress-meta { font: 700 13px/1 var(--font-mono); white-space: nowrap; }
+
+/* Toast */
+.toast { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: var(--radius); background: var(--ink); color: var(--paper); box-shadow: 4px 4px 0 var(--yellow); font-weight: 600; font-size: 14px; max-width: 420px; }
+.toast b { color: var(--yellow); }
+
+/* =========================================================
+   APP SHELL
+   ========================================================= */
+.frame { border: var(--border) solid var(--line); border-radius: var(--radius-lg); overflow: hidden; background: var(--paper); box-shadow: var(--shadow-pop-lg); }
+.frame-bar { display: flex; align-items: center; gap: 8px; padding: 10px 14px; background: var(--surface-2); border-bottom: var(--border) solid var(--line); }
+.frame-bar i { width: 11px; height: 11px; border-radius: 50%; border: 1.5px solid var(--line); }
+.frame-bar i:nth-child(1) { background: var(--red); } .frame-bar i:nth-child(2) { background: var(--yellow); } .frame-bar i:nth-child(3) { background: var(--green); }
+.frame-bar .url { margin-left: 10px; font: 500 12px/1 var(--font-mono); color: var(--ink-3); background: var(--surface); border: 1.5px solid var(--line-soft); padding: 6px 10px; border-radius: var(--radius-pill); flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.app-header { background: var(--surface); border-bottom: var(--border) solid var(--line); }
+.app-header-in { display: flex; align-items: center; gap: 16px; height: 64px; padding: 0 20px; }
+.logo { display: flex; align-items: center; gap: 10px; font-family: var(--font-display); font-weight: 800; font-size: 19px; letter-spacing: -0.02em; text-decoration: none; white-space: nowrap; }
+.logo-mark { width: 34px; height: 34px; display: grid; place-items: center; background: var(--yellow); color: var(--ink); border: var(--border) solid var(--line); border-radius: 10px; box-shadow: 2px 2px 0 var(--shadow-ink); font-size: 18px; transform: rotate(-6deg); }
+.app-nav { display: flex; gap: 2px; }
+.app-nav a { text-decoration: none; font-weight: 700; font-size: 14px; padding: 8px 12px; border-radius: var(--radius-pill); color: var(--ink-2); }
+.app-nav a:hover { background: var(--surface-2); color: var(--ink); }
+.app-nav a.is-active { background: var(--ink); color: var(--paper); }
+.app-header .search { margin-left: auto; width: 260px; }
+.app-nav-mobile { display: none; }
+@media (max-width: 860px) {
+  .app-nav { display: none; }
+  .app-header .search { width: auto; flex: 1; }
+  .app-header .search .kbd { display: none; }
+  .app-nav-mobile { display: flex; gap: 4px; padding: 8px 12px; border-bottom: var(--border) solid var(--line); background: var(--surface); overflow-x: auto; scrollbar-width: none; }
+  .app-nav-mobile a { text-decoration: none; font-weight: 700; font-size: 13px; padding: 6px 12px; border-radius: var(--radius-pill); color: var(--ink-2); white-space: nowrap; }
+  .app-nav-mobile a.is-active { background: var(--ink); color: var(--paper); }
+}
+@media (max-width: 520px) { .logo span.word { display: none; } }
+
+.app-body { padding: 24px 20px 32px; }
+@media (max-width: 520px) { .app-body { padding: 20px 14px 28px; } .app-header-in { padding: 0 14px; } }
+
+/* Page header — every page starts with this */
+.page-head { position: relative; display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding: 22px 22px 20px; margin-bottom: 24px; border: var(--border) solid var(--line); border-radius: var(--radius); background: var(--surface); box-shadow: var(--shadow-pop); overflow: hidden; }
+.page-head::after { content: ""; position: absolute; right: -10px; top: -10px; width: 200px; height: 140px; background-image: radial-gradient(var(--accent, var(--red)) 1.6px, transparent 1.9px); background-size: 11px 11px; opacity: .35; -webkit-mask-image: radial-gradient(circle at top right, #000 20%, transparent 70%); mask-image: radial-gradient(circle at top right, #000 20%, transparent 70%); pointer-events: none; }
+.page-head > * { position: relative; z-index: 1; }
+.eyebrow { font: 700 12px/1 var(--font-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--accent-ink, var(--red-ink)); display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.eyebrow::before { content: ""; width: 18px; height: 4px; border-radius: 2px; background: var(--accent, var(--red)); }
+.page-title { font-size: clamp(28px, 4.2vw, 40px); font-weight: 800; }
+.page-sub { color: var(--ink-2); margin-top: 6px; font-size: 15px; }
+.page-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.acc-red { --accent: var(--red); --accent-ink: var(--red-ink); }
+.acc-blue { --accent: var(--blue); --accent-ink: var(--blue-ink); }
+.acc-violet { --accent: var(--violet); --accent-ink: var(--violet-ink); }
+.acc-green { --accent: var(--green); --accent-ink: var(--green-ink); }
+.acc-orange { --accent: var(--orange); --accent-ink: var(--orange-ink); }
+
+.toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 16px; }
+.seg { display: inline-flex; border: var(--border) solid var(--line); border-radius: var(--radius-pill); overflow: hidden; background: var(--surface); }
+.seg button { border: 0; background: transparent; font: 700 13px/1 var(--font-body); padding: 9px 14px; color: var(--ink-2); cursor: pointer; }
+.seg button + button { border-left: var(--border) solid var(--line); }
+.seg button.is-on { background: var(--ink); color: var(--paper); }
+
+/* Recap list rows */
+.recap-list { display: grid; gap: 12px; }
+.recap-row { display: grid; grid-template-columns: auto 6px 1fr auto; align-items: center; gap: 14px; padding: 14px 16px 14px 10px; }
+.drag { color: var(--ink-3); font-size: 18px; cursor: grab; line-height: 1; letter-spacing: -2px; user-select: none; }
+.kind-bar { align-self: stretch; border-radius: 3px; background: var(--movie); }
+.kind-bar.show { background: var(--show); }
+.recap-row h3 { font-size: 18px; font-weight: 700; letter-spacing: -0.01em; }
+.recap-meta { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 6px; }
+.year { font: 700 13px/1 var(--font-mono); color: var(--ink-2); }
+.recap-row.is-unwatched { background: var(--paper); border-style: dashed; box-shadow: none; }
+.recap-row.is-unwatched h3 { color: var(--ink-2); }
+.recap-row.is-dragging { transform: rotate(-.35deg) translate(-3px, -3px); box-shadow: 8px 8px 0 var(--blue); border-color: var(--blue); }
+.recap-side { display: flex; align-items: center; gap: 10px; }
+@media (max-width: 560px) {
+  .recap-row { grid-template-columns: auto 6px 1fr; }
+  .recap-side { grid-column: 3; justify-content: flex-start; }
+}
+
+.group-label { display: flex; align-items: center; gap: 10px; margin: 8px 0 2px; font: 700 12px/1 var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); }
+.group-label::after { content: ""; flex: 1; height: 2px; background: var(--line-soft); }
+
+/* Recap detail */
+.detail-grid { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 24px; align-items: start; }
+@media (max-width: 900px) { .detail-grid { grid-template-columns: 1fr; } }
+.prose { font-size: 17px; line-height: 1.75; max-width: 68ch; }
+.prose h3 { font-size: 22px; margin: 26px 0 8px; }
+.prose p + p { margin-top: 14px; }
+.prose strong { background: linear-gradient(transparent 60%, var(--yellow-soft) 60%); }
+.prose ul { padding-left: 20px; margin: 12px 0; }
+.prose li::marker { color: var(--red); }
+.side-card h4 { font-size: 15px; font-weight: 700; margin-bottom: 12px; }
+.kv { display: grid; grid-template-columns: auto 1fr; gap: 10px 14px; font-size: 14px; }
+.kv dt { color: var(--ink-3); font-weight: 600; }
+.kv dd { margin: 0; font-weight: 600; text-align: right; }
+.prevnext { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 28px; }
+.prevnext a { text-decoration: none; padding: 14px 16px; }
+.prevnext small { display: block; font: 700 11px/1 var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 6px; }
+.prevnext b { font-family: var(--font-display); font-size: 16px; }
+.prevnext a:last-child { text-align: right; }
+.avatars { display: flex; flex-wrap: wrap; gap: 8px; }
+.ava { display: inline-flex; align-items: center; gap: 8px; padding: 4px 10px 4px 4px; border-radius: var(--radius-pill); border: 1.5px solid var(--line-soft); font-size: 13px; font-weight: 600; }
+.ava i { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-style: normal; font: 800 11px/1 var(--font-display); border: 1.5px solid var(--line); }
+
+/* Timeline */
+.tl-wrap { overflow-x: auto; padding: 8px 4px 24px; }
+.tl { position: relative; display: flex; align-items: flex-start; gap: 0; min-width: max-content; padding-top: 18px; }
+.tl::before { content: ""; position: absolute; left: 0; right: 0; top: 54px; height: 6px; border-radius: 3px; background: var(--ink); }
+.tl-slot { position: relative; display: flex; flex-direction: column; align-items: center; width: 160px; }
+.tl-year { font: 700 15px/1 var(--font-mono); padding: 6px 10px; border-radius: var(--radius-pill); background: var(--surface); border: var(--border) solid var(--line); margin-bottom: 14px; z-index: 1; white-space: nowrap; }
+.tl-gap { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; width: 104px; padding-top: 26px; z-index: 1; }
+.tl-gap span { font: 700 11px/1 var(--font-mono); color: var(--ink-2); background: var(--paper); padding: 6px 8px; border-radius: var(--radius-pill); border: 1.5px dashed var(--ink-3); white-space: nowrap; }
+.tl-events { display: grid; gap: 10px; justify-items: center; margin-top: 4px; }
+.tl-ev { position: relative; }
+.tl-pin { display: block; width: 136px; text-align: left; padding: 10px 12px; border-radius: 12px; background: var(--surface); border: var(--border) solid var(--line); box-shadow: 3px 3px 0 var(--movie); font: 600 13px/1.35 var(--font-body); color: var(--ink); cursor: pointer; transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease); }
+.tl-pin::before { content: ""; display: block; width: 10px; height: 10px; border-radius: 50%; background: var(--movie); border: 1.5px solid var(--line); margin-bottom: 6px; }
+.tl-ev.show .tl-pin { box-shadow: 3px 3px 0 var(--show); }
+.tl-ev.show .tl-pin::before { background: var(--show); }
+.tl-ev:hover .tl-pin, .tl-ev:focus-within .tl-pin { transform: translate(-2px, -2px); box-shadow: 5px 5px 0 var(--movie); }
+.tl-ev.show:hover .tl-pin, .tl-ev.show:focus-within .tl-pin { box-shadow: 5px 5px 0 var(--show); }
+/* Desktop: the card floats above everything (fixed, positioned by script) so the scroll container can't clip it — same as a portalled popover in the app. */
+.tl-pop { position: fixed; left: 0; top: 0; width: 260px; transform: translateX(-50%) translateY(6px); opacity: 0; visibility: hidden; z-index: 60; padding: 16px; border-radius: var(--radius); background: var(--surface); border: var(--border) solid var(--line); box-shadow: var(--shadow-float); transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease), visibility var(--dur); }
+.tl-ev:hover .tl-pop, .tl-ev:focus-within .tl-pop { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
+.tl-pop h4 { font-size: 17px; margin: 8px 0 6px; }
+.tl-pop p { font-size: 14px; color: var(--ink-2); line-height: 1.5; }
+.tl-pop a { display: inline-flex; margin-top: 12px; font-weight: 700; font-size: 14px; color: var(--red-ink); text-decoration: none; }
+.tl-pop a:hover { text-decoration: underline; }
+.zoom { margin-left: auto; }
+@media (max-width: 700px) {
+  .tl-wrap { overflow: visible; }
+  .tl { flex-direction: column; min-width: 0; padding-top: 0; padding-left: 30px; }
+  .tl::before { left: 8px; right: auto; top: 0; bottom: 0; width: 6px; height: auto; }
+  .tl-slot { width: 100%; align-items: flex-start; padding: 12px 0; }
+  .tl-year { margin-left: -36px; }
+  .tl-events { justify-items: stretch; width: 100%; padding-left: 4px; }
+  .tl-pin { width: 100%; }
+  .tl-gap { width: auto; padding: 4px 0 4px 0; align-items: flex-start; margin-left: -34px; }
+  .tl-pop { position: static; transform: none; width: auto; margin-top: 8px; display: none; opacity: 1; visibility: visible; box-shadow: var(--shadow-pop); }
+  .tl-ev:focus-within .tl-pop, .tl-ev:hover .tl-pop { display: block; transform: none; }
+}
+
+/* Character table */
+.table-wrap { overflow-x: auto; border: var(--border) solid var(--line); border-radius: var(--radius); background: var(--surface); box-shadow: var(--shadow-pop); }
+table.data { width: 100%; border-collapse: collapse; min-width: 860px; font-size: 14px; }
+table.data th { text-align: left; font: 700 12px/1 var(--font-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--ink-2); background: var(--surface-2); padding: 14px 14px; border-bottom: var(--border) solid var(--line); white-space: nowrap; }
+table.data th.sorted { color: var(--ink); }
+table.data th .arr { color: var(--red); margin-left: 4px; }
+table.data td { padding: 12px 14px; border-bottom: 1.5px solid var(--line-soft); vertical-align: middle; }
+table.data tr:last-child td { border-bottom: 0; }
+table.data tbody tr { transition: background var(--dur); }
+table.data tbody tr:hover { background: var(--yellow-soft); }
+.name-cell { display: flex; align-items: center; gap: 10px; font-weight: 700; }
+.name-cell small { display: block; font-weight: 500; color: var(--ink-3); font-size: 12px; }
+.link-cell { font-weight: 600; text-decoration: underline; text-decoration-color: var(--line-soft); text-underline-offset: 3px; text-decoration-thickness: 2px; }
+.filter-chip { display: inline-flex; align-items: center; gap: 8px; height: 34px; padding: 0 8px 0 12px; border-radius: var(--radius-pill); border: var(--border) solid var(--line); background: var(--surface); font: 700 13px/1 var(--font-body); }
+.filter-chip.on { background: var(--violet-soft); border-color: var(--violet); color: var(--violet-ink); }
+.filter-chip .x { width: 20px; height: 20px; display: grid; place-items: center; border-radius: 50%; background: var(--violet); color: var(--on-violet); font-size: 12px; }
+.filter-chip .car { opacity: .6; font-size: 11px; margin-right: 4px; }
+.result-count { font: 700 13px/1 var(--font-mono); color: var(--ink-3); margin-left: auto; }
+
+/* Form layout */
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.form-grid .span-2 { grid-column: 1 / -1; }
+@media (max-width: 640px) { .form-grid { grid-template-columns: 1fr; } }
+.form-foot { display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; margin-top: 24px; padding-top: 20px; border-top: var(--border) dashed var(--line-soft); }
+.radio-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.radio { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: var(--radius-pill); border: var(--border) solid var(--line); font-weight: 700; font-size: 14px; background: var(--surface); }
+.radio.on { background: var(--green); color: var(--on-green); box-shadow: 2px 2px 0 var(--shadow-ink); }
+.radio.on.dec { background: var(--surface-2); color: var(--ink); }
+
+/* Empty state & danger zone */
+.empty { text-align: center; padding: 44px 24px; border-radius: var(--radius); border: var(--border) dashed var(--ink-3); }
+.empty-art { width: 84px; height: 84px; margin: 0 auto 16px; border-radius: 24px; display: grid; place-items: center; background: var(--yellow); border: var(--border) solid var(--line); box-shadow: var(--shadow-pop); transform: rotate(-5deg); font-size: 38px; }
+.empty h3 { font-size: 22px; margin-bottom: 6px; }
+.empty p { color: var(--ink-2); max-width: 40ch; margin: 0 auto 18px; }
+.danger { border-color: var(--red); box-shadow: 4px 4px 0 var(--red); }
+.danger h3 { color: var(--red-ink); font-size: 20px; margin-bottom: 6px; }
+
+/* Swatches */
+.swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 14px; }
+.swatch { overflow: hidden; padding: 0; }
+.swatch-color { height: 84px; border-bottom: var(--border) solid var(--line); display: flex; align-items: flex-end; padding: 10px; font: 800 13px/1 var(--font-display); }
+.swatch-body { padding: 10px 12px 12px; }
+.swatch-body b { display: block; font-family: var(--font-display); font-size: 16px; }
+.swatch-body code { font: 500 12px/1.5 var(--font-mono); color: var(--ink-3); }
+.swatch-body p { font-size: 12px; color: var(--ink-2); margin-top: 4px; line-height: 1.4; }
+.tint-row { display: flex; height: 22px; }
+.tint-row span { flex: 1; }
+
+.type-row { display: grid; grid-template-columns: 170px 1fr; gap: 20px; align-items: baseline; padding: 18px 0; border-bottom: 1.5px solid var(--line-soft); }
+.type-row:last-child { border-bottom: 0; }
+.type-spec { font: 500 12px/1.5 var(--font-mono); color: var(--ink-3); }
+@media (max-width: 640px) { .type-row { grid-template-columns: 1fr; gap: 6px; } }
+
+.grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: 20px; }
+.row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+
+.rules { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 16px; }
+.rule { padding: 18px; }
+.rule h4 { font-size: 17px; margin-bottom: 6px; display: flex; gap: 10px; align-items: center; }
+.rule p { font-size: 14px; color: var(--ink-2); }
+.do, .dont { font: 800 11px/1 var(--font-mono); padding: 4px 7px; border-radius: 6px; }
+.do { background: var(--green); color: var(--on-green); }
+.dont { background: var(--red); color: var(--on-red); }
+
+/* Hero */
+.hero { padding: 64px 0 48px; position: relative; overflow: hidden; }
+.hero::before { content: ""; position: absolute; inset: 0; background-image: radial-gradient(var(--dot) 1.5px, transparent 1.8px); background-size: 12px 12px; -webkit-mask-image: linear-gradient(120deg, transparent 30%, #000 100%); mask-image: linear-gradient(120deg, transparent 30%, #000 100%); }
+.hero .wrap { position: relative; }
+.hero h1 { font-size: clamp(42px, 8vw, 88px); font-weight: 800; letter-spacing: -0.035em; line-height: .95; max-width: 14ch; }
+.hero h1 em { font-style: normal; background: var(--yellow); color: var(--ink); padding: 0 .12em; border: var(--border) solid var(--line); border-radius: 12px; box-shadow: 4px 4px 0 var(--shadow-ink); display: inline-block; transform: rotate(-2deg); }
+.hero p { font-size: 19px; color: var(--ink-2); max-width: 56ch; margin-top: 22px; }
+.hero .row { margin-top: 26px; }
+.burst { position: absolute; right: 4%; top: 40px; width: 180px; height: 180px; display: grid; place-items: center; font: 800 22px/1 var(--font-display); color: var(--ink); text-align: center; transform: rotate(10deg); }
+.burst::before { content: ""; position: absolute; inset: 0; background: var(--red); clip-path: polygon(50% 0%, 61% 18%, 82% 10%, 80% 32%, 100% 40%, 85% 56%, 96% 76%, 74% 78%, 68% 100%, 50% 86%, 32% 100%, 26% 78%, 4% 76%, 15% 56%, 0% 40%, 20% 32%, 18% 10%, 39% 18%); }
+.burst span { position: relative; color: var(--on-red); }
+@media (max-width: 900px) { .burst { display: none; } }
+
+footer.guide-foot { padding: 40px 0 60px; color: var(--ink-3); font-size: 14px; }
+</style>
+</head>
+<body>
+
+<div class="stripe" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>
+<header class="guide-top">
+  <div class="wrap">
+    <a class="logo" href="#top"><span class="logo-mark">★</span><span class="word">Design Guide</span></a>
+    <nav aria-label="Sections">
+      <a href="#colour">Colour</a><a href="#type">Type</a><a href="#components">Components</a>
+      <a href="#recaps">Recaps</a><a href="#recap-detail">Recap page</a><a href="#timeline">Timeline</a>
+      <a href="#characters">Characters</a><a href="#inner">Inner pages</a><a href="#rules">Rules</a>
+    </nav>
+    <button class="btn btn-sm" id="themeBtn" type="button" aria-label="Toggle light or dark theme">◐ Theme</button>
+  </div>
+</header>
+
+<main id="top">
+
+<!-- HERO -->
+<section class="hero">
+  <div class="burst" aria-hidden="true"><span>BRIGHT!<br>BOLD!<br>CLEAR!</span></div>
+  <div class="wrap">
+    <div class="eyebrow acc-red">Marvel Directory · visual design v1</div>
+    <h1>Comic-panel <em>bright</em>, modern clean.</h1>
+    <p>Bold ink outlines, offset “pop” shadows, five bright hero colours on warm paper, and a halftone dot motif used sparingly. Every page — even the backup screen — uses the same panels, header and chips.</p>
+    <div class="row">
+      <a class="btn btn-primary" href="#recaps">See the screens →</a>
+      <a class="btn" href="#rules">Read the rules</a>
+    </div>
+  </div>
+</section>
+
+<!-- COLOUR -->
+<section class="guide-section" id="colour">
+  <div class="wrap">
+    <div class="guide-head"><span class="guide-num">01</span><h2>Colour</h2></div>
+    <p class="guide-lede">Five bright hero colours, each with a fixed job. Brights are for fills, bars and accents. Text on a bright fill uses the colour’s <span class="code">--on-*</span> token; coloured text uses the <span class="code">--*-ink</span> shade. Toggle the theme to see the dark set.</p>
+
+    <div class="swatches">
+      <div class="panel swatch"><div class="swatch-color" style="background:var(--red);color:var(--on-red)">Aa</div><div class="tint-row"><span style="background:var(--red-soft)"></span><span style="background:var(--red-ink)"></span></div><div class="swatch-body"><b>Hero Red</b><code>--red</code><p>Primary actions, <strong>movies</strong>, brand.</p></div></div>
+      <div class="panel swatch"><div class="swatch-color" style="background:var(--blue);color:var(--on-blue)">Aa</div><div class="tint-row"><span style="background:var(--blue-soft)"></span><span style="background:var(--blue-ink)"></span></div><div class="swatch-body"><b>Shield Blue</b><code>--blue</code><p><strong>Shows</strong>, focus rings, links in forms.</p></div></div>
+      <div class="panel swatch"><div class="swatch-color" style="background:var(--yellow);color:var(--on-yellow)">Aa</div><div class="tint-row"><span style="background:var(--yellow-soft)"></span><span style="background:var(--yellow-ink)"></span></div><div class="swatch-body"><b>Infinity Gold</b><code>--yellow</code><p>Highlights, logo, empty states, “unknown”.</p></div></div>
+      <div class="panel swatch"><div class="swatch-color" style="background:var(--green);color:var(--on-green)">Aa</div><div class="tint-row"><span style="background:var(--green-soft)"></span><span style="background:var(--green-ink)"></span></div><div class="swatch-body"><b>Gamma Green</b><code>--green</code><p><strong>Watched</strong>, progress, “alive”, success.</p></div></div>
+      <div class="panel swatch"><div class="swatch-color" style="background:var(--violet);color:var(--on-violet)">Aa</div><div class="tint-row"><span style="background:var(--violet-soft)"></span><span style="background:var(--violet-ink)"></span></div><div class="swatch-body"><b>Cosmic Violet</b><code>--violet</code><p>Characters section, importance, active filters.</p></div></div>
+      <div class="panel swatch"><div class="swatch-color" style="background:var(--cyan);color:var(--on-cyan)">Aa</div><div class="tint-row"><span style="background:var(--cyan-soft)"></span><span style="background:var(--cyan-ink)"></span></div><div class="swatch-body"><b>Quantum Cyan</b><code>--cyan</code><p>Universe designations only.</p></div></div>
+      <div class="panel swatch"><div class="swatch-color" style="background:var(--orange);color:var(--on-orange)">Aa</div><div class="tint-row"><span style="background:var(--orange-soft)"></span><span style="background:var(--orange-ink)"></span></div><div class="swatch-body"><b>Repulsor Orange</b><code>--orange</code><p>Timeline section accent, warnings.</p></div></div>
+    </div>
+
+    <div class="sub-label">Neutrals</div>
+    <div class="swatches">
+      <div class="panel swatch"><div class="swatch-color" style="background:var(--paper);color:var(--ink)">Aa</div><div class="swatch-body"><b>Paper</b><code>--paper</code><p>Page background.</p></div></div>
+      <div class="panel swatch"><div class="swatch-color" style="background:var(--surface);color:var(--ink)">Aa</div><div class="swatch-body"><b>Surface</b><code>--surface</code><p>Panels, inputs, header.</p></div></div>
+      <div class="panel swatch"><div class="swatch-color" style="background:var(--surface-2);color:var(--ink)">Aa</div><div class="swatch-body"><b>Surface 2</b><code>--surface-2</code><p>Table heads, tags, tracks.</p></div></div>
+      <div class="panel swatch"><div class="swatch-color" style="background:var(--ink);color:var(--paper)">Aa</div><div class="swatch-body"><b>Ink</b><code>--ink</code><p>Text, outlines, shadows.</p></div></div>
+      <div class="panel swatch"><div class="swatch-color" style="background:var(--ink-2);color:var(--paper)">Aa</div><div class="swatch-body"><b>Ink 2</b><code>--ink-2</code><p>Secondary text.</p></div></div>
+      <div class="panel swatch"><div class="swatch-color" style="background:var(--ink-3);color:var(--paper)">Aa</div><div class="swatch-body"><b>Ink 3</b><code>--ink-3</code><p>Hints, placeholders, meta.</p></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- TYPE -->
+<section class="guide-section" id="type">
+  <div class="wrap">
+    <div class="guide-head"><span class="guide-num">02</span><h2>Typography</h2></div>
+    <p class="guide-lede">Three families. <b>Bricolage Grotesque</b> for headings (characterful, chunky), <b>Plus Jakarta Sans</b> for everything you read, <b>JetBrains Mono</b> for years, episode codes, counts and labels.</p>
+    <div class="panel panel-pad">
+      <div class="type-row"><div class="type-spec">Display · Bricolage 800<br>56–88 / 0.95 / −3.5%</div><div style="font:800 clamp(40px,6vw,64px)/.95 var(--font-display);letter-spacing:-.035em">Avengers Assemble</div></div>
+      <div class="type-row"><div class="type-spec">H1 · Bricolage 800<br>40 / 1.05 / −2%</div><div style="font:800 40px/1.05 var(--font-display);letter-spacing:-.02em">The Recaps</div></div>
+      <div class="type-row"><div class="type-spec">H2 · Bricolage 700<br>28 / 1.15</div><div style="font:700 28px/1.15 var(--font-display);letter-spacing:-.02em">Season 1</div></div>
+      <div class="type-row"><div class="type-spec">H3 · Bricolage 700<br>20 / 1.25</div><div style="font:700 20px/1.25 var(--font-display)">Glorious Purpose</div></div>
+      <div class="type-row"><div class="type-spec">Body · Jakarta 400<br>16 / 1.6</div><div>Loki is arrested by the Time Variance Authority and given a choice: help hunt a dangerous variant, or be erased from existence.</div></div>
+      <div class="type-row"><div class="type-spec">Reading · Jakarta 400<br>17 / 1.75 · max 68ch</div><div class="prose" style="max-width:none">Used for recap text only — slightly larger and airier for long reads.</div></div>
+      <div class="type-row"><div class="type-spec">Small · Jakarta 500<br>14 / 1.5</div><div style="font-size:14px;font-weight:500;color:var(--ink-2)">Released 9 June 2021 · 6 episodes</div></div>
+      <div class="type-row"><div class="type-spec">Eyebrow · Mono 700<br>12 / caps / +10%</div><div class="eyebrow acc-blue" style="margin:0">Show · Season 1</div></div>
+      <div class="type-row"><div class="type-spec">Data · Mono 700<br>13–15, tabular</div><div class="row"><span class="year" style="font-size:15px">−5000</span><span class="year" style="font-size:15px">1943–1945</span><span class="code">S01·E01</span><span class="year" style="font-size:15px">4 / 6</span></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- COMPONENTS -->
+<section class="guide-section" id="components">
+  <div class="wrap">
+    <div class="guide-head"><span class="guide-num">03</span><h2>Components</h2></div>
+    <p class="guide-lede">The building blocks every screen is assembled from. If something new is needed, build it from these pieces — same outline, radius, shadow and chip styles.</p>
+
+    <div class="grid-2">
+      <div class="panel panel-pad">
+        <div class="sub-label" style="margin-top:0">Buttons</div>
+        <div class="row">
+          <button class="btn btn-primary">＋ Add title</button>
+          <button class="btn">Save &amp; add another</button>
+          <button class="btn btn-ghost">Cancel</button>
+        </div>
+        <div class="row" style="margin-top:12px">
+          <button class="btn btn-blue btn-sm">Reorder</button>
+          <button class="btn btn-yellow btn-sm">⬇ Download backup</button>
+          <button class="btn btn-danger btn-sm">Restore…</button>
+          <button class="btn btn-sm" disabled>Disabled</button>
+          <button class="btn btn-icon" aria-label="More">⋯</button>
+        </div>
+        <div class="sub-label">Search</div>
+        <div class="search"><svg class="ico" aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span class="q">Search recaps, events, characters…</span><span class="kbd">⌘K</span></div>
+        <div class="sub-label">Progress</div>
+        <div class="progress-row"><div class="progress" role="progressbar" aria-valuenow="67" aria-valuemin="0" aria-valuemax="100" aria-label="Loki season 1 watched"><i style="width:67%"></i></div><span class="progress-meta">4 / 6</span></div>
+        <div class="progress-row" style="margin-top:10px"><div class="progress" aria-hidden="true"><i style="width:23%"></i></div><span class="progress-meta">23%</span></div>
+        <div class="sub-label">Toast</div>
+        <div class="toast"><span>✓</span><span>Moved <b>Loki · S01·E01</b> after Avengers: Endgame</span></div>
+      </div>
+
+      <div class="panel panel-pad">
+        <div class="sub-label" style="margin-top:0">Chips — one meaning each</div>
+        <div class="row"><span class="chip chip-movie"><span class="dot"></span>Movie</span><span class="chip chip-show"><span class="dot"></span>Show</span></div>
+        <div class="row" style="margin-top:10px"><span class="chip chip-watched">✓ Watched</span><span class="chip chip-unwatched">Not watched</span></div>
+        <div class="row" style="margin-top:10px"><span class="chip chip-alive"><span class="dot"></span>Alive</span><span class="chip chip-deceased"><span class="dot"></span>Deceased</span><span class="chip chip-unknown"><span class="dot"></span>Unknown</span></div>
+        <div class="row" style="margin-top:10px"><span class="chip chip-major">★ Major</span><span class="chip chip-minor">Minor</span></div>
+        <div class="row" style="margin-top:10px"><span class="chip chip-universe">Earth-199999</span><span class="chip chip-universe">Earth-838</span></div>
+        <div class="row" style="margin-top:10px"><span class="chip chip-tag">rewatch</span><span class="chip chip-tag">favourite</span><span class="chip chip-tag">key-event</span></div>
+        <div class="row" style="margin-top:10px"><span class="code">S02·E04</span><span class="year">2012</span></div>
+
+        <div class="sub-label">Inputs</div>
+        <div class="field"><label class="label" for="i1">Name</label><input class="input" id="i1" value="Sylvie"></div>
+        <div class="field" style="margin-top:12px"><label class="label" for="i2">In-universe year</label><input class="input is-error" id="i2" value="20x8"><span class="error">Year must be a whole number (use − for BCE)</span></div>
+      </div>
+    </div>
+
+    <div class="sub-label">Panels</div>
+    <div class="grid-2">
+      <div class="panel panel-pad panel-hover"><h3 style="font-size:20px;margin-bottom:6px">Panel (hover me)</h3><p style="color:var(--ink-2);font-size:14px">2px ink outline, 14px radius, 4px offset shadow. Lifts on hover when clickable.</p></div>
+      <div class="panel panel-pad halftone"><h3 style="font-size:20px;margin-bottom:6px">Halftone panel</h3><p style="color:var(--ink-2);font-size:14px">Dots are decoration only: page headers, empty states, hero. Never behind body text that needs reading.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- SCREEN: RECAPS -->
+<section class="guide-section" id="recaps">
+  <div class="wrap">
+    <div class="guide-head"><span class="guide-num">04</span><h2>Screen · Recaps list</h2></div>
+    <p class="guide-lede">Custom order with episodes mixed between movies. Kind bar on the left (red movie / blue show). Unwatched rows are dashed and flat. In Reorder mode one row is shown mid-drag.</p>
+
+    <div class="frame">
+      <div class="frame-bar"><i></i><i></i><i></i><span class="url">marvel-directory.vercel.app/recaps</span></div>
+      <div class="app-header"><div class="app-header-in">
+        <a class="logo" href="#recaps"><span class="logo-mark">★</span><span class="word">Marvel Directory</span></a>
+        <nav class="app-nav"><a class="is-active" href="#recaps">Recaps</a><a href="#timeline">Timeline</a><a href="#characters">Characters</a><a href="#inner">Backup</a></nav>
+        <div class="search"><svg class="ico" aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span class="q">Search…</span><span class="kbd">⌘K</span></div>
+      </div></div>
+      <nav class="app-nav-mobile"><a class="is-active" href="#recaps">Recaps</a><a href="#timeline">Timeline</a><a href="#characters">Characters</a><a href="#inner">Backup</a></nav>
+      <div class="app-body">
+        <div class="page-head acc-red">
+          <div>
+            <div class="eyebrow">Your order · 214 entries</div>
+            <h1 class="page-title">Recaps</h1>
+            <div class="page-sub" style="max-width:420px">
+              <div class="progress-row" style="margin-top:8px"><div class="progress" aria-hidden="true"><i style="width:38%"></i></div><span class="progress-meta">81 / 214 watched</span></div>
+            </div>
+          </div>
+          <div class="page-actions"><button class="btn btn-blue">⇅ Reorder</button><button class="btn btn-primary">＋ Add title</button></div>
+        </div>
+
+        <div class="toolbar">
+          <div class="seg" role="group" aria-label="Watched filter"><button class="is-on">All</button><button>Watched</button><button>Not watched</button></div>
+          <div class="seg" role="group" aria-label="Type filter"><button class="is-on">All</button><button>Movies</button><button>Shows</button></div>
+          <span class="filter-chip">Tag <span class="car">▾</span></span>
+        </div>
+
+        <div class="recap-list">
+          <div class="group-label">1940s</div>
+          <article class="panel recap-row panel-hover">
+            <span class="drag" aria-hidden="true">⋮⋮</span><span class="kind-bar"></span>
+            <div><h3>Captain America: The First Avenger</h3><div class="recap-meta"><span class="chip chip-movie"><span class="dot"></span>Movie</span><span class="year">1942–1945</span><span class="chip chip-tag">key-event</span></div></div>
+            <div class="recap-side"><span class="chip chip-watched">✓ Watched</span></div>
+          </article>
+          <div class="group-label">1990s</div>
+          <article class="panel recap-row panel-hover">
+            <span class="drag" aria-hidden="true">⋮⋮</span><span class="kind-bar"></span>
+            <div><h3>Captain Marvel</h3><div class="recap-meta"><span class="chip chip-movie"><span class="dot"></span>Movie</span><span class="year">1995</span></div></div>
+            <div class="recap-side"><span class="chip chip-watched">✓ Watched</span></div>
+          </article>
+          <div class="group-label">2010s</div>
+          <article class="panel recap-row is-dragging">
+            <span class="drag" aria-hidden="true">⋮⋮</span><span class="kind-bar show"></span>
+            <div><h3>Loki — Glorious Purpose</h3><div class="recap-meta"><span class="chip chip-show"><span class="dot"></span>Show</span><span class="code">S01·E01</span><span class="year">2012</span></div></div>
+            <div class="recap-side"><span class="chip chip-watched">✓ Watched</span></div>
+          </article>
+          <article class="panel recap-row panel-hover">
+            <span class="drag" aria-hidden="true">⋮⋮</span><span class="kind-bar"></span>
+            <div><h3>Avengers: Endgame</h3><div class="recap-meta"><span class="chip chip-movie"><span class="dot"></span>Movie</span><span class="year">2018–2023</span><span class="chip chip-tag">rewatch</span></div></div>
+            <div class="recap-side"><span class="chip chip-watched">✓ Watched</span></div>
+          </article>
+          <article class="panel recap-row is-unwatched">
+            <span class="drag" aria-hidden="true">⋮⋮</span><span class="kind-bar show"></span>
+            <div><h3>Loki — The Variant</h3><div class="recap-meta"><span class="chip chip-show"><span class="dot"></span>Show</span><span class="code">S01·E02</span><span class="year">—</span></div></div>
+            <div class="recap-side"><span class="chip chip-unwatched">Not watched</span></div>
+          </article>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SCREEN: RECAP DETAIL -->
+<section class="guide-section" id="recap-detail">
+  <div class="wrap">
+    <div class="guide-head"><span class="guide-num">05</span><h2>Screen · Recap page</h2></div>
+    <p class="guide-lede">Reading-first: recap in the wide column at 68ch, facts in a side panel. Pasted Markdown renders with red list markers and a highlighter effect on bold. Previous/next follow your custom order.</p>
+
+    <div class="frame">
+      <div class="frame-bar"><i></i><i></i><i></i><span class="url">marvel-directory.vercel.app/recaps/loki-s01e01</span></div>
+      <div class="app-body">
+        <div class="page-head acc-blue">
+          <div>
+            <div class="eyebrow">Loki · Season 1 · Episode 1</div>
+            <h1 class="page-title">Glorious Purpose</h1>
+            <div class="recap-meta" style="margin-top:10px"><span class="chip chip-show"><span class="dot"></span>Show</span><span class="code">S01·E01</span><span class="year">2012</span><span class="chip chip-watched">✓ Watched</span></div>
+          </div>
+          <div class="page-actions"><button class="btn">✎ Edit</button></div>
+        </div>
+
+        <div class="detail-grid">
+          <div class="panel panel-pad" style="padding:28px">
+            <div class="prose">
+              <p>Escaping with the Tesseract during the Avengers’ 2012 heist, Loki lands in the Gobi Desert — and is promptly arrested by the <strong>Time Variance Authority</strong>.</p>
+              <h3>Key moments</h3>
+              <ul>
+                <li>Mobius offers Loki a deal: help hunt a dangerous variant.</li>
+                <li>Loki watches his own future on the TVA’s screens.</li>
+                <li>The episode ends on a scorched 1985 crime scene.</li>
+              </ul>
+              <p>Sample text only — recaps are pasted in and shown exactly as written.</p>
+            </div>
+          </div>
+          <aside style="display:grid;gap:16px">
+            <div class="panel panel-pad side-card">
+              <h4>Details</h4>
+              <dl class="kv"><dt>Released</dt><dd>9 Jun 2021</dd><dt>Year in universe</dt><dd class="mono">2012</dd><dt>Position</dt><dd class="mono">#58 / 214</dd></dl>
+            </div>
+            <div class="panel panel-pad side-card">
+              <h4>Characters</h4>
+              <div class="avatars">
+                <span class="ava"><i style="background:var(--green)">L</i>Loki</span>
+                <span class="ava"><i style="background:var(--yellow)">M</i>Mobius</span>
+                <span class="ava"><i style="background:var(--violet);color:var(--on-violet)">R</i>Ravonna</span>
+              </div>
+            </div>
+            <div class="panel panel-pad side-card">
+              <h4>Notes &amp; tags</h4>
+              <p style="font-size:14px;color:var(--ink-2);margin-bottom:10px">Great intro to the TVA. Rewatch before season 2.</p>
+              <div class="row"><span class="chip chip-tag">rewatch</span><span class="chip chip-tag">tva</span></div>
+            </div>
+          </aside>
+        </div>
+        <div class="prevnext">
+          <a class="panel panel-hover" href="#recap-detail"><small>← Previous</small><b>The Avengers</b></a>
+          <a class="panel panel-hover" href="#recap-detail"><small>Next →</small><b>Loki · The Variant</b></a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SCREEN: TIMELINE -->
+<section class="guide-section" id="timeline">
+  <div class="wrap">
+    <div class="guide-head"><span class="guide-num">06</span><h2>Screen · Timeline</h2></div>
+    <p class="guide-lede">Only years with events get a slot; gaps collapse into a dashed marker. Hover (or tap / focus) a card to expand it. Horizontal on desktop, vertical on phones — resize the window to see both.</p>
+
+    <div class="frame">
+      <div class="frame-bar"><i></i><i></i><i></i><span class="url">marvel-directory.vercel.app/timeline</span></div>
+      <div class="app-body">
+        <div class="page-head acc-orange">
+          <div><div class="eyebrow">38 events · −5000 to 2025</div><h1 class="page-title">Timeline</h1></div>
+          <div class="page-actions"><button class="btn btn-primary">＋ Add event</button></div>
+        </div>
+        <div class="toolbar">
+          <div class="seg" role="group" aria-label="Type filter"><button class="is-on">All</button><button>Movies</button><button>Shows</button></div>
+          <div class="search" style="width:180px"><span aria-hidden="true">↦</span><span class="q">Jump to year</span></div>
+          <div class="seg zoom" role="group" aria-label="Zoom"><button class="is-on">Year</button><button>Decade</button><button>Century</button></div>
+        </div>
+
+        <div class="tl-wrap">
+          <div class="tl">
+            <div class="tl-slot"><span class="tl-year">−5000</span>
+              <div class="tl-events"><div class="tl-ev"><button class="tl-pin">The Eternals arrive on Earth</button>
+                <div class="tl-pop" role="tooltip"><span class="chip chip-movie"><span class="dot"></span>Eternals</span><h4>The Eternals arrive on Earth</h4><p>Ten Eternals land in Mesopotamia to protect humanity from the Deviants.</p><a href="#recap-detail">Read recap →</a></div></div></div>
+            </div>
+            <div class="tl-gap"><span>⋯ 6,942 yrs ⋯</span></div>
+            <div class="tl-slot"><span class="tl-year">1943</span>
+              <div class="tl-events"><div class="tl-ev"><button class="tl-pin">Steve Rogers receives the serum</button>
+                <div class="tl-pop" role="tooltip"><span class="chip chip-movie"><span class="dot"></span>Captain America: TFA</span><h4>Steve Rogers receives the serum</h4><p>Project Rebirth turns Steve into the first Avenger.</p><a href="#recap-detail">Read recap →</a></div></div></div>
+            </div>
+            <div class="tl-slot"><span class="tl-year">1945</span>
+              <div class="tl-events"><div class="tl-ev"><button class="tl-pin">Steve goes into the ice</button>
+                <div class="tl-pop" role="tooltip"><span class="chip chip-movie"><span class="dot"></span>Captain America: TFA</span><h4>Steve goes into the ice</h4><p>He crashes the Valkyrie into the Arctic.</p><a href="#recap-detail">Read recap →</a></div></div></div>
+            </div>
+            <div class="tl-gap"><span>⋯ 50 yrs ⋯</span></div>
+            <div class="tl-slot"><span class="tl-year">1995</span>
+              <div class="tl-events"><div class="tl-ev"><button class="tl-pin">Carol Danvers regains her memory</button>
+                <div class="tl-pop" role="tooltip"><span class="chip chip-movie"><span class="dot"></span>Captain Marvel</span><h4>Carol Danvers regains her memory</h4><p>On Earth, Carol learns the truth about the Kree.</p><a href="#recap-detail">Read recap →</a></div></div></div>
+            </div>
+            <div class="tl-gap"><span>⋯ 16 yrs ⋯</span></div>
+            <div class="tl-slot"><span class="tl-year">2011</span>
+              <div class="tl-events"><div class="tl-ev"><button class="tl-pin">Captain America wakes up from the ice</button>
+                <div class="tl-pop" role="tooltip"><span class="chip chip-movie"><span class="dot"></span>Captain America: TFA</span><h4>Captain America wakes up from the ice</h4><p>Steve wakes in a staged 1940s room in modern-day New York.</p><a href="#recap-detail">Read recap →</a></div></div></div>
+            </div>
+            <div class="tl-slot"><span class="tl-year">2012</span>
+              <div class="tl-events">
+                <div class="tl-ev"><button class="tl-pin">Battle of New York</button>
+                  <div class="tl-pop" role="tooltip"><span class="chip chip-movie"><span class="dot"></span>The Avengers</span><h4>Battle of New York</h4><p>The Avengers stop Loki’s Chitauri invasion.</p><a href="#recap-detail">Read recap →</a></div></div>
+                <div class="tl-ev show"><button class="tl-pin">Loki is arrested by the TVA</button>
+                  <div class="tl-pop" role="tooltip"><span class="chip chip-show"><span class="dot"></span>Loki · S01·E01</span><h4>Loki is arrested by the TVA</h4><p>A variant Loki escapes with the Tesseract — and is caught.</p><a href="#recap-detail">Read recap →</a></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SCREEN: CHARACTERS -->
+<section class="guide-section" id="characters">
+  <div class="wrap">
+    <div class="guide-head"><span class="guide-num">07</span><h2>Screen · Characters</h2></div>
+    <p class="guide-lede">Dense but friendly table. Active filters are violet chips with an ✕; the sorted column shows a red arrow. Rows highlight yellow on hover. Scrolls sideways inside its panel on phones.</p>
+
+    <div class="frame">
+      <div class="frame-bar"><i></i><i></i><i></i><span class="url">marvel-directory.vercel.app/characters?universe=all&amp;status=alive&amp;sort=name</span></div>
+      <div class="app-body">
+        <div class="page-head acc-violet">
+          <div><div class="eyebrow">142 characters · 9 universes</div><h1 class="page-title">Characters</h1></div>
+          <div class="page-actions"><button class="btn">Universes</button><button class="btn btn-primary">＋ Add character</button></div>
+        </div>
+        <div class="toolbar">
+          <div class="search" style="flex:1;min-width:200px;max-width:320px"><svg class="ico" aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span class="q" style="color:var(--ink)">loki</span></div>
+          <span class="filter-chip on">Status: Alive <span class="x" aria-label="Remove filter">✕</span></span>
+          <span class="filter-chip">Importance <span class="car">▾</span></span>
+          <span class="filter-chip">Universe <span class="car">▾</span></span>
+          <button class="btn btn-ghost btn-sm">Clear all</button>
+          <span class="result-count">3 results</span>
+        </div>
+        <div class="table-wrap">
+          <table class="data">
+            <thead><tr><th class="sorted">Name <span class="arr">▲</span></th><th>Importance</th><th>Universe</th><th>Predominant</th><th>First appearance</th><th>Last appearance</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr><td><div class="name-cell"><span class="ava" style="padding:0;border:0"><i style="background:var(--green)">L</i></span><div>Loki<small>Variant L1130</small></div></div></td><td><span class="chip chip-major">★ Major</span></td><td><span class="chip chip-universe">Earth-199999</span></td><td>Loki</td><td><span class="link-cell">Thor</span></td><td><span class="link-cell">Loki · S02·E06</span></td><td><span class="chip chip-alive"><span class="dot"></span>Alive</span></td></tr>
+              <tr><td><div class="name-cell"><span class="ava" style="padding:0;border:0"><i style="background:var(--yellow)">S</i></span><div>Sylvie<small>Variant L1190</small></div></div></td><td><span class="chip chip-major">★ Major</span></td><td><span class="chip chip-universe">Earth-199999</span></td><td>Loki</td><td><span class="link-cell">Loki · S01·E02</span></td><td><span class="link-cell">Loki · S02·E06</span></td><td><span class="chip chip-alive"><span class="dot"></span>Alive</span></td></tr>
+              <tr><td><div class="name-cell"><span class="ava" style="padding:0;border:0"><i style="background:var(--cyan)">C</i></span><div>Classic Loki<small>Variant</small></div></div></td><td><span class="chip chip-minor">Minor</span></td><td><span class="chip chip-universe">Earth-199999</span></td><td>Loki</td><td><span class="link-cell">Loki · S01·E04</span></td><td><span class="link-cell">Loki · S01·E05</span></td><td><span class="chip chip-unknown"><span class="dot"></span>Unknown</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- INNER PAGES -->
+<section class="guide-section" id="inner">
+  <div class="wrap">
+    <div class="guide-head"><span class="guide-num">08</span><h2>Inner pages</h2></div>
+    <p class="guide-lede">Forms, empty states and the backup screen get exactly the same treatment: page header with eyebrow, panels, chips, pill buttons. No page is allowed to fall back to plain unstyled defaults.</p>
+
+    <div class="frame">
+      <div class="frame-bar"><i></i><i></i><i></i><span class="url">marvel-directory.vercel.app/characters/new</span></div>
+      <div class="app-body">
+        <div class="page-head acc-violet">
+          <div><div class="eyebrow">Characters · New</div><h1 class="page-title">Add a character</h1><p class="page-sub">Each variant is its own character.</p></div>
+        </div>
+        <div class="panel panel-pad" style="padding:24px">
+          <div class="form-grid">
+            <div class="field"><label class="label" for="f1">Name</label><input class="input" id="f1" value="Sylvie"></div>
+            <div class="field"><span class="label">Importance</span><div class="radio-row"><span class="radio on" style="background:var(--violet);color:var(--on-violet)">★ Major</span><span class="radio">Minor</span></div></div>
+            <div class="field">
+              <label class="label" for="f3">Universe</label>
+              <input class="input" id="f3" value="Earth-1" style="border-color:var(--blue);box-shadow:0 0 0 4px var(--blue-soft),3px 3px 0 var(--blue)">
+              <div class="combo-pop" role="listbox">
+                <div class="combo-opt is-active"><span class="mono">Earth-199999</span><span>↵</span></div>
+                <div class="combo-opt"><span class="mono">Earth-10005</span></div>
+                <div class="combo-opt combo-add">＋ Add universe “Earth-1”</div>
+              </div>
+            </div>
+            <div class="field"><span class="label">Status</span><div class="radio-row"><span class="radio on">● Alive</span><span class="radio">Deceased</span><span class="radio">Unknown</span></div></div>
+            <div class="field"><label class="label" for="f5">First appearance</label><select class="select" id="f5"><option>Loki · S01·E02 — The Variant</option></select></div>
+            <div class="field"><label class="label" for="f6">Last appearance</label><select class="select" id="f6"><option>Loki · S02·E06 — Glorious Purpose</option></select></div>
+            <div class="field span-2"><label class="label" for="f7">Notes</label><textarea class="textarea" id="f7" style="min-height:90px">Variant L1190. Hunted by the TVA.</textarea><span class="hint">Plain text or Markdown.</span></div>
+          </div>
+          <div class="form-foot"><button class="btn btn-ghost">Cancel</button><button class="btn">Save &amp; add another</button><button class="btn btn-primary">Save character</button></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-2" style="margin-top:28px">
+      <div class="empty halftone">
+        <div class="empty-art" aria-hidden="true">★</div>
+        <h3>No timeline events yet</h3>
+        <p>Add your first event — like “2011: Captain America wakes up from the ice”.</p>
+        <button class="btn btn-primary">＋ Add event</button>
+      </div>
+      <div style="display:grid;gap:16px">
+        <div class="panel panel-pad">
+          <div class="eyebrow acc-green">Backup</div>
+          <h3 style="font-size:20px;margin-bottom:6px">Download everything</h3>
+          <p style="color:var(--ink-2);font-size:14px;margin-bottom:14px">Last backup <span class="mono" style="color:var(--ink)">today 03:00</span> · automatic</p>
+          <button class="btn btn-yellow">⬇ Download backup</button>
+        </div>
+        <div class="panel panel-pad danger">
+          <h3>Restore from file</h3>
+          <p style="color:var(--ink-2);font-size:14px;margin-bottom:14px">Replaces <b>all</b> current data. A safety backup is saved first.</p>
+          <div class="field"><label class="label" for="r1">Type <span class="mono">RESTORE</span> to confirm</label><input class="input" id="r1" placeholder="RESTORE"></div>
+          <div class="row" style="margin-top:12px"><button class="btn btn-danger" disabled>Restore…</button></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- RULES -->
+<section class="guide-section" id="rules">
+  <div class="wrap">
+    <div class="guide-head"><span class="guide-num">09</span><h2>Rules at a glance</h2></div>
+    <p class="guide-lede">Full list in <span class="code">DESIGN_GUIDE.md</span>. These are the ones that keep every page looking like the same app.</p>
+    <div class="rules">
+      <div class="panel rule"><h4><span class="do">DO</span>Tokens only</h4><p>Every colour, radius and shadow comes from a token. No raw hex values in components.</p></div>
+      <div class="panel rule"><h4><span class="do">DO</span>Page header on every page</h4><p>Eyebrow + title + actions, with the section accent colour. Forms and error pages included.</p></div>
+      <div class="panel rule"><h4><span class="do">DO</span>Red = movie, Blue = show</h4><p>Everywhere: chips, kind bars, timeline pins. Never swap or reuse these for anything else.</p></div>
+      <div class="panel rule"><h4><span class="do">DO</span>Mono for data</h4><p>Years, S01·E01 codes, counts, universe designations always in JetBrains Mono.</p></div>
+      <div class="panel rule"><h4><span class="dont">DON’T</span>White text on bright fills</h4><p>Yellow, green, cyan and orange fills always take ink text (<span class="code">--on-*</span>).</p></div>
+      <div class="panel rule"><h4><span class="dont">DON’T</span>Overdo the comic</h4><p>One primary button per view. Halftone and bursts are accents, not wallpaper.</p></div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="guide-foot"><div class="wrap">Sample content is placeholder text for layout only. Visual reference for DESIGN_GUIDE.md.</div></footer>
+
+<script>
+(function () {
+  var root = document.documentElement;
+  var btn = document.getElementById('themeBtn');
+  try { var saved = localStorage.getItem('dg-theme'); if (saved) root.setAttribute('data-theme', saved); } catch (e) {}
+  btn.addEventListener('click', function () {
+    var current = root.getAttribute('data-theme') ||
+      (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    var next = current === 'dark' ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    try { localStorage.setItem('dg-theme', next); } catch (e) {}
+  });
+
+  // Timeline cards: place the floating popover under its pin (desktop layout only).
+  var desktop = window.matchMedia('(min-width: 701px)');
+  function place(ev) {
+    if (!desktop.matches) return;
+    var pin = ev.querySelector('.tl-pin'), pop = ev.querySelector('.tl-pop');
+    var r = pin.getBoundingClientRect();
+    var half = 130, x = Math.min(Math.max(r.left + r.width / 2, half + 8), window.innerWidth - half - 8);
+    pop.style.left = x + 'px';
+    pop.style.top = (r.bottom + 10) + 'px';
+  }
+  document.querySelectorAll('.tl-ev').forEach(function (ev) {
+    ev.addEventListener('mouseenter', function () { place(ev); });
+    ev.addEventListener('focusin', function () { place(ev); });
+  });
+  window.addEventListener('scroll', function () {
+    document.querySelectorAll('.tl-ev:hover, .tl-ev:focus-within').forEach(place);
+  }, { passive: true });
+  document.querySelectorAll('.tl-wrap').forEach(function (w) {
+    w.addEventListener('scroll', function () {
+      document.querySelectorAll('.tl-ev:hover, .tl-ev:focus-within').forEach(place);
+    }, { passive: true });
+  });
+})();
+</script>
+</body>
+</html>
