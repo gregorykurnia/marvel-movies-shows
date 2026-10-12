@@ -5,8 +5,10 @@ import { cn } from "@/lib/utils";
 // Main sections. Keep in step with PRODUCT_PLAN.md §2 and IMPLEMENTATION_PLAN.md §4.
 export const navItems = [
   { href: "/recaps", label: "Recaps" },
+  { href: "/titles", label: "Titles" },
   { href: "/timeline", label: "Timeline" },
   { href: "/characters", label: "Characters" },
+  { href: "/universes", label: "Universes" },
   { href: "/backup", label: "Backup" },
 ] as const;
 

@@ -258,7 +258,7 @@ Phases match the product plan's build plan. Each phase ends with:
 - [x] Set up Drizzle: client, `drizzle.config.ts`, the full schema from §3, the first migration (generated, not yet applied to any database)
 - [x] Enable `pg_trgm`, add the generated `search_vector` columns and GIN indexes in the migration (verified by applying it to an in-process PostgreSQL)
 - [x] Create Neon branch `test` and `.env.test` (branch created from the empty production branch on 2026-10-12; `.env.test` is gitignored)
-- [ ] Run migrations on `test` (done, all 11 tables plus pg_trgm verified), then on `production` (waiting for approval)
+- [x] Run migrations on `test` (done, all 11 tables plus pg_trgm verified), then on `production` (done, confirmed 2026-10-12)
 - [ ] Design system foundation, per `DESIGN_GUIDE.md`:
   - [x] `src/styles/tokens.css` (exact §3 values), fonts loaded with `next/font`, Tailwind `@theme` mapping, shadcn variable mapping (§11)
   - [x] Base UI components restyled to §7: Button (all variants), Chip, Input/Select/Textarea, Combobox, Segmented control, Radio pills, Filter chip, Progress, Toast, Table, Dialog, Skeleton
@@ -267,8 +267,8 @@ Phases match the product plan's build plan. Each phase ends with:
   - [x] Message template for 404 and the error boundary
 - [x] Set up Vitest and Playwright. Add a smoke test that loads the home page and reads from the database (unit tests and smoke tests pass against the test branch)
 - [x] Add `noindex` metadata and a `robots.txt` that disallows everything
-- [ ] Upgrade the Vercel CLI (currently 57.0.0, which is outdated). Create and link the Vercel project (**needs a one-time `! vercel login` from me**)
-- [ ] Add the database environment variables to Vercel (done for Production, encrypted) and deploy to production (waiting for approval)
+- [x] Upgrade the Vercel CLI (now 63.1.2, confirmed 2026-10-12). Deploys come from the GitHub integration. This checkout has no `.vercel/` link, so the CLI isn't linked here.
+- [x] Add the database environment variables to Vercel (done for Production, encrypted) and deploy to production (live, confirmed 2026-10-12)
 - **Done when:** the app is live on its `*.vercel.app` address, every table exists, and the smoke test passes both locally and against the live site.
 
 ### Phase 1: Titles and Recaps
