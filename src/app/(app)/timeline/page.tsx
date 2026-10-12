@@ -4,13 +4,14 @@ import { Suspense } from "react";
 
 import { PageSkeleton } from "@/components/layout/page-skeleton";
 import { TimelineView, type TypeFilter } from "@/components/timeline/timeline-view";
-import { loadTimelineEvents } from "@/lib/data/timeline";
+import { loadRecapItems, loadTimelineEvents } from "@/lib/data/timeline";
 
 export const metadata: Metadata = { title: "Timeline" };
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
 // The grand timeline (DESIGN_GUIDE §8, Canvas). The filters start from the URL, so a filtered view can be bookmarked.
+// Hand-written events and recap items are loaded separately, so only events can be reordered.
 export default function TimelinePage({ searchParams }: { searchParams: SearchParams }) {
   return (
     <Suspense fallback={<PageSkeleton rows={3} />}>
@@ -26,6 +27,6 @@ async function TimelineContent({ searchParams }: { searchParams: SearchParams })
   const type: TypeFilter = requested === "movie" || requested === "show" || requested === "short" ? requested : "all";
   const tagParam = Array.isArray(params.tag) ? params.tag[0] : params.tag;
   const tag = tagParam?.trim() ? tagParam.trim() : null;
-  const events = await loadTimelineEvents();
-  return <TimelineView events={events} initialType={type} initialTag={tag} />;
+  const [events, recaps] = await Promise.all([loadTimelineEvents(), loadRecapItems()]);
+  return <TimelineView events={events} recaps={recaps} initialType={type} initialTag={tag} />;
 }

@@ -9,7 +9,7 @@ import { useId, useState, type CSSProperties, type ReactNode } from "react";
 
 import { Chip, Year } from "@/components/ui/chip";
 import { ActionMenu } from "@/components/ui/dropdown-menu";
-import type { TimelineEvent } from "@/lib/data/timeline";
+import type { TimelineEvent, TimelineItem } from "@/lib/data/timeline";
 import { formatYear } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -19,35 +19,54 @@ import { useMediaQuery, TIMELINE_WIDE } from "./use-media-query";
 // On wide screens its details open in a portalled popover on hover or focus, which closes on Esc. Below 700px the
 // details open inline on tap. Popover links are not in the tab order, so a keyboard user gets the same links as
 // visually hidden links that show when focused.
+//
+// A recap item (IMPLEMENTATION_PLAN §5.2) uses the same card, with a "From recap" label. It has no edit-event link
+// and no drag handle or ⋯ menu, because it is shown from its recap and can't be moved.
 
 const KIND_COLOUR = { movie: "var(--movie)", show: "var(--show)", short: "var(--short)", none: "var(--ink-3)" } as const;
 
-function kindOf(event: TimelineEvent): keyof typeof KIND_COLOUR {
-  return event.titleKind ?? "none";
+function kindOf(item: TimelineItem): keyof typeof KIND_COLOUR {
+  return item.titleKind ?? "none";
+}
+
+// The links in a card's details. An event links to its recap (if it has one) and to its edit page. A recap item links
+// to its recap and to its recap's edit page.
+function linksFor(item: TimelineItem): { readHref: string | null; editHref: string; editLabel: string } {
+  if (item.source === "recap") {
+    return { readHref: `/recaps/${item.entryId}`, editHref: `/recaps/${item.entryId}/edit`, editLabel: "Edit recap" };
+  }
+  return {
+    readHref: item.entryId ? `/recaps/${item.entryId}` : null,
+    editHref: `/timeline/${item.id}/edit`,
+    editLabel: "Edit event",
+  };
 }
 
 // The popover and inline panel share one body. `interactive` is false inside the popover, which is visual only.
-function EventDetails({ event, interactive }: { event: TimelineEvent; interactive: boolean }) {
-  const kind = kindOf(event);
+function EventDetails({ item, interactive }: { item: TimelineItem; interactive: boolean }) {
+  const kind = kindOf(item);
+  const links = linksFor(item);
+  // A recap item always has a title, so its chip is the show name or "Movie" or "Short".
+  const chipText = item.source === "recap" ? item.chip : item.titleName;
   return (
     <>
       <div className="flex flex-wrap items-center gap-2.5">
-        {event.titleName ? (
+        {chipText ? (
           <Chip tone={kind === "none" ? "tag" : kind} dot>
-            {event.titleName}
+            {chipText}
           </Chip>
         ) : (
           <Chip tone="tag">No title</Chip>
         )}
-        <Year>{formatYear(event.year)}</Year>
+        <Year>{formatYear(item.year)}</Year>
       </div>
-      <h4 className="mt-2 font-display text-[17px] leading-[1.25] font-bold tracking-[-0.01em]">{event.text}</h4>
-      {event.details ? (
-        <p className="mt-1.5 text-sm leading-normal whitespace-pre-line text-ink-2">{event.details}</p>
+      <h4 className="mt-2 font-display text-[17px] leading-[1.25] font-bold tracking-[-0.01em]">{item.text}</h4>
+      {item.source === "event" && item.details ? (
+        <p className="mt-1.5 text-sm leading-normal whitespace-pre-line text-ink-2">{item.details}</p>
       ) : null}
-      {event.tags.length > 0 ? (
+      {item.tags.length > 0 ? (
         <div className="mt-2.5 flex flex-wrap gap-1.5">
-          {event.tags.map((tag) => (
+          {item.tags.map((tag) => (
             <Chip key={tag} tone="tag">
               {tag}
             </Chip>
@@ -55,9 +74,9 @@ function EventDetails({ event, interactive }: { event: TimelineEvent; interactiv
         </div>
       ) : null}
       <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-sm font-bold">
-        {event.entryId ? (
+        {links.readHref ? (
           <Link
-            href={`/recaps/${event.entryId}`}
+            href={links.readHref}
             tabIndex={interactive ? undefined : -1}
             className="text-red-ink no-underline hover:underline"
           >
@@ -65,24 +84,25 @@ function EventDetails({ event, interactive }: { event: TimelineEvent; interactiv
           </Link>
         ) : null}
         <Link
-          href={`/timeline/${event.id}/edit`}
+          href={links.editHref}
           tabIndex={interactive ? undefined : -1}
           className="text-ink-2 underline underline-offset-[3px]"
         >
-          Edit event
+          {links.editLabel}
         </Link>
       </div>
     </>
   );
 }
 
-// One event on the axis. `reorder` is set only in Reorder mode: the drag handle and the ⋯ menu, built by the
-// sortable wrapper, so the card itself never touches a ref.
-export function EventCard({ event, reorder }: { event: TimelineEvent; reorder?: { handle: ReactNode; menu: ReactNode } }) {
+// One event or recap item on the axis. `reorder` is set only for a hand-written event in Reorder mode: the drag handle
+// and the ⋯ menu, built by the sortable wrapper, so the card itself never touches a ref.
+export function EventCard({ item, reorder }: { item: TimelineItem; reorder?: { handle: ReactNode; menu: ReactNode } }) {
   const wide = useMediaQuery(TIMELINE_WIDE);
   const [expanded, setExpanded] = useState(false);
   const panelId = useId();
-  const kind = kindOf(event);
+  const kind = kindOf(item);
+  const links = linksFor(item);
   const style = { "--kind": KIND_COLOUR[kind] } as CSSProperties;
   // Below 700px a tap opens the details inline. Reorder mode has no details, so the pin only drags there.
   const tapToExpand = !wide && !reorder;
@@ -104,7 +124,10 @@ export function EventCard({ event, reorder }: { event: TimelineEvent; reorder?: 
       )}
     >
       <span aria-hidden className="mb-1.5 block size-2.5 rounded-full border-[1.5px] border-line bg-[var(--kind)]" />
-      {event.text}
+      {item.source === "recap" ? (
+        <span className="mb-0.5 block font-mono text-[10px] font-bold tracking-[0.06em] text-ink-3 uppercase">From recap</span>
+      ) : null}
+      {item.text}
     </button>
   );
 
@@ -128,7 +151,7 @@ export function EventCard({ event, reorder }: { event: TimelineEvent; reorder?: 
                 collisionPadding={12}
                 className="z-50 w-[260px] rounded-input border-2 border-line bg-surface p-4 shadow-float"
               >
-                <EventDetails event={event} interactive={false} />
+                <EventDetails item={item} interactive={false} />
               </HoverCard.Content>
             </HoverCard.Portal>
           </HoverCard.Root>
@@ -140,23 +163,20 @@ export function EventCard({ event, reorder }: { event: TimelineEvent; reorder?: 
       {/* Keyboard path to the popover's links. Hidden until one of them has focus. */}
       {!reorder && wide ? (
         <span className="flex flex-wrap gap-2">
-          {event.entryId ? (
-            <Link
-              href={`/recaps/${event.entryId}`}
-              className="sr-only text-[13px] font-bold text-red-ink focus:not-sr-only"
-            >
-              Read recap for “{event.text}”
+          {links.readHref ? (
+            <Link href={links.readHref} className="sr-only text-[13px] font-bold text-red-ink focus:not-sr-only">
+              Read recap for “{item.text}”
             </Link>
           ) : null}
-          <Link href={`/timeline/${event.id}/edit`} className="sr-only text-[13px] font-bold text-ink-2 focus:not-sr-only">
-            Edit “{event.text}”
+          <Link href={links.editHref} className="sr-only text-[13px] font-bold text-ink-2 focus:not-sr-only">
+            {item.source === "recap" ? `Edit recap for “${item.text}”` : `Edit “${item.text}”`}
           </Link>
         </span>
       ) : null}
 
       {tapToExpand && expanded ? (
         <div id={panelId} className="rounded-panel border-2 border-line bg-surface p-3.5 shadow-pop">
-          <EventDetails event={event} interactive />
+          <EventDetails item={item} interactive />
         </div>
       ) : null}
     </div>
@@ -216,7 +236,7 @@ export function SortableEvent({
           isDragging && "rotate-[-0.35deg] border-blue shadow-[8px_8px_0_var(--blue)]",
         )}
       >
-        <EventCard event={event} reorder={{ handle, menu }} />
+        <EventCard item={event} reorder={{ handle, menu }} />
       </div>
     </li>
   );

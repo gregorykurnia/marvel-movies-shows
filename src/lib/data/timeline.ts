@@ -6,12 +6,15 @@ import { getDb, type Tx } from "@/db";
 import { timelineEvents, titles } from "@/db/schema";
 import type { YearPlaceable } from "@/lib/ordering";
 
-import { loadCatalog, type TitleKind } from "./catalog";
+import { KIND_LABEL } from "@/lib/title-kind";
+
+import { loadCatalog, type CatalogEntry, type TitleKind } from "./catalog";
 import { entryLabel } from "./characters";
 import { loadEventTagNames, loadTagNames } from "./tags";
 
-// One event as the timeline shows it.
+// One hand-written event as the timeline shows it. `source` tells it apart from a recap item.
 export type TimelineEvent = {
+  source: "event";
   id: string;
   year: number;
   text: string;
@@ -61,6 +64,7 @@ export async function loadTimelineEvents(): Promise<TimelineEvent[]> {
   const labels = new Map(catalog.map((entry) => [entry.id, entryLabel(entry)]));
   return rows.map((row) => ({
     ...row,
+    source: "event" as const,
     details: row.details ?? null,
     notes: row.notes ?? null,
     titleName: row.titleName ?? null,
@@ -70,7 +74,51 @@ export async function loadTimelineEvents(): Promise<TimelineEvent[]> {
   }));
 }
 
-// One event, for its edit page.
+// A movie or an episode with an in-universe year, as a read-only timeline item (PRODUCT_PLAN §2.2). Nothing is stored
+// for it: it is read from the recap every time, so it always follows the recap's year. `id` is `entry:<entryId>`, which
+// can't collide with an event id, and no event lookup or move ever reads it.
+export type TimelineRecap = {
+  source: "recap";
+  id: string;
+  entryId: string;
+  year: number;
+  // The episode name, "Episode N" when an episode has none, or the movie or short title.
+  text: string;
+  // The show name for an episode. "Movie" or "Short" for a title with one recap.
+  chip: string;
+  titleKind: TitleKind;
+  tags: string[];
+};
+
+// Anything on the timeline: a hand-written event, or a recap item.
+export type TimelineItem = TimelineEvent | TimelineRecap;
+
+function recapText(entry: CatalogEntry): string {
+  if (entry.titleKind !== "show") return entry.titleName;
+  return entry.name ?? `Episode ${entry.episodeNumber}`;
+}
+
+// Every movie and episode with an in-universe year, in recap order (the order the recap list shows).
+export async function loadRecapItems(): Promise<TimelineRecap[]> {
+  const catalog = await loadCatalog();
+  return catalog.flatMap((entry): TimelineRecap[] => {
+    if (entry.inUniverseYear === null) return [];
+    return [
+      {
+        source: "recap",
+        id: `entry:${entry.id}`,
+        entryId: entry.id,
+        year: entry.inUniverseYear,
+        text: recapText(entry),
+        chip: entry.titleKind === "show" ? entry.titleName : KIND_LABEL[entry.titleKind],
+        titleKind: entry.titleKind,
+        tags: entry.tags,
+      },
+    ];
+  });
+}
+
+// One event, for its edit page. Only hand-written events: a recap item is never found here.
 export async function loadEventDetail(id: string): Promise<TimelineEvent | null> {
   const found = await loadTimelineEvents();
   return found.find((event) => event.id === id) ?? null;

@@ -114,11 +114,13 @@ test("events in the right order, a BCE year, compressed gaps, and working recap 
     expect(index("1943")).toBeLessThan(index("2011"));
     // 1943 to −5000 spans 6,943 years, shown as one gap instead of thousands of empty slots.
     await expect(page.getByText("⋯ 6,943 yrs ⋯")).toBeVisible();
-    // Both 2011 events share one slot, in the order they were saved.
+    // The two 2011 events share one slot, in the order they were saved. The 2011 movie's recap is a timeline item
+    // too, so it comes after them.
     const in2011 = await eventsIn(page, "2011");
-    expect(in2011).toHaveLength(2);
+    expect(in2011).toHaveLength(3);
     expect(in2011[0]).toContain(banished);
     expect(in2011[1]).toContain(second);
+    expect(in2011[2]).toContain(movie);
   });
 
   await test.step("hover opens the details, and the recap link goes to the recap", async () => {
@@ -143,7 +145,8 @@ test("events in the right order, a BCE year, compressed gaps, and working recap 
   await test.step("zoom out to decades, then click the bucket to zoom back in", async () => {
     await page.goto("/timeline");
     await page.getByRole("radio", { name: "Decade" }).click();
-    const bucket = page.getByRole("button", { name: /^2010–2019: 2 events/ });
+    // Two events and the 2011 movie's recap item.
+    const bucket = page.getByRole("button", { name: /^2010–2019: 3 events/ });
     await expect(bucket).toBeVisible();
     await bucket.click();
     await expect(page.locator('ul[aria-label="Events in 2011"]')).toContainText(banished);
@@ -164,6 +167,8 @@ test("events in the right order, a BCE year, compressed gaps, and working recap 
     await page.getByRole("radio", { name: "Movies" }).click();
     await expect(page).toHaveURL(/type=movie$/);
     await expect(page.getByRole("button", { name: serum, exact: true })).toBeVisible();
+    // The movie's recap item is a movie too, so the filter keeps it. Its name starts with "From recap".
+    await expect(page.getByRole("button", { name: new RegExp(movie) })).toBeVisible();
     await expect(page.getByRole("button", { name: second, exact: true })).toHaveCount(0);
     await page.getByRole("radio", { name: "Shows" }).click();
     await expect(page.getByText("Nothing matches this filter")).toBeVisible();
@@ -174,9 +179,10 @@ test("events in the right order, a BCE year, compressed gaps, and working recap 
   await test.step("reorder within a year, by keyboard and from the ⋯ menu", async () => {
     await page.goto("/timeline");
     await page.getByRole("button", { name: "⇅ Reorder" }).click();
-    expect(await eventsIn(page, "2011")).toEqual(
-      (await eventsIn(page, "2011")).length === 2 ? await eventsIn(page, "2011") : [],
-    );
+    // Reorder mode still shows the 2011 movie's recap item, after the two events.
+    const reordering2011 = await eventsIn(page, "2011");
+    expect(reordering2011).toHaveLength(3);
+    expect(reordering2011[2]).toContain(movie);
 
     // "Second" is last in 2011, so pick it up and move it above "Banished".
     await dragWithKeyboard(page, second, "ArrowUp");

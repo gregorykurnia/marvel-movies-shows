@@ -21,7 +21,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Panel } from "@/components/ui/panel";
 import { Segmented } from "@/components/ui/segmented";
 import { useToast } from "@/components/ui/toast";
-import type { TimelineEvent } from "@/lib/data/timeline";
+import type { TimelineEvent, TimelineItem, TimelineRecap } from "@/lib/data/timeline";
 import {
   bucketStart,
   gapLabel,
@@ -33,6 +33,7 @@ import {
   type AxisSlot,
   type Zoom,
 } from "@/lib/timeline-layout";
+import { mergeTimeline } from "@/lib/timeline-merge";
 import { formatCount, formatYear } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -44,15 +45,18 @@ const ZOOM_LABELS: Record<Zoom, string> = { year: "Year", decade: "Decade", cent
 const TYPE_LABELS: Record<TypeFilter, string> = { all: "All", movie: "Movies", show: "Shows", short: "Shorts" };
 const TYPE_OPTIONS = (["all", "movie", "show", "short"] as const).map((value) => ({ value, label: TYPE_LABELS[value] }));
 
-// The timeline (DESIGN_GUIDE §8, Canvas; IMPLEMENTATION_PLAN §5.2). Events are placed by year on a compressed axis.
-// Empty years collapse into gap markers. Zoom groups years into decades or centuries, and clicking a group zooms
-// into it. Reorder mode moves events within their year, and each move shows at once. It rolls back if the save fails.
+// The timeline (DESIGN_GUIDE §8, Canvas; IMPLEMENTATION_PLAN §5.2). Events and recap items are placed by year on a
+// compressed axis. Empty years collapse into gap markers. Zoom groups years into decades or centuries, and clicking a
+// group zooms into it. Reorder mode moves hand-written events within their year, and each move shows at once. It rolls
+// back if the save fails. Recap items are shown, not moved.
 export function TimelineView({
   events,
+  recaps,
   initialType,
   initialTag,
 }: {
   events: TimelineEvent[];
+  recaps: TimelineRecap[];
   initialType: TypeFilter;
   initialTag: string | null;
 }) {
@@ -64,11 +68,14 @@ export function TimelineView({
   const [reordering, setReordering] = useState(false);
   const [jumpText, setJumpText] = useState("");
   const [jumpMessage, setJumpMessage] = useState<string | null>(null);
+  // The reorder list: hand-written events only. Moves change this list, so a recap item can never be moved.
   const [items, showMove] = useOptimistic(
     events,
     (current: TimelineEvent[], move: { id: string; afterId: string | null }) =>
       moveWithinYear(current, move.id, move.afterId),
   );
+  // What is shown: events and recap items in one timeline order.
+  const displayed = useMemo<TimelineItem[]>(() => mergeTimeline(items, recaps), [items, recaps]);
   // Set when a bucket is clicked, so the year it zooms into can be scrolled to after the zoom changes.
   const pendingScroll = useRef<number | null>(null);
 
@@ -92,27 +99,28 @@ export function TimelineView({
     pendingScroll.current = null;
   }, [zoom]);
 
-  // Every tag used on an event, once each, for the tag filter.
+  // Every tag used on an event or a recap item, once each, for the tag filter.
   const tagOptions = useMemo(
-    () => [...new Set(events.flatMap((event) => event.tags))].sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase())),
-    [events],
+    () => [...new Set(displayed.flatMap((item) => item.tags))].sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase())),
+    [displayed],
   );
   const shown = useMemo(
     () =>
-      items.filter(
-        (event) =>
-          (type === "all" || event.titleKind === type) &&
-          (tag === null || event.tags.some((name) => name.toLowerCase() === tag.toLowerCase())),
+      displayed.filter(
+        (item) =>
+          (type === "all" || item.titleKind === type) &&
+          (tag === null || item.tags.some((name) => name.toLowerCase() === tag.toLowerCase())),
       ),
-    [items, type, tag],
+    [displayed, type, tag],
   );
   const axis = useMemo(() => layoutAxis(shown, zoom), [shown, zoom]);
   // Reordering needs every event of a year in view, so it's off while a filter hides some, and above year zoom.
   const filtered = type !== "all" || tag !== null;
   const reorderOn = reordering && zoom === "year" && !filtered;
 
-  const range = events.length
-    ? `${formatYear(events[0].year)} to ${formatYear(Math.max(...events.map((event) => event.year)))}`
+  // The first and last years of everything on the timeline, which is sorted by year.
+  const range = displayed.length
+    ? `${formatYear(displayed[0].year)} to ${formatYear(displayed[displayed.length - 1].year)}`
     : null;
 
   // Moves one event, after `afterId` (null: first in its year). The screen updates first. If the save fails, the
@@ -144,12 +152,14 @@ export function TimelineView({
     moveTo(moving, next[to - 1]?.id ?? null);
   }
 
-  function moveByMenu(group: TimelineEvent[], event: TimelineEvent, direction: "up" | "down") {
+  // The ⋯ menu. Its group is the year's hand-written events, so a recap item in that year is never counted.
+  function moveByMenu(event: TimelineEvent, direction: "up" | "down") {
+    const group = items.filter((other) => other.year === event.year);
     const step = neighbourForMove(group, event.id, direction);
     if (step) moveTo(event, step.afterId);
   }
 
-  function zoomInto(bucket: AxisSlot<TimelineEvent>) {
+  function zoomInto(bucket: AxisSlot<TimelineItem>) {
     const next: Zoom = zoom === "century" ? "decade" : "year";
     pendingScroll.current = Math.min(...bucket.items.map((event) => bucketStart(event.year, next)));
     setZoom(next);
@@ -185,7 +195,7 @@ export function TimelineView({
     <>
       <PageHeader
         accent="orange"
-        eyebrow={range ? `${formatCount(events.length, "event")} · ${range}` : "Timeline"}
+        eyebrow={range ? `${formatCount(displayed.length, "event")} · ${range}` : "Timeline"}
         title="Timeline"
         actions={
           <Link href="/timeline/new" className={buttonVariants({ variant: "primary" })}>
@@ -194,7 +204,7 @@ export function TimelineView({
         }
       />
 
-      {events.length === 0 ? (
+      {displayed.length === 0 ? (
         <EmptyState
           icon="◷"
           title="No events yet"
@@ -302,13 +312,13 @@ function Canvas({
   onMove,
   onZoomInto,
 }: {
-  axis: AxisItem<TimelineEvent>[];
+  axis: AxisItem<TimelineItem>[];
   zoom: Zoom;
   reorderOn: boolean;
   sensors: ReturnType<typeof useSensors>;
   onDragEnd: (event: DragEndEvent) => void;
-  onMove: (group: TimelineEvent[], event: TimelineEvent, direction: "up" | "down") => void;
-  onZoomInto: (bucket: AxisSlot<TimelineEvent>) => void;
+  onMove: (event: TimelineEvent, direction: "up" | "down") => void;
+  onZoomInto: (bucket: AxisSlot<TimelineItem>) => void;
 }) {
   return (
     <Panel className="overflow-hidden">
@@ -360,7 +370,7 @@ function Canvas({
   );
 }
 
-// One slot on the axis: a year (or a decade or century bucket) with its events.
+// One slot on the axis: a year (or a decade or century bucket) with its events and recap items.
 function Slot({
   slot,
   zoom,
@@ -368,11 +378,11 @@ function Slot({
   onMove,
   onZoomInto,
 }: {
-  slot: AxisSlot<TimelineEvent>;
+  slot: AxisSlot<TimelineItem>;
   zoom: Zoom;
   reorderOn: boolean;
-  onMove: (group: TimelineEvent[], event: TimelineEvent, direction: "up" | "down") => void;
-  onZoomInto: (bucket: AxisSlot<TimelineEvent>) => void;
+  onMove: (event: TimelineEvent, direction: "up" | "down") => void;
+  onZoomInto: (bucket: AxisSlot<TimelineItem>) => void;
 }) {
   const id = `slot-${slot.start}`;
 
@@ -404,20 +414,28 @@ function Slot({
   );
 
   if (reorderOn) {
+    // Only hand-written events are sortable. A recap item in the year is shown after them, with no handle or menu.
+    const events = slot.items.filter((item): item is TimelineEvent => item.source === "event");
     return (
       <li id={id} className="relative flex list-none flex-col items-start py-2 min-[700px]:w-[160px] min-[700px]:items-center">
         {year}
-        <SortableContext items={slot.items.map((event) => event.id)} strategy={verticalListSortingStrategy}>
+        <SortableContext items={events.map((event) => event.id)} strategy={verticalListSortingStrategy}>
           <ul aria-label={`Events in ${slot.label}`} className="grid w-full gap-2.5 min-[700px]:justify-items-center">
-            {slot.items.map((event, index) => (
-              <SortableEvent
-                key={event.id}
-                event={event}
-                canMoveUp={index > 0}
-                canMoveDown={index < slot.items.length - 1}
-                onMove={(direction) => onMove(slot.items, event, direction)}
-              />
-            ))}
+            {slot.items.map((item) =>
+              item.source === "event" ? (
+                <SortableEvent
+                  key={item.id}
+                  event={item}
+                  canMoveUp={events.indexOf(item) > 0}
+                  canMoveDown={events.indexOf(item) < events.length - 1}
+                  onMove={(direction) => onMove(item, direction)}
+                />
+              ) : (
+                <li key={item.id} className="w-full list-none min-[700px]:flex min-[700px]:justify-center">
+                  <EventCard item={item} />
+                </li>
+              ),
+            )}
           </ul>
         </SortableContext>
       </li>
@@ -428,9 +446,9 @@ function Slot({
     <li id={id} className="relative flex list-none flex-col items-start py-2 min-[700px]:w-[160px] min-[700px]:items-center">
       {year}
       <ul aria-label={`Events in ${slot.label}`} className="grid w-full gap-2.5 min-[700px]:justify-items-center">
-        {slot.items.map((event) => (
-          <li key={event.id} className="w-full list-none min-[700px]:flex min-[700px]:justify-center">
-            <EventCard event={event} />
+        {slot.items.map((item) => (
+          <li key={item.id} className="w-full list-none min-[700px]:flex min-[700px]:justify-center">
+            <EventCard item={item} />
           </li>
         ))}
       </ul>
