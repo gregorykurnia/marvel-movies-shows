@@ -22,10 +22,12 @@ export function connectTestDatabase() {
 // Every spec names what it creates with the prefix "E2E", so leftovers from a failed run are easy to find.
 export const E2E_PREFIX = "E2E";
 
-// Removes everything the specs created: characters first (universes can't be deleted while in use), then universes,
-// titles and tags. Titles cascade to their entries, recaps and appearances.
+// Removes everything the specs created: timeline events first (they are not removed with their titles), then
+// characters (universes can't be deleted while in use), then universes, titles and tags. Titles cascade to their
+// entries, recaps and appearances.
 export async function removeE2eData() {
   const db = connectTestDatabase();
+  await db.execute(sql`delete from timeline_events where text like ${`${E2E_PREFIX}%`}`);
   await db.execute(sql`delete from characters where name like ${`${E2E_PREFIX}%`}`);
   await db.execute(sql`delete from universes where name like ${`${E2E_PREFIX}%`}`);
   await db.execute(sql`delete from titles where name like ${`${E2E_PREFIX}%`}`);
@@ -106,4 +108,29 @@ export async function seedBrowseData(run: string) {
     characterId: lokiA.id,
     universeName: `${E2E_PREFIX} Earth-199999 ${run}`,
   };
+}
+
+// Adds timeline events for the screenshot specs: a BCE event with no title, events linked to the seeded movie and
+// episode, and two events in one year. Returns the first event's id, for the edit page.
+export async function seedTimelineEvents(run: string, ids: { movieTitleId: string; movieEntryId: string; showId: string; episodeId: string }) {
+  const db = connectTestDatabase();
+  const { timelineEvents } = await import("../../src/db/schema");
+  const { readEventPlaceables } = await import("../../src/lib/data/timeline");
+  const { keyInYear } = await import("../../src/lib/ordering");
+
+  const rows = [
+    { year: -5000, text: `${E2E_PREFIX} The Eternals arrive ${run}`, titleId: null, entryId: null },
+    { year: 1943, text: `${E2E_PREFIX} Steve receives the serum ${run}`, titleId: ids.movieTitleId, entryId: ids.movieEntryId },
+    { year: 2012, text: `${E2E_PREFIX} Battle of New York ${run}`, titleId: ids.movieTitleId, entryId: ids.movieEntryId },
+    { year: 2012, text: `${E2E_PREFIX} Loki is arrested ${run}`, titleId: ids.showId, entryId: ids.episodeId },
+  ];
+
+  let firstId: string | null = null;
+  for (const row of rows) {
+    const sortKey = keyInYear(await readEventPlaceables(db), row.year, undefined);
+    const [inserted] = await db.insert(timelineEvents).values({ ...row, sortKey }).returning({ id: timelineEvents.id });
+    firstId ??= inserted.id;
+  }
+  if (!firstId) throw new Error("no timeline events were seeded");
+  return { firstId };
 }

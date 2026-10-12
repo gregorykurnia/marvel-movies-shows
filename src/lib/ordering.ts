@@ -67,6 +67,32 @@ export function keyForMove(items: Placeable[], movingId: string, afterId: string
   return keyBetween(others[index].sortKey, others[index + 1]?.sortKey ?? null);
 }
 
+// Timeline events sort by year first, then by sort_key (IMPLEMENTATION_PLAN §3.2). So a key must stay inside its
+// year's block. `items` is every other event, sorted by key. `afterId` undefined puts the event last in its year,
+// null puts it first, and an id puts it directly after that event (which must be in the same year).
+export type YearPlaceable = { id: string; sortKey: string; year: number };
+
+export function keyInYear(items: YearPlaceable[], year: number, afterId: string | null | undefined): string {
+  let before: string | null;
+  let after: string | null;
+  if (afterId === undefined) {
+    const last = items.findLastIndex((item) => item.year <= year);
+    before = items[last]?.sortKey ?? null;
+    after = items[last + 1]?.sortKey ?? null;
+  } else if (afterId === null) {
+    const below = items.findLastIndex((item) => item.year < year);
+    const first = items.findIndex((item) => item.year >= year);
+    before = items[below]?.sortKey ?? null;
+    after = first === -1 ? null : items[first].sortKey;
+  } else {
+    const index = items.findIndex((item) => item.id === afterId);
+    if (index === -1) throw new Error("The event to place after is not in the list");
+    before = items[index].sortKey;
+    after = items[index + 1]?.sortKey ?? null;
+  }
+  return keyBetween(before, after);
+}
+
 // The order the list would have after one move, without touching any keys. The UI uses this to update
 // immediately, before the server confirms.
 export function reorderAfter<T extends { id: string }>(items: T[], movingId: string, afterId: string | null): T[] {

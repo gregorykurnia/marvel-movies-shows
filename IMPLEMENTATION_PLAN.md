@@ -291,12 +291,12 @@ Phases match the product plan's build plan. Each phase ends with:
 - **Done when:** I can enter several Loki variants in different universes, then filter by universe and status and sort by any column.
 
 ### Phase 3: Timeline
-- [ ] Event create and edit form
-- [ ] Compressed axis layout logic (with unit tests: gaps, negative years, a single event, many events in one year)
-- [ ] Timeline view: horizontal on desktop, vertical on mobile
-- [ ] Hover and tap event card with the recap link
-- [ ] Tie-break reordering within a year
-- [ ] Zoom levels, jump to year, type filter
+- [x] Event create and edit form (also a delete on the edit page, approved 2026-10-12)
+- [x] Compressed axis layout logic (with unit tests: gaps, negative years, a single event, many events in one year)
+- [x] Timeline view: horizontal on desktop, vertical on mobile
+- [x] Hover and tap event card with the recap link
+- [x] Tie-break reordering within a year
+- [x] Zoom levels, jump to year, type filter
 - **Done when:** events with real years (including a BCE year) appear in the right order, gaps are compressed, and the recap links work.
 
 ### Phase 4: Notes, Tags and Search

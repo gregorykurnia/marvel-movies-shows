@@ -171,6 +171,29 @@ export const watchedSchema = z.object({
   watched: z.boolean(),
 });
 
+// Timeline events (PRODUCT_PLAN §2.2). The year is any whole number, and the text is a short label. Placement says
+// where the event goes within its year: "auto" (last), "first", "keep" (edit only, same year), or the id of the
+// event it follows.
+export const eventFormSchema = z.object({
+  year: requiredWhole("the year", YEAR_MIN, YEAR_MAX),
+  text: z.string().trim().min(1, "Enter what happened").max(200, "Keep it under 200 characters"),
+  details: optionalText(2000),
+  titleId: optionalUuid,
+  entryId: optionalUuid,
+  placement: z
+    .string()
+    .trim()
+    .refine(
+      (value) => ["auto", "keep", "first"].includes(value) || z.uuid().safeParse(value).success,
+      "Choose where it goes in its year",
+    ),
+});
+
+export const eventMoveSchema = z.object({
+  eventId: uuid,
+  afterId: z.uuid().nullable(),
+});
+
 // Deleting needs the typed word on the server too, not just in the danger zone's button.
 export const deleteConfirmSchema = z.literal("DELETE", { error: "Type DELETE to confirm" });
 
