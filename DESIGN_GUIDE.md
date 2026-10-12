@@ -262,7 +262,6 @@ Every route in the implementation plan uses one of these. **No route gets a besp
 The home page `/` shows:
 - A hero-style page header with the overall watched progress.
 - Three large clickable panels (Recaps, Timeline, Characters), each in its section accent colour.
-- A "Recently edited" list.
 
 ---
 

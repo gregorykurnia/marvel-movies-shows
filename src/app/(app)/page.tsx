@@ -5,10 +5,8 @@ import Link from "next/link";
 import { connection } from "next/server";
 import { Suspense } from "react";
 
-import { EmptyState } from "@/components/layout/empty-state";
 import { PageHeader } from "@/components/layout/page-header";
 import { accentClasses, type Accent } from "@/components/ui/eyebrow";
-import { buttonVariants } from "@/components/ui/button";
 import { Panel } from "@/components/ui/panel";
 import { ProgressBar } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -112,23 +110,6 @@ export default function HomePage() {
           );
         })}
       </nav>
-
-      <section aria-labelledby="recently-edited" className="mt-10">
-        <h2 id="recently-edited" className="mb-4 font-display text-[28px] font-bold tracking-[-0.02em]">
-          Recently edited
-        </h2>
-        <EmptyState
-          icon="★"
-          title="Nothing edited yet"
-          action={
-            <Link href="/titles/new" className={buttonVariants({ variant: "primary" })}>
-              ＋ Add title
-            </Link>
-          }
-        >
-          Movies, shows and recaps you add or change will show up here.
-        </EmptyState>
-      </section>
     </>
   );
 }

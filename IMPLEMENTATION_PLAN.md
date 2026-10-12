@@ -168,7 +168,7 @@ Trigram index on `name` for fuzzy search.
 
 | Route | Purpose |
 |---|---|
-| `/` | Home: overall watched progress, quick links to each section, and recently edited items. |
+| `/` | Home: overall watched progress and quick links to each section. |
 | `/recaps` | The custom-ordered list of all entries. Filters: watched or unwatched, type, tag. A **Reorder mode** toggle enables drag-and-drop, so normal scrolling doesn't move things by accident. |
 | `/recaps/[entryId]` | One recap: header details, rendered recap, characters, notes and tags, watched toggle, and previous and next buttons in custom order. |
 | `/recaps/[entryId]/edit` | Edit the recap text (large paste area with a preview), year, notes, tags and appearances. |
