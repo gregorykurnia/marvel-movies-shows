@@ -73,6 +73,7 @@ async function RecapContent({ params }: { params: Promise<{ entryId: string }> }
           </Chip>
           {code ? <EpisodeCode>{code}</EpisodeCode> : null}
           <Year>{formatYear(entry.inUniverseYear)}</Year>
+          {entry.universeName ? <Chip tone="universe">{entry.universeName}</Chip> : null}
           <WatchedControl entryId={entry.id} watched={entry.watched} />
         </div>
       </PageHeader>
@@ -149,6 +150,12 @@ async function RecapContent({ params }: { params: Promise<{ entryId: string }> }
               <dd className="text-right font-semibold">{formatDate(releaseDate) ?? "—"}</dd>
               <dt className="font-semibold text-ink-3">Year in universe</dt>
               <dd className="text-right font-mono font-semibold tabular-nums">{formatYear(entry.inUniverseYear)}</dd>
+              <dt className="font-semibold text-ink-3">Universe</dt>
+              {entry.universeName ? (
+                <dd className="text-right font-mono font-semibold">{entry.universeName}</dd>
+              ) : (
+                <dd className="text-right text-ink-3">No universe set</dd>
+              )}
               <dt className="font-semibold text-ink-3">Position</dt>
               <dd className="text-right font-mono font-semibold tabular-nums">
                 {position + 1} / {catalog.length}

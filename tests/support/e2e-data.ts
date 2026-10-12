@@ -23,14 +23,14 @@ export function connectTestDatabase() {
 export const E2E_PREFIX = "E2E";
 
 // Removes everything the specs created: timeline events first (they are not removed with their titles), then
-// characters (universes can't be deleted while in use), then universes, titles and tags. Titles cascade to their
-// entries, recaps and appearances.
+// characters, then titles (their recaps go with them, and a recap can use a universe), then universes (they can't be
+// deleted while in use, by a character or a recap), then tags. Titles cascade to their entries, recaps and appearances.
 export async function removeE2eData() {
   const db = connectTestDatabase();
   await db.execute(sql`delete from timeline_events where text like ${`${E2E_PREFIX}%`}`);
   await db.execute(sql`delete from characters where name like ${`${E2E_PREFIX}%`}`);
-  await db.execute(sql`delete from universes where name like ${`${E2E_PREFIX}%`}`);
   await db.execute(sql`delete from titles where name like ${`${E2E_PREFIX}%`}`);
+  await db.execute(sql`delete from universes where name like ${`${E2E_PREFIX}%`}`);
   await db.execute(sql`delete from tags where name like ${`${E2E_PREFIX}%`}`);
 }
 

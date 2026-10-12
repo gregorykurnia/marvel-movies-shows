@@ -10,7 +10,7 @@ import { fail, ok, validationFailure, type ActionResult } from "@/lib/action-res
 import { replaceRecapCharacters } from "@/lib/data/appearances";
 import { replaceEntryTags, tagIdsFor } from "@/lib/data/tags";
 import { readPlaceables } from "@/lib/data/placeables";
-import { isForeignKeyViolation, isUniqueViolation } from "@/lib/db-errors";
+import { isForeignKeyViolation, isMissingUniverseViolation, isUniqueViolation } from "@/lib/db-errors";
 import { formStrings } from "@/lib/form";
 import { formatEpisodeCode } from "@/lib/format";
 import { keyForMove, seededKey, seededKeys } from "@/lib/ordering";
@@ -30,6 +30,7 @@ import {
 
 const DUPLICATE_EPISODE = "That episode already exists in this show.";
 const MISSING_CHARACTER = "One of the characters no longer exists. Pick them again.";
+const MISSING_UNIVERSE = "That universe no longer exists. Pick it again.";
 
 // Thrown inside a transaction to roll it back when the episode number is taken.
 class DuplicateEpisode extends Error {}
@@ -68,6 +69,7 @@ export async function createEpisode(titleId: string, formData: FormData): Promis
           name: input.name,
           releaseDate: input.releaseDate,
           inUniverseYear: input.inUniverseYear,
+          universeId: input.universeId,
           sortKey,
           watched: false,
         })
@@ -84,6 +86,7 @@ export async function createEpisode(titleId: string, formData: FormData): Promis
         episode: `${formatEpisodeCode(input.season, input.episode)} is already in this show`,
       });
     }
+    if (isMissingUniverseViolation(error)) return fail(MISSING_UNIVERSE, { universeId: MISSING_UNIVERSE });
     throw error;
   }
 }
@@ -129,6 +132,7 @@ export async function addEpisodes(titleId: string, formData: FormData): Promise<
           name: null,
           releaseDate: null,
           inUniverseYear: input.inUniverseYear,
+          universeId: input.universeId,
           sortKey,
           watched: false,
         })),
@@ -148,6 +152,7 @@ export async function addEpisodes(titleId: string, formData: FormData): Promise<
     if (isUniqueViolation(error)) {
       return fail("Some of these episodes already exist. Nothing was added.");
     }
+    if (isMissingUniverseViolation(error)) return fail(MISSING_UNIVERSE, { universeId: MISSING_UNIVERSE });
     throw error;
   }
 }
@@ -173,6 +178,7 @@ export async function saveEpisode(entryId: string, formData: FormData): Promise<
           name: input.name,
           releaseDate: input.releaseDate,
           inUniverseYear: input.inUniverseYear,
+          universeId: input.universeId,
           recap: input.recap,
           notes: input.notes,
         })
@@ -190,6 +196,7 @@ export async function saveEpisode(entryId: string, formData: FormData): Promise<
         episode: `${formatEpisodeCode(input.season, input.episode)} is already in this show`,
       });
     }
+    if (isMissingUniverseViolation(error)) return fail(MISSING_UNIVERSE, { universeId: MISSING_UNIVERSE });
     if (isForeignKeyViolation(error)) return fail(MISSING_CHARACTER);
     throw error;
   }
@@ -224,7 +231,7 @@ export async function saveMovie(entryId: string, formData: FormData): Promise<Ac
         .where(eq(titles.id, entry.titleId));
       await tx
         .update(entries)
-        .set({ inUniverseYear: input.inUniverseYear, recap: input.recap, notes: input.notes })
+        .set({ inUniverseYear: input.inUniverseYear, universeId: input.universeId, recap: input.recap, notes: input.notes })
         .where(eq(entries.id, entryId));
       await replaceRecapCharacters(tx, entryId, characters.data);
       await replaceEntryTags(tx, entryId, await tagIdsFor(tx, tagNames.data));
@@ -232,6 +239,7 @@ export async function saveMovie(entryId: string, formData: FormData): Promise<Ac
     });
     if (!saved) return fail("That movie no longer exists.");
   } catch (error) {
+    if (isMissingUniverseViolation(error)) return fail(MISSING_UNIVERSE, { universeId: MISSING_UNIVERSE });
     if (isForeignKeyViolation(error)) return fail(MISSING_CHARACTER);
     throw error;
   }

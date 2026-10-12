@@ -10,19 +10,23 @@ import { Input, Textarea } from "@/components/ui/field";
 import { FormAlert, FormFooter, FormGrid, FormPanel, wide } from "@/components/ui/form-layout";
 import { RadioPills } from "@/components/ui/radio-pills";
 import { useToast } from "@/components/ui/toast";
+import { UniverseField, withUniverse, type UniverseOption } from "@/components/universes/universe-field";
 import { cn } from "@/lib/utils";
 
 // Add a movie or a show (IMPLEMENTATION_PLAN §4). A movie is saved with its single entry, then the user goes on
 // to paste its recap. A show is saved empty, then the user goes on to add its episodes.
-export function TitleNewForm() {
+export function TitleNewForm({ universes }: { universes: UniverseOption[] }) {
   const router = useRouter();
   const toast = useToast();
   const [pending, startTransition] = useTransition();
   const [kind, setKind] = useState<"movie" | "show">("movie");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [message, setMessage] = useState<string | null>(null);
-  // Changing the key clears the typed fields after "Save & add another". The kind stays chosen.
+  // Changing the key clears the typed fields after "Save & add another". The kind and the universe stay chosen,
+  // so a run of movies from one universe doesn't need it picked each time.
   const [version, setVersion] = useState(0);
+  const [universeList, setUniverseList] = useState(universes);
+  const [universeId, setUniverseId] = useState<string | null>(null);
 
   function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -90,15 +94,23 @@ export function TitleNewForm() {
             label={kind === "movie" ? "Release date" : "Premiere date"}
             error={errors.releaseDate}
           />
-          <Input
-            name="inUniverseYear"
-            label="In-universe year"
-            inputMode="numeric"
-            placeholder="e.g. 2011"
-            hint="Seeds where the movie lands in the recap order. Use − for years before 1 AD."
-            error={errors.inUniverseYear}
-            className={cn(kind !== "movie" && "hidden")}
-          />
+          <div className={cn("grid gap-[18px] min-[640px]:col-span-2 min-[640px]:grid-cols-2", kind !== "movie" && "hidden")}>
+            <Input
+              name="inUniverseYear"
+              label="In-universe year"
+              inputMode="numeric"
+              placeholder="e.g. 2011"
+              hint="Seeds where the movie lands in the recap order. Use − for years before 1 AD."
+              error={errors.inUniverseYear}
+            />
+            <UniverseField
+              universes={universeList}
+              value={universeId}
+              onValueChange={setUniverseId}
+              onCreated={(universe) => setUniverseList((list) => withUniverse(list, universe))}
+              error={errors.universeId}
+            />
+          </div>
         </FormGrid>
 
         <FormFooter>

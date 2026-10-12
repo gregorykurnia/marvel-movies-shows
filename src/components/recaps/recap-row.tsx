@@ -93,6 +93,7 @@ export function RecapRow({
             </Chip>
             {code ? <EpisodeCode>{code}</EpisodeCode> : null}
             <Year>{formatYear(entry.inUniverseYear)}</Year>
+            {entry.universeName ? <Chip tone="universe">{entry.universeName}</Chip> : null}
             {entry.tags.slice(0, 3).map((tag) => (
               <Chip key={tag} tone="tag">
                 {tag}

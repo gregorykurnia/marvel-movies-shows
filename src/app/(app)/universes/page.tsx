@@ -40,7 +40,7 @@ async function UniversesContent() {
       />
       <UniverseManager universes={universes} />
       <p className="mt-4 text-[13px] text-ink-3">
-        {formatCount(universes.length, "universe")} · a universe in use by a character can&rsquo;t be deleted.
+        {formatCount(universes.length, "universe")} · a universe in use by a character or a recap can&rsquo;t be deleted.
       </p>
     </>
   );

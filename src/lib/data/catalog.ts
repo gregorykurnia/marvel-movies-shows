@@ -3,7 +3,7 @@
 import { and, asc, eq, sql } from "drizzle-orm";
 
 import { getDb } from "@/db";
-import { entries, titles } from "@/db/schema";
+import { entries, titles, universes } from "@/db/schema";
 
 import { loadEntryTagNames } from "./tags";
 
@@ -21,6 +21,8 @@ export type CatalogEntry = {
   name: string | null;
   releaseDate: string | null;
   inUniverseYear: number | null;
+  universeId: string | null;
+  universeName: string | null;
   watched: boolean;
   hasRecap: boolean;
   sortKey: string;
@@ -38,6 +40,8 @@ const catalogColumns = {
   name: entries.name,
   releaseDate: entries.releaseDate,
   inUniverseYear: entries.inUniverseYear,
+  universeId: entries.universeId,
+  universeName: universes.name,
   watched: entries.watched,
   hasRecap: sql<boolean>`${entries.recap} is not null`,
   sortKey: entries.sortKey,
@@ -50,6 +54,7 @@ export async function loadCatalog(): Promise<CatalogEntry[]> {
       .select(catalogColumns)
       .from(entries)
       .innerJoin(titles, eq(entries.titleId, titles.id))
+      .leftJoin(universes, eq(entries.universeId, universes.id))
       .orderBy(asc(entries.sortKey)),
     loadEntryTagNames(),
   ]);
@@ -63,6 +68,7 @@ export async function loadEpisodesForTitle(titleId: string): Promise<CatalogEntr
       .select(catalogColumns)
       .from(entries)
       .innerJoin(titles, eq(entries.titleId, titles.id))
+      .leftJoin(universes, eq(entries.universeId, universes.id))
       .where(eq(entries.titleId, titleId))
       .orderBy(asc(entries.seasonNumber), asc(entries.episodeNumber)),
     loadEntryTagNames(),
@@ -134,6 +140,7 @@ export async function loadEntryDetail(id: string): Promise<EntryDetail | null> {
       .select({ ...catalogColumns, recap: entries.recap, notes: entries.notes })
       .from(entries)
       .innerJoin(titles, eq(entries.titleId, titles.id))
+      .leftJoin(universes, eq(entries.universeId, universes.id))
       .where(eq(entries.id, id))
       .limit(1),
     loadEntryTagNames(),

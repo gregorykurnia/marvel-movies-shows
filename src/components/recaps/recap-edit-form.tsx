@@ -10,6 +10,7 @@ import { FormAlert, FormFooter, FormGrid, FormPanel, wide } from "@/components/u
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { Panel } from "@/components/ui/panel";
 import { useToast } from "@/components/ui/toast";
+import { UniverseField, withUniverse, type UniverseOption } from "@/components/universes/universe-field";
 import type { EntryDetail } from "@/lib/data/catalog";
 import Link from "next/link";
 
@@ -26,11 +27,13 @@ export function RecapEditForm({
   characterOptions,
   initialCharacterIds,
   tagOptions,
+  universeOptions,
 }: {
   entry: EntryDetail;
   characterOptions: { value: string; label: string }[];
   initialCharacterIds: string[];
   tagOptions: string[];
+  universeOptions: UniverseOption[];
 }) {
   const router = useRouter();
   const toast = useToast();
@@ -40,6 +43,8 @@ export function RecapEditForm({
   const [recap, setRecap] = useState(entry.recap ?? "");
   const [characterIds, setCharacterIds] = useState(initialCharacterIds);
   const [tagNames, setTagNames] = useState(entry.tags);
+  const [universeList, setUniverseList] = useState(universeOptions);
+  const [universeId, setUniverseId] = useState<string | null>(entry.universeId);
   const isMovie = entry.titleKind === "movie";
 
   function onSubmit(event: FormEvent<HTMLFormElement>) {
@@ -84,13 +89,13 @@ export function RecapEditForm({
                 defaultValue={entry.titleReleaseDate ?? ""}
                 error={errors.releaseDate}
               />
-              <Input
-                name="inUniverseYear"
-                label="In-universe year"
-                inputMode="numeric"
-                defaultValue={entry.inUniverseYear ?? ""}
-                hint="Seeds where a new entry lands. Use − for years before 1 AD."
-                error={errors.inUniverseYear}
+              <YearAndUniverse
+                defaultYear={entry.inUniverseYear}
+                universes={universeList}
+                universeId={universeId}
+                onUniverseId={setUniverseId}
+                onCreated={(universe) => setUniverseList((list) => withUniverse(list, universe))}
+                errors={errors}
               />
             </>
           ) : (
@@ -124,13 +129,13 @@ export function RecapEditForm({
                 defaultValue={entry.releaseDate ?? ""}
                 error={errors.releaseDate}
               />
-              <Input
-                name="inUniverseYear"
-                label="In-universe year"
-                inputMode="numeric"
-                defaultValue={entry.inUniverseYear ?? ""}
-                hint="Seeds where a new entry lands. Use − for years before 1 AD."
-                error={errors.inUniverseYear}
+              <YearAndUniverse
+                defaultYear={entry.inUniverseYear}
+                universes={universeList}
+                universeId={universeId}
+                onUniverseId={setUniverseId}
+                onCreated={(universe) => setUniverseList((list) => withUniverse(list, universe))}
+                errors={errors}
               />
             </>
           )}
@@ -197,5 +202,42 @@ export function RecapEditForm({
         </FormFooter>
       </FormPanel>
     </form>
+  );
+}
+
+// The in-universe year and the universe, side by side on a row of their own (PRODUCT_PLAN §2.1).
+function YearAndUniverse({
+  defaultYear,
+  universes,
+  universeId,
+  onUniverseId,
+  onCreated,
+  errors,
+}: {
+  defaultYear: number | null;
+  universes: UniverseOption[];
+  universeId: string | null;
+  onUniverseId: (id: string | null) => void;
+  onCreated: (universe: UniverseOption) => void;
+  errors: Record<string, string>;
+}) {
+  return (
+    <div className="grid gap-[18px] min-[640px]:col-span-2 min-[640px]:grid-cols-2">
+      <Input
+        name="inUniverseYear"
+        label="In-universe year"
+        inputMode="numeric"
+        defaultValue={defaultYear ?? ""}
+        hint="Seeds where a new entry lands. Use − for years before 1 AD."
+        error={errors.inUniverseYear}
+      />
+      <UniverseField
+        universes={universes}
+        value={universeId}
+        onValueChange={onUniverseId}
+        onCreated={onCreated}
+        error={errors.universeId}
+      />
+    </div>
   );
 }

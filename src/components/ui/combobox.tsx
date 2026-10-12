@@ -22,6 +22,8 @@ type ComboboxProps = {
   value: string | null;
   onValueChange: (value: string | null) => void;
   onCreate?: (text: string) => void;
+  // When set, a value can be cleared: this row sits first in the list while a value is chosen and nothing is typed.
+  clearLabel?: string;
   placeholder?: string;
   hint?: string;
   error?: string;
@@ -32,7 +34,8 @@ type ComboboxProps = {
 
 type Item =
   | { kind: "option"; option: ComboOption }
-  | { kind: "create"; text: string };
+  | { kind: "create"; text: string }
+  | { kind: "clear" };
 
 export function Combobox({
   label,
@@ -40,6 +43,7 @@ export function Combobox({
   value,
   onValueChange,
   onCreate,
+  clearLabel,
   placeholder,
   hint,
   error,
@@ -64,7 +68,9 @@ export function Combobox({
   const exact = options.some((option) => option.label.toLowerCase() === needle);
   const canCreate = Boolean(onCreate) && editing && needle.length > 0 && !exact;
 
+  const showClear = Boolean(clearLabel) && value !== null && needle.length === 0;
   const items: Item[] = [
+    ...(showClear ? [{ kind: "clear" } as Item] : []),
     ...matches.map((option): Item => ({ kind: "option", option })),
     ...(canCreate ? [{ kind: "create", text: query.trim() } as Item] : []),
   ];
@@ -78,6 +84,8 @@ export function Combobox({
   function choose(item: Item) {
     if (item.kind === "create") {
       onCreate?.(item.text);
+    } else if (item.kind === "clear") {
+      onValueChange(null);
     } else {
       onValueChange(item.option.value);
     }
@@ -154,9 +162,10 @@ export function Combobox({
             {items.map((item, index) => {
               const isActive = index === activeIndex;
               const isCreate = item.kind === "create";
+              const isClear = item.kind === "clear";
               return (
                 <li
-                  key={isCreate ? "create" : item.option.value}
+                  key={isCreate ? "create" : isClear ? "clear" : item.option.value}
                   id={optionId(index)}
                   role="option"
                   aria-selected={isActive}
@@ -169,10 +178,16 @@ export function Combobox({
                     isCreate &&
                       "mt-1 rounded-none border-t-[1.5px] border-dashed border-line-soft pt-2.5 font-bold text-violet-ink",
                     isCreate && isActive && "bg-blue-soft text-violet-ink",
+                    isClear && "border-b-[1.5px] border-dashed border-line-soft pb-2.5 text-ink-2",
                   )}
                 >
                   {isCreate ? (
                     <span>＋ Add “{item.text}”</span>
+                  ) : isClear ? (
+                    <>
+                      <span>{clearLabel}</span>
+                      {isActive ? <span aria-hidden>↵</span> : null}
+                    </>
                   ) : (
                     <>
                       <span className={cn(item.option.mono && "font-mono")}>

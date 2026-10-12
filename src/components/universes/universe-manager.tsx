@@ -14,7 +14,7 @@ import type { UniverseRow } from "@/lib/data/characters";
 import { formatCount } from "@/lib/format";
 
 // Add, rename and delete universes (IMPLEMENTATION_PLAN §6, Phase 2). A universe can only be deleted when no
-// character uses it. The button says so, and the server checks it again.
+// character or recap uses it. The button says so, and the server checks it again.
 export function UniverseManager({ universes }: { universes: UniverseRow[] }) {
   return (
     <div className="grid gap-6">
@@ -83,7 +83,7 @@ function UniverseRowItem({ universe }: { universe: UniverseRow }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(universe.name);
   const [error, setError] = useState<string | undefined>();
-  const inUse = universe.characters > 0;
+  const inUse = universe.characters > 0 || universe.recaps > 0;
 
   function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -147,7 +147,7 @@ function UniverseRowItem({ universe }: { universe: UniverseRow }) {
             <div className="flex flex-wrap items-center gap-3">
               <Chip tone="universe">{universe.name}</Chip>
               <span className="font-mono text-[13px] font-bold tabular-nums text-ink-2">
-                {formatCount(universe.characters, "character")}
+                {formatCount(universe.characters, "character")} · {formatCount(universe.recaps, "recap")}
               </span>
             </div>
             <div className="flex flex-wrap items-center gap-2.5">
@@ -166,7 +166,7 @@ function UniverseRowItem({ universe }: { universe: UniverseRow }) {
               </Button>
               {inUse ? (
                 <span id={`in-use-${universe.id}`} className="text-[13px] text-ink-3">
-                  In use. Move its characters first.
+                  In use. Clear it from its characters and recaps first.
                 </span>
               ) : null}
             </div>

@@ -7,6 +7,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { FormSkeleton } from "@/components/layout/page-skeleton";
 import { EpisodeForm } from "@/components/titles/episode-form";
 import { loadMovieEntryId, loadTitle } from "@/lib/data/catalog";
+import { loadUniverseOptions } from "@/lib/data/characters";
 
 export const metadata: Metadata = { title: "Add episodes" };
 
@@ -21,7 +22,7 @@ export default function AddEpisodesPage({ params }: { params: Promise<{ id: stri
 async function AddEpisodesContent({ params }: { params: Promise<{ id: string }> }) {
   await connection();
   const { id } = await params;
-  const title = await loadTitle(id);
+  const [title, universes] = await Promise.all([loadTitle(id), loadUniverseOptions()]);
   if (!title) notFound();
   if (title.kind === "movie") {
     const entryId = await loadMovieEntryId(id);
@@ -37,7 +38,7 @@ async function AddEpisodesContent({ params }: { params: Promise<{ id: string }> 
         title="Add episodes"
         subtitle={`For ${title.name}. A run keeps its episode order, and it's placed by its year.`}
       />
-      <EpisodeForm titleId={id} showName={title.name} />
+      <EpisodeForm titleId={id} showName={title.name} universes={universes} />
     </>
   );
 }

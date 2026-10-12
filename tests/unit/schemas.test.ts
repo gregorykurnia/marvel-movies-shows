@@ -23,11 +23,23 @@ function errorsFor(result: { success: boolean; error?: unknown }) {
 }
 
 describe("titleFormSchema", () => {
-  const base = { kind: "movie", name: "Thor", releaseDate: "2011-05-06", inUniverseYear: "" };
+  // The forms always send every field, including the universe (an empty string when none is picked).
+  const base = { kind: "movie", name: "Thor", releaseDate: "2011-05-06", inUniverseYear: "", universeId: "" };
 
   it("accepts a movie and turns blanks into null", () => {
     const parsed = titleFormSchema.parse(base);
-    expect(parsed).toEqual({ kind: "movie", name: "Thor", releaseDate: "2011-05-06", inUniverseYear: null });
+    expect(parsed).toEqual({
+      kind: "movie",
+      name: "Thor",
+      releaseDate: "2011-05-06",
+      inUniverseYear: null,
+      universeId: null,
+    });
+  });
+
+  it("accepts a universe id, and refuses one that isn't an id", () => {
+    expect(titleFormSchema.parse({ ...base, universeId: VALID_UUID }).universeId).toBe(VALID_UUID);
+    expect(errorsFor(titleFormSchema.safeParse({ ...base, universeId: "Earth-616" }))).toHaveProperty("universeId");
   });
 
   it("requires a name", () => {
@@ -57,7 +69,19 @@ describe("titleFormSchema", () => {
 });
 
 describe("episodeFormSchema", () => {
-  const base = { season: "1", episode: "1", name: "Glorious Purpose", releaseDate: "", inUniverseYear: "2012" };
+  const base = {
+    season: "1",
+    episode: "1",
+    name: "Glorious Purpose",
+    releaseDate: "",
+    inUniverseYear: "2012",
+    universeId: "",
+  };
+
+  it("accepts a universe for the episode, or none", () => {
+    expect(episodeFormSchema.parse({ ...base, universeId: VALID_UUID }).universeId).toBe(VALID_UUID);
+    expect(episodeFormSchema.parse(base).universeId).toBeNull();
+  });
 
   it("accepts season 0 for specials", () => {
     expect(episodeFormSchema.parse({ ...base, season: "0" }).season).toBe(0);
@@ -87,10 +111,20 @@ describe("episodeFormSchema", () => {
 });
 
 describe("episodeRangeSchema (bulk add)", () => {
-  const base = { season: "1", fromEpisode: "1", toEpisode: "9", inUniverseYear: "1950" };
+  const base = { season: "1", fromEpisode: "1", toEpisode: "9", inUniverseYear: "1950", universeId: "" };
 
   it("accepts a normal block", () => {
-    expect(episodeRangeSchema.parse(base)).toEqual({ season: 1, fromEpisode: 1, toEpisode: 9, inUniverseYear: 1950 });
+    expect(episodeRangeSchema.parse(base)).toEqual({
+      season: 1,
+      fromEpisode: 1,
+      toEpisode: 9,
+      inUniverseYear: 1950,
+      universeId: null,
+    });
+  });
+
+  it("gives the whole block the one universe that is picked", () => {
+    expect(episodeRangeSchema.parse({ ...base, universeId: VALID_UUID }).universeId).toBe(VALID_UUID);
   });
 
   it("rejects a last episode before the first", () => {
@@ -123,11 +157,33 @@ describe("recapSchema", () => {
 
 describe("movieEditSchema", () => {
   it("needs a name and keeps the recap", () => {
-    const parsed = movieEditSchema.parse({ name: "Thor", releaseDate: "", inUniverseYear: "", recap: "Text", notes: "" });
-    expect(parsed).toEqual({ name: "Thor", releaseDate: null, inUniverseYear: null, recap: "Text", notes: null });
-    expect(errorsFor(movieEditSchema.safeParse({ name: "", releaseDate: "", inUniverseYear: "", recap: "", notes: "" }))).toHaveProperty(
-      "name",
-    );
+    const parsed = movieEditSchema.parse({
+      name: "Thor",
+      releaseDate: "",
+      inUniverseYear: "",
+      universeId: "",
+      recap: "Text",
+      notes: "",
+    });
+    expect(parsed).toEqual({
+      name: "Thor",
+      releaseDate: null,
+      inUniverseYear: null,
+      universeId: null,
+      recap: "Text",
+      notes: null,
+    });
+    expect(
+      errorsFor(
+        movieEditSchema.safeParse({ name: "", releaseDate: "", inUniverseYear: "", universeId: "", recap: "", notes: "" }),
+      ),
+    ).toHaveProperty("name");
+  });
+
+  it("keeps the recap's universe, and clears it when none is picked", () => {
+    const base = { name: "Thor", releaseDate: "", inUniverseYear: "", recap: "", notes: "" };
+    expect(movieEditSchema.parse({ ...base, universeId: VALID_UUID }).universeId).toBe(VALID_UUID);
+    expect(movieEditSchema.parse({ ...base, universeId: "" }).universeId).toBeNull();
   });
 });
 

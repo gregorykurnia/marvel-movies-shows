@@ -7,12 +7,14 @@ import { redirect } from "next/navigation";
 import { getDb } from "@/db";
 import { entries, titles } from "@/db/schema";
 import { fail, ok, validationFailure, type ActionResult } from "@/lib/action-result";
+import { isMissingUniverseViolation } from "@/lib/db-errors";
 import { formStrings } from "@/lib/form";
 import { readPlaceables } from "@/lib/data/placeables";
 import { seededKey } from "@/lib/ordering";
 import { deleteConfirmSchema, titleEditSchema, titleFormSchema } from "@/lib/schemas";
 
 // Server Actions for titles (movies and shows). See IMPLEMENTATION_PLAN §5.4 for the form rules.
+const MISSING_UNIVERSE = "That universe no longer exists. Pick it again.";
 
 // A movie is one recap. Creating a movie creates its single entry, placed by its year (§3.2).
 // A show is created empty, and its episodes are added on its own page.
@@ -23,23 +25,36 @@ export async function createTitle(
   if (!parsed.success) return validationFailure(parsed.error);
   const input = parsed.data;
 
-  const created = await getDb().transaction(async (tx) => {
-    const [title] = await tx
-      .insert(titles)
-      .values({ name: input.name, kind: input.kind, releaseDate: input.releaseDate })
-      .returning({ id: titles.id });
+  let created: { id: string; kind: "movie" | "show"; entryId: string | null };
+  try {
+    created = await getDb().transaction(async (tx) => {
+      const [title] = await tx
+        .insert(titles)
+        .values({ name: input.name, kind: input.kind, releaseDate: input.releaseDate })
+        .returning({ id: titles.id });
 
-    if (input.kind === "show") {
-      return { id: title.id, kind: "show" as const, entryId: null };
-    }
+      if (input.kind === "show") {
+        return { id: title.id, kind: "show" as const, entryId: null };
+      }
 
-    const sortKey = seededKey(await readPlaceables(tx), input.inUniverseYear);
-    const [entry] = await tx
-      .insert(entries)
-      .values({ titleId: title.id, sortKey, inUniverseYear: input.inUniverseYear, watched: false })
-      .returning({ id: entries.id });
-    return { id: title.id, kind: "movie" as const, entryId: entry.id };
-  });
+      const sortKey = seededKey(await readPlaceables(tx), input.inUniverseYear);
+      const [entry] = await tx
+        .insert(entries)
+        .values({
+          titleId: title.id,
+          sortKey,
+          inUniverseYear: input.inUniverseYear,
+          universeId: input.universeId,
+          watched: false,
+        })
+        .returning({ id: entries.id });
+      return { id: title.id, kind: "movie" as const, entryId: entry.id };
+    });
+  } catch (error) {
+    // The transaction is rolled back, so the title isn't created either.
+    if (isMissingUniverseViolation(error)) return fail(MISSING_UNIVERSE, { universeId: MISSING_UNIVERSE });
+    throw error;
+  }
 
   revalidatePath("/", "layout");
   return ok(created);

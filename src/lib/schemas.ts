@@ -81,6 +81,7 @@ export const titleFormSchema = z.object({
   name,
   releaseDate: optionalDate,
   inUniverseYear: optionalYear,
+  universeId: optionalUuid,
 });
 
 export const titleEditSchema = z.object({
@@ -96,6 +97,7 @@ export const episodeFormSchema = z.object({
   name: optionalText(160),
   releaseDate: optionalDate,
   inUniverseYear: optionalYear,
+  universeId: optionalUuid,
 });
 
 export const MAX_EPISODES_PER_BLOCK = 100;
@@ -106,6 +108,8 @@ export const episodeRangeSchema = z
     fromEpisode: requiredWhole("the first episode number", 1, 999),
     toEpisode: requiredWhole("the last episode number", 1, 999),
     inUniverseYear: optionalYear,
+    // One universe for the whole block (PRODUCT_PLAN §2.1).
+    universeId: optionalUuid,
   })
   .superRefine((value, context) => {
     if (value.toEpisode < value.fromEpisode) {
@@ -140,6 +144,7 @@ export const movieEditSchema = z.object({
   name,
   releaseDate: optionalDate,
   inUniverseYear: optionalYear,
+  universeId: optionalUuid,
   recap: recapSchema,
   notes: optionalText(10_000),
 });

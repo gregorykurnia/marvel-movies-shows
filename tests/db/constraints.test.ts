@@ -1,7 +1,7 @@
 import { describe, expect, it, afterAll } from "vitest";
 
 import { appearances, characters, entries, tags, titles, universes } from "../../src/db/schema";
-import { isRestrictViolation, isUniqueViolation } from "../../src/lib/db-errors";
+import { isMissingUniverseViolation, isRestrictViolation, isUniqueViolation } from "../../src/lib/db-errors";
 import { connectTestDatabase, E2E_PREFIX, removeE2eData } from "../support/e2e-data";
 
 // Database rules (IMPLEMENTATION_PLAN §7): unique episodes, delete rules, and the case-insensitive tag constraint.
@@ -92,6 +92,54 @@ describe("delete rules", () => {
     const error = await errorFrom(db.delete(universes).where(eqUniverse(universe.id)));
     expect(error).not.toBeNull();
     expect(isRestrictViolation(error)).toBe(true);
+  });
+
+  it("a universe that a recap uses can't be deleted, and is freed once the recap no longer uses it", async () => {
+    const [universe] = await db
+      .insert(universes)
+      .values({ name: label("recap universe") })
+      .returning({ id: universes.id });
+    const [show] = await db
+      .insert(titles)
+      .values({ name: label("recap universe show"), kind: "show" })
+      .returning({ id: titles.id });
+    const [episode] = await db
+      .insert(entries)
+      .values({ titleId: show.id, seasonNumber: 1, episodeNumber: 1, sortKey: `${run}-u1`, watched: false, universeId: universe.id })
+      .returning({ id: entries.id });
+
+    const error = await errorFrom(db.delete(universes).where(eqUniverse(universe.id)));
+    expect(error).not.toBeNull();
+    expect(isRestrictViolation(error)).toBe(true);
+
+    await db.update(entries).set({ universeId: null }).where(eqEntry(episode.id));
+    const freed = await errorFrom(db.delete(universes).where(eqUniverse(universe.id)));
+    expect(freed).toBeNull();
+  });
+
+  it("a recap can't point at a universe that no longer exists, and the error says which link failed", async () => {
+    const [show] = await db
+      .insert(titles)
+      .values({ name: label("missing universe show"), kind: "show" })
+      .returning({ id: titles.id });
+    const [gone] = await db
+      .insert(universes)
+      .values({ name: label("gone universe") })
+      .returning({ id: universes.id });
+    await db.delete(universes).where(eqUniverse(gone.id));
+
+    const error = await errorFrom(
+      db.insert(entries).values({
+        titleId: show.id,
+        seasonNumber: 1,
+        episodeNumber: 1,
+        sortKey: `${run}-u2`,
+        watched: false,
+        universeId: gone.id,
+      }),
+    );
+    expect(error).not.toBeNull();
+    expect(isMissingUniverseViolation(error)).toBe(true);
   });
 
   it("deleting a title clears a character's predominant title but keeps the character", async () => {

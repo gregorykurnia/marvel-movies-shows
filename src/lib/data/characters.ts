@@ -2,26 +2,35 @@
 import { asc, eq, sql } from "drizzle-orm";
 
 import { getDb } from "@/db";
-import { appearances, characters, titles, universes } from "@/db/schema";
+import { appearances, characters, entries, titles, universes } from "@/db/schema";
 
 import { loadCatalog, loadTitleRows as loadTitleRowsForOptions, type CatalogEntry } from "./catalog";
 import { loadCharacterTagNames } from "./tags";
 
-export type UniverseRow = { id: string; name: string; characters: number };
+export type UniverseRow = { id: string; name: string; characters: number; recaps: number };
 
-// The universes for the form and the directory, with how many characters use each one.
-
+// The universes for the form and the directory, with how many characters and recaps use each one. A universe in use
+// by either can't be deleted (PRODUCT_PLAN §2.1, §2.3).
 export async function loadUniverseRows(): Promise<UniverseRow[]> {
+  // Two joins, each counted with DISTINCT, so a character and a recap are counted once each. (Correlated subqueries
+  // would render "id" without its table, and compare the wrong column.)
   return getDb()
     .select({
       id: universes.id,
       name: universes.name,
-      characters: sql<number>`count(${characters.id})::int`,
+      characters: sql<number>`count(distinct ${characters.id})::int`,
+      recaps: sql<number>`count(distinct ${entries.id})::int`,
     })
     .from(universes)
     .leftJoin(characters, eq(characters.universeId, universes.id))
+    .leftJoin(entries, eq(entries.universeId, universes.id))
     .groupBy(universes.id)
     .orderBy(asc(universes.name));
+}
+
+// The universe names for a picker, in name order (no counts).
+export async function loadUniverseOptions(): Promise<{ id: string; name: string }[]> {
+  return getDb().select({ id: universes.id, name: universes.name }).from(universes).orderBy(asc(universes.name));
 }
 
 export type CharacterRecord = {

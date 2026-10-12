@@ -9,7 +9,7 @@ import { DangerZone } from "@/components/layout/danger-zone";
 import { PageHeader } from "@/components/layout/page-header";
 import { FormSkeleton } from "@/components/layout/page-skeleton";
 import { RecapEditForm } from "@/components/recaps/recap-edit-form";
-import { loadCharacterPickerOptions, loadRecapCharacterIds } from "@/lib/data/characters";
+import { loadCharacterPickerOptions, loadRecapCharacterIds, loadUniverseOptions } from "@/lib/data/characters";
 import { loadEntryDetail } from "@/lib/data/catalog";
 import { loadTagNames } from "@/lib/data/tags";
 import { formatEpisodeCode } from "@/lib/format";
@@ -27,11 +27,12 @@ export default function EditRecapPage({ params }: { params: Promise<{ entryId: s
 async function EditRecapContent({ params }: { params: Promise<{ entryId: string }> }) {
   await connection();
   const { entryId } = await params;
-  const [entry, characterOptions, characterIds, tagOptions] = await Promise.all([
+  const [entry, characterOptions, characterIds, tagOptions, universeOptions] = await Promise.all([
     loadEntryDetail(entryId),
     loadCharacterPickerOptions(),
     loadRecapCharacterIds(entryId),
     loadTagNames(),
+    loadUniverseOptions(),
   ]);
   if (!entry) notFound();
 
@@ -51,6 +52,7 @@ async function EditRecapContent({ params }: { params: Promise<{ entryId: string 
         characterOptions={characterOptions}
         initialCharacterIds={characterIds}
         tagOptions={tagOptions}
+        universeOptions={universeOptions}
       />
 
       {isMovie ? (

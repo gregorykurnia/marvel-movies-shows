@@ -73,6 +73,8 @@ export const entries = pgTable(
     name: text("name"),
     releaseDate: date("release_date"),
     inUniverseYear: integer("in_universe_year"),
+    // The universe designation (PRODUCT_PLAN §2.1). Optional. A universe used by a recap can't be deleted.
+    universeId: uuid("universe_id").references(() => universes.id, { onDelete: "restrict" }),
     sortKey: collatedText("sort_key").notNull().unique(),
     watched: boolean("watched").notNull().default(false),
     recap: text("recap"),

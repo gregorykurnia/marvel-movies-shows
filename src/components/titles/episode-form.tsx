@@ -10,18 +10,30 @@ import { Input } from "@/components/ui/field";
 import { FormAlert, FormFooter, FormGrid, FormPanel, wide } from "@/components/ui/form-layout";
 import { Segmented } from "@/components/ui/segmented";
 import { useToast } from "@/components/ui/toast";
+import { UniverseField, withUniverse, type UniverseOption } from "@/components/universes/universe-field";
 import { formatEpisodeCode } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 // Add one episode, or a run of episodes in one season (IMPLEMENTATION_PLAN §6, Phase 1). Every field stays in the
-// form. The fields for the other mode are hidden, not removed, so nothing typed is lost when switching.
+// form. The fields for the other mode are hidden, not removed, so nothing typed is lost when switching. A run gets
+// one universe for all of its episodes.
 type Mode = "one" | "run";
 
-export function EpisodeForm({ titleId, showName }: { titleId: string; showName: string }) {
+export function EpisodeForm({
+  titleId,
+  showName,
+  universes,
+}: {
+  titleId: string;
+  showName: string;
+  universes: UniverseOption[];
+}) {
   const router = useRouter();
   const toast = useToast();
   const [pending, startTransition] = useTransition();
   const [mode, setMode] = useState<Mode>("one");
+  const [universeList, setUniverseList] = useState(universes);
+  const [universeId, setUniverseId] = useState<string | null>(null);
   const [season, setSeason] = useState("1");
   const [episode, setEpisode] = useState("1");
   const [name, setName] = useState("");
@@ -161,16 +173,25 @@ export function EpisodeForm({ titleId, showName }: { titleId: string; showName: 
             error={errors.releaseDate}
             className={cn(mode !== "one" && "hidden")}
           />
-          <Input
-            name="inUniverseYear"
-            label="In-universe year"
-            inputMode="numeric"
-            placeholder="e.g. 2012"
-            value={year}
-            onChange={(event) => setYear(event.target.value)}
-            hint="Seeds where these land in the recap order. Use − for years before 1 AD."
-            error={errors.inUniverseYear}
-          />
+          <div className="grid gap-[18px] min-[640px]:col-span-2 min-[640px]:grid-cols-2">
+            <Input
+              name="inUniverseYear"
+              label="In-universe year"
+              inputMode="numeric"
+              placeholder="e.g. 2012"
+              value={year}
+              onChange={(event) => setYear(event.target.value)}
+              hint="Seeds where these land in the recap order. Use − for years before 1 AD."
+              error={errors.inUniverseYear}
+            />
+            <UniverseField
+              universes={universeList}
+              value={universeId}
+              onValueChange={setUniverseId}
+              onCreated={(universe) => setUniverseList((list) => withUniverse(list, universe))}
+              error={errors.universeId}
+            />
+          </div>
         </FormGrid>
 
         <FormFooter>
