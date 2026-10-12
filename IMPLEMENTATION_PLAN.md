@@ -339,15 +339,15 @@ Phases match the product plan's build plan. Each phase ends with:
 - **Done when:** I can set a universe on a movie or episode, see it on the recap page and in the list, and a universe used by a recap can't be deleted.
 
 ### Phase 7: Recaps on the timeline
-- [ ] Read model: `loadTimelineEvents` also returns every movie and episode with an in-universe year, as read-only items. No table change.
-- [ ] Merge: a pure function in `src/lib/timeline-merge.ts` (new). Hand-written events first, in their order, then recap items in recap order. Unit tests for BCE years, same-year ties, and a year with only recap items.
-- [ ] Recap item cards: the "From recap" label, the text and chip from §5.2, and popover links "Read recap →" and "Edit recap". No "Edit event" on these items.
-- [ ] Reorder: `onDragEnd` and `moveByMenu` use hand-written events only. Recap items aren't sortable and have no ⋯ menu.
-- [ ] Type and tag filters apply to recap items.
-- [ ] The header count includes both kinds.
-- [ ] Update the Phase 3 end-to-end test (`tests/e2e/phase-3.spec.ts`). Its 2011 count and the 2010–2019 bucket count will change, because recap items are included.
-- [ ] New end-to-end test: a year set on a recap appears in the right place, changing it moves the item, clearing it removes it, and reorder still works in a year that has a recap item.
-- [ ] Design review (`DESIGN_GUIDE.md` §13) for the timeline at 390px and 1280px, light and dark.
+- [x] Read model: `loadRecapItems` in `src/lib/data/timeline.ts` returns every movie and episode with an in-universe year, as read-only items with ids `entry:<entryId>`, next to `loadTimelineEvents`. No table change. `loadEventDetail` and `moveEvent` still read `timeline_events` only.
+- [x] Merge: a pure function in `src/lib/timeline-merge.ts` (new). Hand-written events first, in their order, then recap items in recap order. Unit tests in `tests/unit/timeline-merge.test.ts` for BCE years, same-year ties, and a year with only recap items.
+- [x] Recap item cards: the "From recap" label, the text and chip from §5.2, and popover links "Read recap →" and "Edit recap". No "Edit event" on these items, and no drag handle or ⋯ menu.
+- [x] Reorder: `onDragEnd` and `moveByMenu` use hand-written events only. Recap items aren't sortable.
+- [x] Type and tag filters apply to recap items.
+- [x] The header count includes both kinds.
+- [x] Update the Phase 3 end-to-end test (`tests/e2e/phase-3.spec.ts`). Its 2011 count is now 3 and the 2010–2019 bucket reads "3 events", because the 2011 Thor movie is a recap item too.
+- [x] New end-to-end test (`tests/e2e/phase-7.spec.ts`): a year set on a recap appears in the right place, changing it moves the item, clearing it removes it, and reorder still works in a year that has a recap item.
+- [ ] Design review (`DESIGN_GUIDE.md` §13) for the timeline at 390px and 1280px, light and dark. Screenshots are in `screenshots/phase-7/` (git-ignored, 4 captures, none scroll sideways at 390px). Checked by eye against the guide, not yet side by side with `design-preview.html`. Waiting for the owner's sign-off.
 - **Done when:** a recap's in-universe year shows on the timeline in the right place, moves when I change the year, and its link opens the recap.
 
 ---
