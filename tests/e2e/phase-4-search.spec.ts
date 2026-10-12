@@ -1,6 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 
-import { E2E_PREFIX, removeE2eData } from "../support/e2e-data";
+import { E2E_PREFIX, removeE2eData, seedMatchingEvents } from "../support/e2e-data";
 import { field } from "../support/e2e-helpers";
 
 // Phase 4 search (PRODUCT_PLAN §2.5): one search finds a recap, a timeline event, a character, a note and a tag, and
@@ -16,6 +16,7 @@ const noteWord = `noteword${run}`;
 const tagWord = `searchtag${run}`;
 const eventWord = `eventword${run}`;
 const characterWord = `searchchar${run}`;
+const manyWord = `manyword${run}`;
 const movie = `${E2E_PREFIX} Search movie ${run}`;
 const character = `${E2E_PREFIX} ${characterWord}`;
 
@@ -124,4 +125,19 @@ test("one search finds a recap, its note and tag, an event, and a character", as
     await page.keyboard.press("Control+k");
     await expect(headerSearch(page)).toBeFocused();
   });
+});
+
+test("a group with more matches than the preview gets a Show all link", async ({ page }) => {
+  await seedMatchingEvents(manyWord, 11);
+  await page.goto("/timeline");
+  await search(page, manyWord);
+
+  const timeline = page.getByRole("region", { name: "Timeline", exact: true });
+  await expect(timeline.getByRole("link", { name: new RegExp(manyWord) })).toHaveCount(10);
+  await timeline.getByRole("link", { name: "Show all 11", exact: true }).click();
+
+  await expect(page).toHaveURL(/group=events/);
+  await expect(page.getByRole("link", { name: new RegExp(manyWord) })).toHaveCount(11);
+  await expect(page.getByRole("heading", { name: "Recaps", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "All results", exact: true })).toBeVisible();
 });

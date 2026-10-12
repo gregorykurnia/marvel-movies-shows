@@ -134,3 +134,16 @@ export async function seedTimelineEvents(run: string, ids: { movieTitleId: strin
   if (!firstId) throw new Error("no timeline events were seeded");
   return { firstId };
 }
+
+// Adds `count` timeline events that all contain `word`, so a search has more matches than the preview shows.
+export async function seedMatchingEvents(word: string, count: number) {
+  const db = connectTestDatabase();
+  const { timelineEvents } = await import("../../src/db/schema");
+  const { readEventPlaceables } = await import("../../src/lib/data/timeline");
+  const { keyInYear } = await import("../../src/lib/ordering");
+
+  for (let index = 1; index <= count; index += 1) {
+    const sortKey = keyInYear(await readEventPlaceables(db), 1960, undefined);
+    await db.insert(timelineEvents).values({ year: 1960, text: `${E2E_PREFIX} ${word} event ${index}`, sortKey });
+  }
+}

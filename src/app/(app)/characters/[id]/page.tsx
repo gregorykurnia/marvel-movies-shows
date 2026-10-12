@@ -60,7 +60,12 @@ async function CharacterContent({ params }: { params: Promise<{ id: string }> })
           <Chip tone={character.status} dot>
             {statusLabel(character.status)}
           </Chip>
-          {character.universeName ? <Chip tone="universe">{character.universeName}</Chip> : null}
+          {character.universeName ? (
+            // Long universe names are cut short here so they stay clear of the Edit button. The Details card has the full name.
+            <Chip tone="universe" className="min-w-0 max-w-full" title={character.universeName}>
+              <span className="min-w-0 truncate">{character.universeName}</span>
+            </Chip>
+          ) : null}
         </div>
       </PageHeader>
 
