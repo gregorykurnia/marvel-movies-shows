@@ -15,8 +15,10 @@ A personal web app with Marvel recaps, a timeline and a character directory. Rea
 - Don't add features beyond `PRODUCT_PLAN.md` without asking. Ideas go to the user first.
 
 ## Commit and push after every change (automatic)
-- Commit and push to `main` after every change, without asking first. Pushes to `main` deploy to production (Vercel is connected to GitHub, and the live site is `https://marvel-movies-shows.vercel.app`). So every change goes through these steps before the turn ends:
-  1. Run `npm run typecheck`, `npm run lint`, `npm run build` and `npm test`. Run `npx playwright test tests/e2e/smoke.spec.ts` too when the change touches pages or the database. If anything fails, fix it first. Never commit or push a failing change.
+- Commit and push to `main` after every change, without asking first, and say what changed in the final message. This includes edits to this file. Pushes to `main` deploy to production (Vercel is connected to GitHub, and the live site is `https://marvel-movies-shows.vercel.app`). So every change goes through these steps before the turn ends:
+  1. Run `npm run typecheck`, `npm run lint`, `npm run build` and `npm test`. Run `npx playwright test tests/e2e/smoke.spec.ts` too when the change touches pages or the database, plus the spec for each page the change touches. If a check fails because of the change, fix it first. Never commit or push a change that breaks a check.
+     - The full Playwright suite is not a per-change gate. Run it before a release, or when the user asks.
+     - A failure from the environment in a flow the change doesn't touch (a dropped database connection, a timeout) is not a blocker. Name the test and the reason in the commit message and the report, then push.
   2. Check `git status`. Stage only the files you changed, with `git add <paths>`. If the tree holds changes that aren't yours, leave them unstaged and out of the commit. Never stage `.env*`, `screenshots/`, `.vercel/`, `node_modules/` or `test-results/`.
   3. Commit to `main`. The message says what changed and why. End it with `Co-Authored-By: Claude Haiku 5.5 <noreply@anthropic.com>`.
   4. Check `git log origin/main..main`, because a push sends every unpushed commit. Then push with `git push origin main`.
