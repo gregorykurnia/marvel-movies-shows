@@ -31,6 +31,8 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
   reporter: [["list"]],
+  // The first visit to a route compiles it in dev, which can take several seconds.
+  expect: { timeout: 20_000 },
   use: {
     baseURL: liveBaseUrl ?? `http://localhost:${PORT}`,
     trace: "retain-on-failure",

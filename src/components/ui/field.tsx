@@ -30,7 +30,7 @@ type FieldShellProps = {
 export function FieldShell({ id, label, hint, error, children, className }: FieldShellProps) {
   const messageId = `${id}-message`;
   return (
-    <div className={cn("grid content-start gap-1.5", className)}>
+    <div className={cn("grid min-w-0 content-start gap-1.5", className)}>
       <label htmlFor={id} className="text-sm font-bold">
         {label}
       </label>

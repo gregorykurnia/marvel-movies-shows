@@ -14,7 +14,9 @@ export function TableWrap({
   return (
     <div
       className={cn(
-        "overflow-x-auto rounded-panel border-2 border-line bg-surface shadow-pop",
+        // relative: screen-reader labels inside the table are absolutely positioned. This keeps them inside the
+        // scroll area, so they can't widen the page.
+        "relative min-w-0 overflow-x-auto rounded-panel border-2 border-line bg-surface shadow-pop",
         className,
       )}
       {...props}

@@ -17,7 +17,10 @@ function createDb() {
   return drizzle({ client: pool, schema });
 }
 
-type Db = ReturnType<typeof createDb>;
+export type Db = ReturnType<typeof createDb>;
+
+// The transaction handle passed to db.transaction(async (tx) => …).
+export type Tx = Parameters<Parameters<Db["transaction"]>[0]>[0];
 
 // Created on first use, not at import time, so builds without database env vars still work.
 // Cached on globalThis so dev hot reloads don't open a new pool on every edit.

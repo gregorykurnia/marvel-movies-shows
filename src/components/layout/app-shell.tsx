@@ -23,7 +23,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <AppHeader />
       <main
         id="main"
-        className="mx-auto w-full max-w-[1200px] flex-1 px-4 pt-6 pb-8 min-[768px]:px-8 max-[520px]:pt-5 max-[520px]:pb-7"
+        className="mx-auto w-full min-w-0 max-w-[1200px] flex-1 px-4 pt-6 pb-8 min-[768px]:px-8 max-[520px]:pt-5 max-[520px]:pb-7"
       >
         {children}
       </main>

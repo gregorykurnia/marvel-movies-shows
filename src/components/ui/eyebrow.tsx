@@ -28,7 +28,7 @@ export function Eyebrow({
   return (
     <p
       className={cn(
-        "mb-2.5 flex items-center gap-2 whitespace-nowrap font-mono text-xs font-bold uppercase leading-none tracking-[.1em] text-(--accent-ink)",
+        "mb-2.5 flex min-w-0 items-center gap-2 font-mono text-xs leading-[1.4] font-bold tracking-[.1em] uppercase text-(--accent-ink)",
         "before:h-1 before:w-[18px] before:rounded-sm before:bg-(--accent) before:content-['']",
         accentClasses[accent],
         className,

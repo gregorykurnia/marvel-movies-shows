@@ -272,22 +272,22 @@ Phases match the product plan's build plan. Each phase ends with:
 - **Done when:** the app is live on its `*.vercel.app` address, every table exists, and the smoke test passes both locally and against the live site.
 
 ### Phase 1: Titles and Recaps
-- [ ] Title create, edit and delete (movie or show)
-- [ ] Episode create and edit, plus bulk-add episodes
-- [ ] Ordering helpers: a fractional key between neighbours, and year-seeded placement (with unit tests)
-- [ ] `/recaps` list with Reorder mode and drag-and-drop
-- [ ] Recap view page with Markdown display, previous and next
-- [ ] Recap edit page with paste area and live preview
-- [ ] Watched toggle, muted unwatched style, season, show and overall progress bars
-- [ ] Watched and type filters
+- [x] Title create, edit and delete (movie or show)
+- [x] Episode create and edit, plus bulk-add episodes
+- [x] Ordering helpers: a fractional key between neighbours, and year-seeded placement (with unit tests)
+- [x] `/recaps` list with Reorder mode and drag-and-drop
+- [x] Recap view page with Markdown display, previous and next
+- [x] Recap edit page with paste area and live preview
+- [x] Watched toggle, muted unwatched style, season, show and overall progress bars
+- [x] Watched and type filters
 - **Done when:** I can add a show with episodes, paste recaps, drag an episode between two movies, mark things watched, and the order and progress survive a reload.
 
 ### Phase 2: Characters
-- [ ] `/universes` management
-- [ ] Character create and edit form with all comboboxes, inline add universe, and the status dropdown
-- [ ] Appearances editor, on both the character form and the recap edit page
-- [ ] `/characters` table with search, filters, sort, URL-synced state, clear all
-- [ ] Character page with appearances list linked to recaps
+- [x] `/universes` management
+- [x] Character create and edit form with all comboboxes, inline add universe, and the status choice (built as radio pills, per DESIGN_GUIDE §7)
+- [x] Appearances editor, on both the character form and the recap edit page
+- [x] `/characters` table with search, filters, sort, URL-synced state, clear all
+- [x] Character page with appearances list linked to recaps
 - **Done when:** I can enter several Loki variants in different universes, then filter by universe and status and sort by any column.
 
 ### Phase 3: Timeline

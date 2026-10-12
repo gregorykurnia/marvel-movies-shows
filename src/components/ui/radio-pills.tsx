@@ -13,6 +13,11 @@ const toneClasses = {
     "data-[state=checked]:bg-violet data-[state=checked]:text-on-violet",
   neutral:
     "data-[state=checked]:bg-surface-2 data-[state=checked]:text-ink",
+  // Movie is red and show is blue, everywhere (DESIGN_GUIDE §2).
+  red: "data-[state=checked]:bg-red data-[state=checked]:text-on-red",
+  blue: "data-[state=checked]:bg-blue data-[state=checked]:text-on-blue",
+  // Unknown status, and the warning colour.
+  yellow: "data-[state=checked]:bg-yellow data-[state=checked]:text-on-yellow",
 } as const;
 
 // Each option can set its own tone, since Status is green on Alive only. The group tone is the fallback.
