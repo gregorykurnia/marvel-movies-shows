@@ -252,7 +252,7 @@ Phases match the product plan's build plan. Each phase ends with:
 ### Phase 0: Foundation
 - [x] Store Neon connection strings in `.env.local` and add `.gitignore`
 - [x] Verify the direct and pooled connections
-- [ ] Upgrade Node.js to 24 LTS
+- [x] Upgrade Node.js to 24 LTS
 - [x] Initialise a local git repo (no commit yet)
 - [x] Scaffold Next.js + TypeScript + Tailwind + shadcn/ui (shadcn-style components built on Radix, not via the shadcn CLI)
 - [x] Set up Drizzle: client, `drizzle.config.ts`, the full schema from §3, the first migration (generated, not yet applied to any database)

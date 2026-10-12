@@ -19,6 +19,11 @@ const testDatabaseUrl = assertTestDatabase(
 
 const PORT = 3000;
 
+// E2E_BASE_URL points the specs at a deployed site instead (for example the live URL, to check Phase 0's
+// done-when). No local server is started in that case. Unset, the specs run against a local dev server
+// that uses the test database.
+const liveBaseUrl = process.env.E2E_BASE_URL;
+
 export default defineConfig({
   testDir: "./tests/e2e",
   fullyParallel: false,
@@ -27,7 +32,7 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0,
   reporter: [["list"]],
   use: {
-    baseURL: `http://localhost:${PORT}`,
+    baseURL: liveBaseUrl ?? `http://localhost:${PORT}`,
     trace: "retain-on-failure",
   },
   projects: [
@@ -36,16 +41,19 @@ export default defineConfig({
       use: { ...devices["Desktop Chrome"], viewport: { width: 1280, height: 800 } },
     },
   ],
-  webServer: {
-    // Dev server, because the /styleguide route only exists in development.
-    command: `npm run dev -- --port ${PORT}`,
-    url: `http://localhost:${PORT}`,
-    reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
-    env: {
-      ...process.env,
-      ...testEnv,
-      DATABASE_URL_POOLED: testDatabaseUrl,
-    } as Record<string, string>,
-  },
+  webServer: liveBaseUrl
+    ? undefined
+    : {
+        // Always the test-database dev server (npm run dev:test). Never reuse an existing server on the port:
+        // a dev server started with plain `npm run dev` reads .env.local, which points at production.
+        command: `npm run dev:test -- --port ${PORT}`,
+        url: `http://localhost:${PORT}`,
+        reuseExistingServer: false,
+        timeout: 120_000,
+        env: {
+          ...process.env,
+          ...testEnv,
+          DATABASE_URL_POOLED: testDatabaseUrl,
+        } as Record<string, string>,
+      },
 });
