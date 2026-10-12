@@ -13,3 +13,13 @@ A personal web app with Marvel recaps, a timeline and a character directory. Rea
 - Tests run against the Neon `test` branch, never `production`.
 - Secrets live in `.env.local` / `.env.test` (gitignored). Never print, commit or copy connection strings into docs.
 - Don't add features beyond `PRODUCT_PLAN.md` without asking. Ideas go to the user first.
+
+## Commit and push after every change
+- Pushes to `main` deploy to production (Vercel is connected to GitHub, and the live site is `https://marvel-movies-shows.vercel.app`). So every change goes through these steps before the turn ends:
+  1. Run `npm run typecheck`, `npm run lint`, `npm run build` and `npm test`. Run `npx playwright test tests/e2e/smoke.spec.ts` too when the change touches pages or the database. If anything fails, fix it first. Never commit or push a failing change.
+  2. Stage only the files you changed, with `git add <paths>`. Check `git status` first. Never stage `.env*`, `screenshots/`, `.vercel/`, `node_modules/` or `test-results/`.
+  3. Commit to `main`. The message says what changed and why. End it with `Co-Authored-By: Claude Haiku 5.5 <noreply@anthropic.com>`.
+  4. Push with `git push origin main`.
+  5. Tell the user what changed: the files, what each change does, the commit hash, and the Vercel deployment status.
+- Never force-push and never rewrite published history.
+- Production database migrations are not automatic. Run `npm run db:migrate` (production) only when the user asks for it. Migrations go to the `test` branch first (`npm run db:migrate:test`).

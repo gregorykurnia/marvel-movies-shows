@@ -3,7 +3,7 @@ import { join } from "node:path";
 
 import { expect, test } from "@playwright/test";
 
-// Design review screenshots (DESIGN_GUIDE §13): the app shell and /styleguide at 390px and 1280px, in light and dark.
+// Design review screenshots (DESIGN_GUIDE §13): the home page, /styleguide and the 404 at 390px and 1280px, in light and dark.
 // Files are written to screenshots/phase-0/ at the project root (git-ignored).
 const outDir = join(process.cwd(), "screenshots", "phase-0");
 const widths = [
@@ -12,6 +12,7 @@ const widths = [
 ] as const;
 const themes = ["light", "dark"] as const;
 const pages = [
+  { name: "home", path: "/" },
   { name: "styleguide", path: "/styleguide" },
   { name: "not-found", path: "/this-page-does-not-exist" },
 ] as const;
