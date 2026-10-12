@@ -41,7 +41,12 @@ async function EditShowContent({ params }: { params: Promise<{ id: string }> }) 
         title={title.name}
         subtitle="Renaming a show doesn’t change its episodes or their order."
       />
-      <TitleEditForm titleId={id} defaultName={title.name} defaultReleaseDate={title.releaseDate} />
+      <TitleEditForm
+        titleId={id}
+        defaultName={title.name}
+        defaultReleaseDate={title.releaseDate}
+        defaultNotes={title.notes}
+      />
 
       <div className="mt-8">
         <DangerZone

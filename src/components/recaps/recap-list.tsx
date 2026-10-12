@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useOptimistic, useState, useTransition } from "react";
 import {
   closestCenter,
@@ -16,6 +17,7 @@ import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSo
 import { moveEntry } from "@/actions/entries";
 import { EmptyState } from "@/components/layout/empty-state";
 import { PageHeader } from "@/components/layout/page-header";
+import { TagFilter } from "@/components/tags/tag-filter";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { ProgressBar } from "@/components/ui/progress";
 import { SegmentedLinks } from "@/components/ui/segmented-links";
@@ -23,6 +25,7 @@ import { useToast } from "@/components/ui/toast";
 import type { CatalogEntry } from "@/lib/data/catalog";
 import { decadeLabel, formatCount } from "@/lib/format";
 import { reorderAfter } from "@/lib/ordering";
+import { recapsHref, type RecapFilters } from "@/lib/recap-filters";
 
 import { RecapRow } from "./recap-row";
 
@@ -35,15 +38,20 @@ export function RecapList({
   entries,
   totals,
   filtered,
+  filters,
+  tagOptions,
   watchedOptions,
   typeOptions,
 }: {
   entries: CatalogEntry[];
   totals: { total: number; watched: number };
   filtered: boolean;
+  filters: RecapFilters;
+  tagOptions: string[];
   watchedOptions: FilterOption[];
   typeOptions: FilterOption[];
 }) {
+  const router = useRouter();
   const [reordering, setReordering] = useState(false);
   const reorderOn = reordering && !filtered;
   const [items, showMove] = useOptimistic(
@@ -135,6 +143,11 @@ export function RecapList({
       <div className="mb-4 flex flex-wrap items-center gap-2.5">
         <SegmentedLinks label="Watched filter" options={watchedOptions} />
         <SegmentedLinks label="Type filter" options={typeOptions} />
+        <TagFilter
+          value={filters.tag}
+          options={tagOptions}
+          onChange={(tag) => router.replace(recapsHref({ ...filters, tag }), { scroll: false })}
+        />
         {filtered ? (
           <Link href="/recaps" scroll={false} className={buttonVariants({ variant: "ghost", size: "sm" })}>
             Clear filters

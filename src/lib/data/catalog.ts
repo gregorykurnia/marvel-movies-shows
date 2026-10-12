@@ -5,6 +5,8 @@ import { and, asc, eq, sql } from "drizzle-orm";
 import { getDb } from "@/db";
 import { entries, titles } from "@/db/schema";
 
+import { loadEntryTagNames } from "./tags";
+
 export type TitleKind = "movie" | "show";
 
 // One movie or episode, with the fields its title needs. This is the row for every list.
@@ -22,6 +24,7 @@ export type CatalogEntry = {
   watched: boolean;
   hasRecap: boolean;
   sortKey: string;
+  tags: string[];
 };
 
 const catalogColumns = {
@@ -42,21 +45,29 @@ const catalogColumns = {
 
 // Every movie and episode in custom order (the order the recap list shows).
 export async function loadCatalog(): Promise<CatalogEntry[]> {
-  return getDb()
-    .select(catalogColumns)
-    .from(entries)
-    .innerJoin(titles, eq(entries.titleId, titles.id))
-    .orderBy(asc(entries.sortKey));
+  const [rows, tagNames] = await Promise.all([
+    getDb()
+      .select(catalogColumns)
+      .from(entries)
+      .innerJoin(titles, eq(entries.titleId, titles.id))
+      .orderBy(asc(entries.sortKey)),
+    loadEntryTagNames(),
+  ]);
+  return rows.map((row) => ({ ...row, tags: tagNames.get(row.id) ?? [] }));
 }
 
 // One show's episodes, in season and episode order (the order a show page lists them in).
 export async function loadEpisodesForTitle(titleId: string): Promise<CatalogEntry[]> {
-  return getDb()
-    .select(catalogColumns)
-    .from(entries)
-    .innerJoin(titles, eq(entries.titleId, titles.id))
-    .where(eq(entries.titleId, titleId))
-    .orderBy(asc(entries.seasonNumber), asc(entries.episodeNumber));
+  const [rows, tagNames] = await Promise.all([
+    getDb()
+      .select(catalogColumns)
+      .from(entries)
+      .innerJoin(titles, eq(entries.titleId, titles.id))
+      .where(eq(entries.titleId, titleId))
+      .orderBy(asc(entries.seasonNumber), asc(entries.episodeNumber)),
+    loadEntryTagNames(),
+  ]);
+  return rows.map((row) => ({ ...row, tags: tagNames.get(row.id) ?? [] }));
 }
 
 export type TitleRow = {
@@ -93,11 +104,18 @@ export type TitleRecord = {
   name: string;
   kind: TitleKind;
   releaseDate: string | null;
+  notes: string | null;
 };
 
 export async function loadTitle(id: string): Promise<TitleRecord | null> {
   const [row] = await getDb()
-    .select({ id: titles.id, name: titles.name, kind: titles.kind, releaseDate: titles.releaseDate })
+    .select({
+      id: titles.id,
+      name: titles.name,
+      kind: titles.kind,
+      releaseDate: titles.releaseDate,
+      notes: titles.notes,
+    })
     .from(titles)
     .where(eq(titles.id, id))
     .limit(1);
@@ -106,18 +124,22 @@ export async function loadTitle(id: string): Promise<TitleRecord | null> {
 
 export type EntryDetail = CatalogEntry & {
   recap: string | null;
+  notes: string | null;
 };
 
-// One entry with its recap text, for the recap page and its edit page.
+// One entry with its recap text and notes, for the recap page and its edit page.
 export async function loadEntryDetail(id: string): Promise<EntryDetail | null> {
-  const [row] = await getDb()
-    .select({ ...catalogColumns, recap: entries.recap })
-    .from(entries)
-    .innerJoin(titles, eq(entries.titleId, titles.id))
-    .where(eq(entries.id, id))
-    .limit(1);
+  const [[row], tagNames] = await Promise.all([
+    getDb()
+      .select({ ...catalogColumns, recap: entries.recap, notes: entries.notes })
+      .from(entries)
+      .innerJoin(titles, eq(entries.titleId, titles.id))
+      .where(eq(entries.id, id))
+      .limit(1),
+    loadEntryTagNames(),
+  ]);
   if (!row) return null;
-  return { ...row, recap: row.recap ?? null };
+  return { ...row, recap: row.recap ?? null, notes: row.notes ?? null, tags: tagNames.get(id) ?? [] };
 }
 
 // Used by the movie flow: the one entry a movie title owns, or null if it doesn't exist.

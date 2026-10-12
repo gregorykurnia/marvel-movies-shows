@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { Suspense } from "react";
 
+import { deleteCharacter } from "@/actions/characters";
+import { DangerZone } from "@/components/layout/danger-zone";
 import { PageHeader } from "@/components/layout/page-header";
 import { FormSkeleton } from "@/components/layout/page-skeleton";
 import { CharacterForm } from "@/components/characters/character-form";
@@ -52,6 +54,18 @@ async function EditCharacterContent({ params }: { params: Promise<{ id: string }
         }}
         {...options}
       />
+
+      <div className="mt-8">
+        <DangerZone
+          title={`Delete “${character.name}”`}
+          confirmWord="DELETE"
+          actionLabel="Delete character"
+          action={deleteCharacter.bind(null, id, "/characters")}
+        >
+          Removes this variant, its tags and its appearances. The recaps it appeared in stay as they are. This can&rsquo;t
+          be undone.
+        </DangerZone>
+      </div>
     </>
   );
 }

@@ -31,6 +31,8 @@ async function EditEventContent({ params }: { params: Promise<{ id: string }> })
     year: String(event.year),
     text: event.text,
     details: event.details ?? "",
+    notes: event.notes ?? "",
+    tags: event.tags,
     titleId: event.titleId,
     entryId: event.entryId,
     placement: "keep",
@@ -53,7 +55,7 @@ async function EditEventContent({ params }: { params: Promise<{ id: string }> })
           actionLabel="Delete event"
           action={deleteEvent.bind(null, id, "/timeline")}
         >
-          Removes this event from the timeline. Its recap is not affected. This can&rsquo;t be undone.
+          Removes this event from the timeline and its tags. Its recap is not affected. This can&rsquo;t be undone.
         </DangerZone>
       </div>
     </>

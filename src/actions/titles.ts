@@ -52,7 +52,12 @@ export async function updateTitle(titleId: string, formData: FormData): Promise<
 
   const updated = await getDb()
     .update(titles)
-    .set({ name: parsed.data.name, releaseDate: parsed.data.releaseDate, updatedAt: sql`now()` })
+    .set({
+      name: parsed.data.name,
+      releaseDate: parsed.data.releaseDate,
+      notes: parsed.data.notes,
+      updatedAt: sql`now()`,
+    })
     .where(eq(titles.id, titleId))
     .returning({ id: titles.id });
   if (updated.length === 0) return fail("That title no longer exists.");

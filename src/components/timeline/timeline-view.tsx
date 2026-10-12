@@ -15,6 +15,7 @@ import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSo
 
 import { moveEvent as moveEventAction } from "@/actions/events";
 import { EmptyState } from "@/components/layout/empty-state";
+import { TagFilter } from "@/components/tags/tag-filter";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Panel } from "@/components/ui/panel";
@@ -46,10 +47,19 @@ const TYPE_OPTIONS = (["all", "movie", "show"] as const).map((value) => ({ value
 // The timeline (DESIGN_GUIDE §8, Canvas; IMPLEMENTATION_PLAN §5.2). Events are placed by year on a compressed axis.
 // Empty years collapse into gap markers. Zoom groups years into decades or centuries, and clicking a group zooms
 // into it. Reorder mode moves events within their year, and each move shows at once. It rolls back if the save fails.
-export function TimelineView({ events, initialType }: { events: TimelineEvent[]; initialType: TypeFilter }) {
+export function TimelineView({
+  events,
+  initialType,
+  initialTag,
+}: {
+  events: TimelineEvent[];
+  initialType: TypeFilter;
+  initialTag: string | null;
+}) {
   const toast = useToast();
   const [, startTransition] = useTransition();
   const [type, setType] = useState<TypeFilter>(initialType);
+  const [tag, setTag] = useState<string | null>(initialTag);
   const [zoom, setZoom] = useState<Zoom>("year");
   const [reordering, setReordering] = useState(false);
   const [jumpText, setJumpText] = useState("");
@@ -67,11 +77,14 @@ export function TimelineView({ events, initialType }: { events: TimelineEvent[];
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
 
-  // Keep the address bar in step with the type filter, so a filtered view can be bookmarked.
+  // Keep the address bar in step with the filters, so a filtered view can be bookmarked.
   useEffect(() => {
-    const query = type === "all" ? "" : `?type=${type}`;
-    window.history.replaceState(null, "", `${window.location.pathname}${query}`);
-  }, [type]);
+    const params = new URLSearchParams();
+    if (type !== "all") params.set("type", type);
+    if (tag) params.set("tag", tag);
+    const query = params.toString();
+    window.history.replaceState(null, "", `${window.location.pathname}${query ? `?${query}` : ""}`);
+  }, [type, tag]);
 
   useEffect(() => {
     if (pendingScroll.current === null) return;
@@ -79,13 +92,24 @@ export function TimelineView({ events, initialType }: { events: TimelineEvent[];
     pendingScroll.current = null;
   }, [zoom]);
 
+  // Every tag used on an event, once each, for the tag filter.
+  const tagOptions = useMemo(
+    () => [...new Set(events.flatMap((event) => event.tags))].sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase())),
+    [events],
+  );
   const shown = useMemo(
-    () => (type === "all" ? items : items.filter((event) => event.titleKind === type)),
-    [items, type],
+    () =>
+      items.filter(
+        (event) =>
+          (type === "all" || event.titleKind === type) &&
+          (tag === null || event.tags.some((name) => name.toLowerCase() === tag.toLowerCase())),
+      ),
+    [items, type, tag],
   );
   const axis = useMemo(() => layoutAxis(shown, zoom), [shown, zoom]);
   // Reordering needs every event of a year in view, so it's off while a filter hides some, and above year zoom.
-  const reorderOn = reordering && zoom === "year" && type === "all";
+  const filtered = type !== "all" || tag !== null;
+  const reorderOn = reordering && zoom === "year" && !filtered;
 
   const range = events.length
     ? `${formatYear(events[0].year)} to ${formatYear(Math.max(...events.map((event) => event.year)))}`
@@ -154,9 +178,8 @@ export function TimelineView({ events, initialType }: { events: TimelineEvent[];
 
   function clearFilters() {
     setType("all");
+    setTag(null);
   }
-
-  const filtered = type !== "all";
 
   return (
     <>
@@ -192,6 +215,7 @@ export function TimelineView({ events, initialType }: { events: TimelineEvent[];
               onValueChange={(value) => setType(value as TypeFilter)}
               options={TYPE_OPTIONS}
             />
+            <TagFilter value={tag} options={tagOptions} onChange={setTag} />
             <Segmented
               label="Zoom"
               value={zoom}
@@ -235,7 +259,7 @@ export function TimelineView({ events, initialType }: { events: TimelineEvent[];
           ) : null}
           {zoom !== "year" || filtered ? (
             <p className="-mt-2 mb-3 text-[13px] text-ink-3">
-              {zoom !== "year" ? "Zoom to the year level to reorder events." : "Clear the type filter to reorder events."}
+              {zoom !== "year" ? "Zoom to the year level to reorder events." : "Clear the filters to reorder events."}
             </p>
           ) : null}
 
@@ -249,7 +273,7 @@ export function TimelineView({ events, initialType }: { events: TimelineEvent[];
                 </button>
               }
             >
-              There are no {TYPE_LABELS[type].toLowerCase()} events yet.
+              No events match these filters yet.
             </EmptyState>
           ) : (
             <Canvas

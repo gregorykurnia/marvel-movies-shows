@@ -8,11 +8,13 @@ import { EmptyState } from "@/components/layout/empty-state";
 import { PageHeader } from "@/components/layout/page-header";
 import { PageSkeleton } from "@/components/layout/page-skeleton";
 import { PrevNext } from "@/components/layout/prev-next";
+import { CharacterTagsCard } from "@/components/characters/character-tags-card";
 import { RecapMarkdown } from "@/components/recaps/recap-markdown";
 import { buttonVariants } from "@/components/ui/button";
 import { Chip, EpisodeCode } from "@/components/ui/chip";
 import { Panel } from "@/components/ui/panel";
 import { loadCharacterDetail, loadNeighbouringCharacters } from "@/lib/data/characters";
+import { loadTagNames } from "@/lib/data/tags";
 import { formatCount } from "@/lib/format";
 import { importanceLabel, statusLabel } from "@/lib/labels";
 
@@ -30,7 +32,11 @@ export default function CharacterPage({ params }: { params: Promise<{ id: string
 async function CharacterContent({ params }: { params: Promise<{ id: string }> }) {
   await connection();
   const { id } = await params;
-  const [character, neighbours] = await Promise.all([loadCharacterDetail(id), loadNeighbouringCharacters(id)]);
+  const [character, neighbours, tagOptions] = await Promise.all([
+    loadCharacterDetail(id),
+    loadNeighbouringCharacters(id),
+    loadTagNames(),
+  ]);
   if (!character) notFound();
 
   const universeText = character.universeName ?? "No universe";
@@ -153,20 +159,7 @@ async function CharacterContent({ params }: { params: Promise<{ id: string }> })
             </dl>
           </Panel>
 
-          <Panel className="p-5">
-            <h2 className="mb-3 font-display text-[15px] font-bold">Tags</h2>
-            {character.tags.length > 0 ? (
-              <div className="flex flex-wrap gap-2">
-                {character.tags.map((tag) => (
-                  <Chip key={tag} tone="tag">
-                    {tag}
-                  </Chip>
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-ink-3">No tags yet.</p>
-            )}
-          </Panel>
+          <CharacterTagsCard characterId={id} initial={character.tags} options={tagOptions} />
           <p className="text-[13px] text-ink-3">{formatCount(character.appearances.length, "appearance")}</p>
         </aside>
       </div>

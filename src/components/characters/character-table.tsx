@@ -20,6 +20,7 @@ import { Search } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import { EmptyState } from "@/components/layout/empty-state";
+import { TagFilter } from "@/components/tags/tag-filter";
 import { buttonVariants } from "@/components/ui/button";
 import { Chip } from "@/components/ui/chip";
 import { FilterMenu } from "@/components/ui/filter-menu";
@@ -122,6 +123,7 @@ export function CharacterTable({ rows }: { rows: CharacterTableRow[] }) {
   const [search, setSearch] = useState(() => params.get("q") ?? "");
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(() => filtersFrom(params));
   const [sorting, setSorting] = useState<SortingState>(() => sortingFrom(params));
+  const [tag, setTag] = useState<string | null>(() => params.get("tag"));
 
   // Keep the address bar in step with what the table shows.
   useEffect(() => {
@@ -130,6 +132,7 @@ export function CharacterTable({ rows }: { rows: CharacterTableRow[] }) {
     for (const filter of columnFilters) {
       if (typeof filter.value === "string" && filter.value) next.set(filter.id, filter.value);
     }
+    if (tag) next.set("tag", tag);
     const sort = sorting[0];
     if (sort) {
       next.set("sort", sort.id);
@@ -137,7 +140,17 @@ export function CharacterTable({ rows }: { rows: CharacterTableRow[] }) {
     }
     const query = next.toString();
     window.history.replaceState(null, "", `${pathname}${query ? `?${query}` : ""}`);
-  }, [search, columnFilters, sorting, pathname]);
+  }, [search, columnFilters, sorting, tag, pathname]);
+
+  // Every tag a character has, once each, for the tag filter. The filter narrows the rows before the table sees them.
+  const tagOptions = useMemo(
+    () => [...new Set(rows.flatMap((row) => row.tags))].sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase())),
+    [rows],
+  );
+  const tagged = useMemo(
+    () => (tag ? rows.filter((row) => row.tags.some((name) => name.toLowerCase() === tag.toLowerCase())) : rows),
+    [rows, tag],
+  );
 
   const options = useMemo(() => {
     const uniqueBy = <T extends { value: string; label: string }>(list: T[]) => {
@@ -173,7 +186,7 @@ export function CharacterTable({ rows }: { rows: CharacterTableRow[] }) {
 
   const table = useTable({
     features,
-    data: rows,
+    data: tagged,
     columns,
     state: { columnFilters, sorting, globalFilter: search },
     onColumnFiltersChange: setColumnFilters,
@@ -189,7 +202,7 @@ export function CharacterTable({ rows }: { rows: CharacterTableRow[] }) {
   });
 
   const visibleRows = table.getRowModel().rows;
-  const activeCount = columnFilters.length + (search.trim() ? 1 : 0);
+  const activeCount = columnFilters.length + (search.trim() ? 1 : 0) + (tag ? 1 : 0);
   const filterValue = (id: Filters) => (columnFilters.find((filter) => filter.id === id)?.value as string | undefined) ?? null;
 
   function setFilter(id: Filters, value: string | null) {
@@ -202,6 +215,7 @@ export function CharacterTable({ rows }: { rows: CharacterTableRow[] }) {
   function clearAll() {
     setSearch("");
     setColumnFilters([]);
+    setTag(null);
   }
 
   return (
@@ -224,6 +238,7 @@ export function CharacterTable({ rows }: { rows: CharacterTableRow[] }) {
         <FilterMenu label="Predominant" value={filterValue("predominant")} options={options.predominant} onChange={(value) => setFilter("predominant", value)} />
         <FilterMenu label="First" value={filterValue("first")} options={options.first} onChange={(value) => setFilter("first", value)} />
         <FilterMenu label="Last" value={filterValue("last")} options={options.last} onChange={(value) => setFilter("last", value)} />
+        <TagFilter value={tag} options={tagOptions} onChange={setTag} />
         {activeCount > 0 ? (
           <button
             type="button"

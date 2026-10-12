@@ -2,23 +2,27 @@
 
 import { and, eq, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 
 import { getDb } from "@/db";
 import { entries, titles } from "@/db/schema";
 import { fail, ok, validationFailure, type ActionResult } from "@/lib/action-result";
 import { replaceRecapCharacters } from "@/lib/data/appearances";
+import { replaceEntryTags, tagIdsFor } from "@/lib/data/tags";
 import { readPlaceables } from "@/lib/data/placeables";
 import { isForeignKeyViolation, isUniqueViolation } from "@/lib/db-errors";
 import { formStrings } from "@/lib/form";
 import { formatEpisodeCode } from "@/lib/format";
 import { keyForMove, seededKey, seededKeys } from "@/lib/ordering";
 import {
+  deleteConfirmSchema,
   episodeEditSchema,
   episodeFormSchema,
   episodeRangeSchema,
   moveEntrySchema,
   movieEditSchema,
   recapCharactersSchema,
+  tagNamesSchema,
   watchedSchema,
 } from "@/lib/schemas";
 
@@ -155,6 +159,8 @@ export async function saveEpisode(entryId: string, formData: FormData): Promise<
   if (!parsed.success) return validationFailure(parsed.error);
   const characters = recapCharactersSchema.safeParse(formData.getAll("characterId").map(String));
   if (!characters.success) return validationFailure(characters.error);
+  const tagNames = tagNamesSchema.safeParse(formData.getAll("tagName").map(String));
+  if (!tagNames.success) return validationFailure(tagNames.error);
   const input = parsed.data;
 
   try {
@@ -168,11 +174,13 @@ export async function saveEpisode(entryId: string, formData: FormData): Promise<
           releaseDate: input.releaseDate,
           inUniverseYear: input.inUniverseYear,
           recap: input.recap,
+          notes: input.notes,
         })
         .where(and(eq(entries.id, entryId), sql`${entries.seasonNumber} is not null`))
         .returning({ id: entries.id });
       if (updated.length === 0) return false;
       await replaceRecapCharacters(tx, entryId, characters.data);
+      await replaceEntryTags(tx, entryId, await tagIdsFor(tx, tagNames.data));
       return true;
     });
     if (!saved) return fail("That episode no longer exists.");
@@ -197,6 +205,8 @@ export async function saveMovie(entryId: string, formData: FormData): Promise<Ac
   if (!parsed.success) return validationFailure(parsed.error);
   const characters = recapCharactersSchema.safeParse(formData.getAll("characterId").map(String));
   if (!characters.success) return validationFailure(characters.error);
+  const tagNames = tagNamesSchema.safeParse(formData.getAll("tagName").map(String));
+  if (!tagNames.success) return validationFailure(tagNames.error);
   const input = parsed.data;
 
   try {
@@ -214,9 +224,10 @@ export async function saveMovie(entryId: string, formData: FormData): Promise<Ac
         .where(eq(titles.id, entry.titleId));
       await tx
         .update(entries)
-        .set({ inUniverseYear: input.inUniverseYear, recap: input.recap })
+        .set({ inUniverseYear: input.inUniverseYear, recap: input.recap, notes: input.notes })
         .where(eq(entries.id, entryId));
       await replaceRecapCharacters(tx, entryId, characters.data);
+      await replaceEntryTags(tx, entryId, await tagIdsFor(tx, tagNames.data));
       return true;
     });
     if (!saved) return fail("That movie no longer exists.");
@@ -269,4 +280,19 @@ export async function setWatched(input: { entryId: string; watched: boolean }): 
 
   revalidatePath("/", "layout");
   return ok();
+}
+
+// Deletes one episode and its recap. Its appearances, tags and timeline links go with it (the timeline keeps the
+// event and clears its recap link). The typed word is checked here too, then the user goes to `redirectTo`.
+export async function deleteEpisode(entryId: string, redirectTo: string, formData: FormData): Promise<void> {
+  const confirm = deleteConfirmSchema.safeParse(formData.get("confirm"));
+  if (!confirm.success) {
+    throw new Error("Type DELETE to confirm before deleting.");
+  }
+
+  await getDb()
+    .delete(entries)
+    .where(and(eq(entries.id, entryId), sql`${entries.seasonNumber} is not null`));
+  revalidatePath("/", "layout");
+  redirect(redirectTo);
 }

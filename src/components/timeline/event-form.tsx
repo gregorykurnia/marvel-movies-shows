@@ -7,6 +7,7 @@ import { useState, useTransition, type FormEvent } from "react";
 import { createEvent, updateEvent } from "@/actions/events";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Combobox, type ComboOption } from "@/components/ui/combobox";
+import { TagInput } from "@/components/tags/tag-input";
 import { Input, Textarea } from "@/components/ui/field";
 import { FormAlert, FormFooter, FormGrid, FormPanel, wide } from "@/components/ui/form-layout";
 import { useToast } from "@/components/ui/toast";
@@ -16,6 +17,8 @@ export type EventFormValues = {
   year: string;
   text: string;
   details: string;
+  notes: string;
+  tags: string[];
   titleId: string | null;
   entryId: string | null;
   // "auto", "first", "keep" (edit only), or the id of the event this one follows.
@@ -26,6 +29,8 @@ export const blankEvent: EventFormValues = {
   year: "",
   text: "",
   details: "",
+  notes: "",
+  tags: [],
   titleId: null,
   entryId: null,
   placement: "auto",
@@ -35,6 +40,7 @@ export type EventFormOptions = {
   titles: { id: string; name: string; kind: "movie" | "show" }[];
   entries: { id: string; titleId: string; label: string }[];
   events: { id: string; year: number; text: string }[];
+  tagNames: string[];
 };
 
 // Parses the typed year. "−" is a real minus sign, so it's accepted as well as "-". Null while the text isn't a year.
@@ -150,7 +156,7 @@ export function EventForm({
         if (another) {
           // Keep the year, title and recap, which often repeat. Clear what is specific to this event.
           toast(`Added “${text}”. Add the next event.`);
-          setValues((current) => ({ ...current, text: "", details: "", placement: "auto" }));
+          setValues((current) => ({ ...current, text: "", details: "", notes: "", tags: [], placement: "auto" }));
           return;
         }
         toast(mode === "new" ? `Added “${text}”.` : "Event saved.");
@@ -215,6 +221,25 @@ export function EventForm({
             hint="Optional. Adds a “Read recap” link to the event."
             error={errors.entryId}
           />
+          <Textarea
+            name="notes"
+            label="Notes"
+            rows={3}
+            value={values.notes}
+            onChange={(event) => set("notes", event.target.value)}
+            hint="Your own notes on this event. Plain text or Markdown."
+            error={errors.notes}
+            className={wide}
+          />
+          <div className={wide}>
+            <TagInput
+              label="Add a tag"
+              value={values.tags}
+              onChange={(next) => set("tags", next)}
+              options={options.tagNames}
+              hint="Tags filter the timeline. Pick an existing one, or type a new one."
+            />
+          </div>
           <div className={wide}>
             <Combobox
               label="Order within the year"

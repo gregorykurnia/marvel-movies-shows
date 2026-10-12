@@ -93,6 +93,11 @@ export function RecapRow({
             </Chip>
             {code ? <EpisodeCode>{code}</EpisodeCode> : null}
             <Year>{formatYear(entry.inUniverseYear)}</Year>
+            {entry.tags.slice(0, 3).map((tag) => (
+              <Chip key={tag} tone="tag">
+                {tag}
+              </Chip>
+            ))}
           </div>
         </div>
         <WatchedControl entryId={entry.id} watched={entry.watched} className="shrink-0" />

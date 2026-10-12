@@ -2,9 +2,10 @@
 import { asc, eq, sql } from "drizzle-orm";
 
 import { getDb } from "@/db";
-import { appearances, characters, characterTags, tags, titles, universes } from "@/db/schema";
+import { appearances, characters, titles, universes } from "@/db/schema";
 
 import { loadCatalog, loadTitleRows as loadTitleRowsForOptions, type CatalogEntry } from "./catalog";
+import { loadCharacterTagNames } from "./tags";
 
 export type UniverseRow = { id: string; name: string; characters: number };
 
@@ -87,6 +88,7 @@ export type CharacterTableRow = {
   predominantTitleName: string | null;
   firstEntry: EntryChip | null;
   lastEntry: EntryChip | null;
+  tags: string[];
 };
 
 // An entry as shown on a character row: its label, its watched state, and its place in the custom order.
@@ -94,7 +96,7 @@ export type EntryChip = { id: string; label: string; watched: boolean; rank: num
 
 // The directory table's data. Joins are done here, so filtering and sorting can stay in the browser.
 export async function loadCharacterTable(): Promise<{ rows: CharacterTableRow[]; entries: EntryChip[] }> {
-  const [characterRows, catalog] = await Promise.all([
+  const [characterRows, catalog, tagNames] = await Promise.all([
     getDb()
       .select({
         id: characters.id,
@@ -113,6 +115,7 @@ export async function loadCharacterTable(): Promise<{ rows: CharacterTableRow[];
       .leftJoin(titles, eq(characters.predominantTitleId, titles.id))
       .orderBy(asc(characters.name)),
     loadCatalog(),
+    loadCharacterTagNames(),
   ]);
 
   const chips = new Map<string, EntryChip>();
@@ -131,6 +134,7 @@ export async function loadCharacterTable(): Promise<{ rows: CharacterTableRow[];
     predominantTitleName: row.predominantTitleName ?? null,
     firstEntry: row.firstEntryId ? (chips.get(row.firstEntryId) ?? null) : null,
     lastEntry: row.lastEntryId ? (chips.get(row.lastEntryId) ?? null) : null,
+    tags: tagNames.get(row.id) ?? [],
   }));
 
   return { rows, entries: [...chips.values()] };
@@ -140,7 +144,6 @@ export async function loadCharacterTable(): Promise<{ rows: CharacterTableRow[];
 export type CharacterDetail = CharacterTableRow & {
   notes: string | null;
   appearances: (EntryChip & { href: string; isMovie: boolean; code: string | null })[];
-  tags: string[];
 };
 
 export async function loadCharacterDetail(id: string): Promise<CharacterDetail | null> {
@@ -148,15 +151,9 @@ export async function loadCharacterDetail(id: string): Promise<CharacterDetail |
   const row = rows.find((candidate) => candidate.id === id);
   if (!row) return null;
 
-  const [record, appearanceRows, tagRows, catalog] = await Promise.all([
+  const [record, appearanceRows, catalog] = await Promise.all([
     loadCharacterRecord(id),
     getDb().select({ entryId: appearances.entryId }).from(appearances).where(eq(appearances.characterId, id)),
-    getDb()
-      .select({ name: tags.name })
-      .from(characterTags)
-      .innerJoin(tags, eq(characterTags.tagId, tags.id))
-      .where(eq(characterTags.characterId, id))
-      .orderBy(asc(tags.name)),
     loadCatalog(),
   ]);
 
@@ -178,7 +175,6 @@ export async function loadCharacterDetail(id: string): Promise<CharacterDetail |
     ...row,
     notes: record?.notes ?? null,
     appearances: appearancesList,
-    tags: tagRows.map((tag) => tag.name),
   };
 }
 

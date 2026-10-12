@@ -14,6 +14,7 @@ import type { EntryDetail } from "@/lib/data/catalog";
 import Link from "next/link";
 
 import { AppearancesPicker } from "@/components/characters/appearances-picker";
+import { TagInput } from "@/components/tags/tag-input";
 
 import { RecapMarkdown } from "./recap-markdown";
 
@@ -24,10 +25,12 @@ export function RecapEditForm({
   entry,
   characterOptions,
   initialCharacterIds,
+  tagOptions,
 }: {
   entry: EntryDetail;
   characterOptions: { value: string; label: string }[];
   initialCharacterIds: string[];
+  tagOptions: string[];
 }) {
   const router = useRouter();
   const toast = useToast();
@@ -36,6 +39,7 @@ export function RecapEditForm({
   const [message, setMessage] = useState<string | null>(null);
   const [recap, setRecap] = useState(entry.recap ?? "");
   const [characterIds, setCharacterIds] = useState(initialCharacterIds);
+  const [tagNames, setTagNames] = useState(entry.tags);
   const isMovie = entry.titleKind === "movie";
 
   function onSubmit(event: FormEvent<HTMLFormElement>) {
@@ -162,6 +166,24 @@ export function RecapEditForm({
             onChange={setCharacterIds}
             hint="Every character who appears in this recap. Each variant is listed with its universe."
             emptyText="No characters linked yet."
+          />
+        </div>
+
+        <div className="mt-6 grid gap-4">
+          <Textarea
+            name="notes"
+            label="Notes"
+            rows={4}
+            defaultValue={entry.notes ?? ""}
+            hint="Your own notes on this recap. Plain text or Markdown. Only you see them here, and search finds them."
+            error={errors.notes}
+          />
+          <TagInput
+            label="Add a tag"
+            value={tagNames}
+            onChange={setTagNames}
+            options={tagOptions}
+            hint="Tags filter the recap list. Pick an existing one, or type a new one."
           />
         </div>
 

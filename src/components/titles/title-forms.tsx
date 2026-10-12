@@ -6,7 +6,7 @@ import { useState, useTransition, type FormEvent } from "react";
 
 import { createTitle, updateTitle } from "@/actions/titles";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { Input } from "@/components/ui/field";
+import { Input, Textarea } from "@/components/ui/field";
 import { FormAlert, FormFooter, FormGrid, FormPanel, wide } from "@/components/ui/form-layout";
 import { RadioPills } from "@/components/ui/radio-pills";
 import { useToast } from "@/components/ui/toast";
@@ -122,10 +122,12 @@ export function TitleEditForm({
   titleId,
   defaultName,
   defaultReleaseDate,
+  defaultNotes,
 }: {
   titleId: string;
   defaultName: string;
   defaultReleaseDate: string | null;
+  defaultNotes: string | null;
 }) {
   const router = useRouter();
   const toast = useToast();
@@ -166,6 +168,15 @@ export function TitleEditForm({
             label="Premiere date"
             defaultValue={defaultReleaseDate ?? ""}
             error={errors.releaseDate}
+          />
+          <Textarea
+            name="notes"
+            label="Notes"
+            rows={4}
+            defaultValue={defaultNotes ?? ""}
+            hint="Your own notes on the show. Plain text or Markdown."
+            error={errors.notes}
+            className="min-[640px]:col-span-2"
           />
         </FormGrid>
         <FormFooter>

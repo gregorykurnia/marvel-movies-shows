@@ -78,23 +78,31 @@ async function RecapContent({ params }: { params: Promise<{ entryId: string }> }
       </PageHeader>
 
       <div className="grid items-start gap-6 min-[900px]:grid-cols-[minmax(0,1fr)_300px]">
-        <Panel className="p-5 min-[640px]:p-7">
-          {entry.recap ? (
-            <RecapMarkdown text={entry.recap} />
-          ) : (
-            <EmptyState
-              icon="✎"
-              title="No recap yet"
-              action={
-                <Link href={`/recaps/${entry.id}/edit`} className={buttonVariants({ variant: "primary" })}>
-                  Paste recap
-                </Link>
-              }
-            >
-              Paste the recap as plain text or Markdown. It will be shown here exactly as written.
-            </EmptyState>
-          )}
-        </Panel>
+        <div className="grid min-w-0 gap-6">
+          <Panel className="p-5 min-[640px]:p-7">
+            {entry.recap ? (
+              <RecapMarkdown text={entry.recap} />
+            ) : (
+              <EmptyState
+                icon="✎"
+                title="No recap yet"
+                action={
+                  <Link href={`/recaps/${entry.id}/edit`} className={buttonVariants({ variant: "primary" })}>
+                    Paste recap
+                  </Link>
+                }
+              >
+                Paste the recap as plain text or Markdown. It will be shown here exactly as written.
+              </EmptyState>
+            )}
+          </Panel>
+          {entry.notes ? (
+            <Panel className="p-5 min-[640px]:p-7">
+              <h2 className="mb-3 font-display text-2xl leading-[1.15] font-bold tracking-[-0.02em]">Notes</h2>
+              <RecapMarkdown text={entry.notes} />
+            </Panel>
+          ) : null}
+        </div>
 
         <aside className="grid gap-4">
           <Panel className="p-5">
@@ -118,6 +126,20 @@ async function RecapContent({ params }: { params: Promise<{ entryId: string }> }
               </ul>
             ) : (
               <p className="text-sm text-ink-3">No characters linked to this recap yet.</p>
+            )}
+          </Panel>
+          <Panel className="p-5">
+            <h2 className="mb-3 font-display text-[15px] font-bold">Tags</h2>
+            {entry.tags.length > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                {entry.tags.map((tag) => (
+                  <Chip key={tag} tone="tag">
+                    {tag}
+                  </Chip>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-ink-3">No tags yet.</p>
             )}
           </Panel>
           <Panel className="p-5">

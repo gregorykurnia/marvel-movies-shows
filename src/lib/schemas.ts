@@ -2,6 +2,8 @@
 // Form fields arrive as strings, so each helper treats "" as "not set" and parses numbers and dates itself.
 import { z } from "zod";
 
+import { cleanTagName } from "./tag-name";
+
 const MINUS = "−";
 
 // Years are whole numbers. A year before 1 AD can be typed with either "-" or "−".
@@ -84,6 +86,7 @@ export const titleFormSchema = z.object({
 export const titleEditSchema = z.object({
   name,
   releaseDate: optionalDate,
+  notes: optionalText(10_000),
 });
 
 // Episodes. Season 0 is allowed for specials. Episode numbers start at 1.
@@ -127,14 +130,43 @@ export const recapSchema = z
   .max(RECAP_MAX_LENGTH, "The recap is too long to save")
   .transform((value) => (value.trim() === "" ? null : value));
 
-export const episodeEditSchema = episodeFormSchema.extend({ recap: recapSchema });
+// Notes on a recap are stored on its entry (PRODUCT_PLAN §2.6). Tags are read separately with tagNamesSchema.
+export const episodeEditSchema = episodeFormSchema.extend({
+  recap: recapSchema,
+  notes: optionalText(10_000),
+});
 
 export const movieEditSchema = z.object({
   name,
   releaseDate: optionalDate,
   inUniverseYear: optionalYear,
   recap: recapSchema,
+  notes: optionalText(10_000),
 });
+
+// Tags (PRODUCT_PLAN §2.6). A name is cleaned the same way as in the form (no "#", single spaces, 40 characters
+// at most). A list drops blanks and repeats, ignoring case, and keeps the first spelling.
+export const tagNameSchema = z
+  .string()
+  .transform((value) => cleanTagName(value))
+  .pipe(z.string().min(1, "Enter a tag name"));
+
+export const tagNamesSchema = z
+  .array(z.string())
+  .max(50, "Use at most 50 tags")
+  .transform((names) => {
+    const seen = new Set<string>();
+    const kept: string[] = [];
+    for (const raw of names) {
+      const name = cleanTagName(raw);
+      if (!name || seen.has(name.toLowerCase())) continue;
+      seen.add(name.toLowerCase());
+      kept.push(name);
+    }
+    return kept;
+  });
+
+export const uuidSchema = z.uuid("That item no longer exists.");
 
 // Characters. Each variant is its own row (PRODUCT_PLAN §2.3).
 export const importanceSchema = z.enum(["major", "minor"], { error: "Choose major or minor" });
@@ -178,6 +210,7 @@ export const eventFormSchema = z.object({
   year: requiredWhole("the year", YEAR_MIN, YEAR_MAX),
   text: z.string().trim().min(1, "Enter what happened").max(200, "Keep it under 200 characters"),
   details: optionalText(2000),
+  notes: optionalText(10_000),
   titleId: optionalUuid,
   entryId: optionalUuid,
   placement: z

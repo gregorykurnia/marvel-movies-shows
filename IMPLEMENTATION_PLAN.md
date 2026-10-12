@@ -300,9 +300,10 @@ Phases match the product plan's build plan. Each phase ends with:
 - **Done when:** events with real years (including a BCE year) appear in the right order, gaps are compressed, and the recap links work.
 
 ### Phase 4: Notes, Tags and Search
-- [ ] Notes fields on all edit forms
-- [ ] Tag input on entries, events and characters, plus `/tags` management
-- [ ] Tag filter on the Recaps, Timeline and Characters views
+- [x] Notes fields on all edit forms (titles, episodes, events, characters)
+- [x] Tag input on entries, events and characters, plus `/tags` management (rename, merge, delete)
+- [x] Tag filter on the Recaps, Timeline and Characters views
+- [x] Episode and character delete, with the typed DELETE confirmation (approved 2026-10-12, with the timeline event delete)
 - [ ] `/search` with grouped results, the header search box, `⌘K` and `/` shortcuts
 - **Done when:** one search finds a match in a recap's text, an event, a character and a note, and tag filters work on every list.
 

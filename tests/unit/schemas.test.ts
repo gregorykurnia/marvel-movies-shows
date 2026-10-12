@@ -123,9 +123,9 @@ describe("recapSchema", () => {
 
 describe("movieEditSchema", () => {
   it("needs a name and keeps the recap", () => {
-    const parsed = movieEditSchema.parse({ name: "Thor", releaseDate: "", inUniverseYear: "", recap: "Text" });
-    expect(parsed).toEqual({ name: "Thor", releaseDate: null, inUniverseYear: null, recap: "Text" });
-    expect(errorsFor(movieEditSchema.safeParse({ name: "", releaseDate: "", inUniverseYear: "", recap: "" }))).toHaveProperty(
+    const parsed = movieEditSchema.parse({ name: "Thor", releaseDate: "", inUniverseYear: "", recap: "Text", notes: "" });
+    expect(parsed).toEqual({ name: "Thor", releaseDate: null, inUniverseYear: null, recap: "Text", notes: null });
+    expect(errorsFor(movieEditSchema.safeParse({ name: "", releaseDate: "", inUniverseYear: "", recap: "", notes: "" }))).toHaveProperty(
       "name",
     );
   });

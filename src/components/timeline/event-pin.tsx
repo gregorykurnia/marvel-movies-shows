@@ -45,6 +45,15 @@ function EventDetails({ event, interactive }: { event: TimelineEvent; interactiv
       {event.details ? (
         <p className="mt-1.5 text-sm leading-normal whitespace-pre-line text-ink-2">{event.details}</p>
       ) : null}
+      {event.tags.length > 0 ? (
+        <div className="mt-2.5 flex flex-wrap gap-1.5">
+          {event.tags.map((tag) => (
+            <Chip key={tag} tone="tag">
+              {tag}
+            </Chip>
+          ))}
+        </div>
+      ) : null}
       <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-sm font-bold">
         {event.entryId ? (
           <Link

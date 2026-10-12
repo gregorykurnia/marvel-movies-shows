@@ -7,11 +7,12 @@ import { redirect } from "next/navigation";
 import { getDb, type Tx } from "@/db";
 import { entries, timelineEvents } from "@/db/schema";
 import { fail, ok, validationFailure, type ActionResult } from "@/lib/action-result";
+import { replaceEventTags, tagIdsFor } from "@/lib/data/tags";
 import { readEventPlaceables } from "@/lib/data/timeline";
 import { isForeignKeyViolation } from "@/lib/db-errors";
 import { formStrings } from "@/lib/form";
 import { keyInYear, type YearPlaceable } from "@/lib/ordering";
-import { deleteConfirmSchema, eventFormSchema, eventMoveSchema } from "@/lib/schemas";
+import { deleteConfirmSchema, eventFormSchema, eventMoveSchema, tagNamesSchema } from "@/lib/schemas";
 
 // Server Actions for timeline events (IMPLEMENTATION_PLAN §3.2). An event's sort_key only orders it within its year,
 // so a move or a new placement always stays inside that year's block (see keyInYear).
@@ -58,6 +59,8 @@ export async function createEvent(formData: FormData): Promise<ActionResult<{ id
   const parsed = eventFormSchema.safeParse(formStrings(formData));
   if (!parsed.success) return validationFailure(parsed.error);
   const input = parsed.data;
+  const tagNames = tagNamesSchema.safeParse(formData.getAll("tagName").map(String));
+  if (!tagNames.success) return validationFailure(tagNames.error);
 
   try {
     const result = await getDb().transaction(async (tx) => {
@@ -75,11 +78,13 @@ export async function createEvent(formData: FormData): Promise<ActionResult<{ id
           year: input.year,
           text: input.text,
           details: input.details,
+          notes: input.notes,
           titleId: links.titleId,
           entryId: links.entryId,
           sortKey,
         })
         .returning({ id: timelineEvents.id });
+      await replaceEventTags(tx, row.id, await tagIdsFor(tx, tagNames.data));
       return { ok: true as const, id: row.id };
     });
 
@@ -103,6 +108,8 @@ export async function updateEvent(eventId: string, formData: FormData): Promise<
   const parsed = eventFormSchema.safeParse(formStrings(formData));
   if (!parsed.success) return validationFailure(parsed.error);
   const input = parsed.data;
+  const tagNames = tagNamesSchema.safeParse(formData.getAll("tagName").map(String));
+  if (!tagNames.success) return validationFailure(tagNames.error);
 
   try {
     const result: UpdateOutcome = await getDb().transaction(async (tx) => {
@@ -126,6 +133,7 @@ export async function updateEvent(eventId: string, formData: FormData): Promise<
       } else {
         await writeEvent(tx, eventId, input, links, current.sortKey);
       }
+      await replaceEventTags(tx, eventId, await tagIdsFor(tx, tagNames.data));
       return { ok: true as const };
     });
 
@@ -145,7 +153,7 @@ export async function updateEvent(eventId: string, formData: FormData): Promise<
 async function writeEvent(
   tx: Tx,
   eventId: string,
-  input: { year: number; text: string; details: string | null },
+  input: { year: number; text: string; details: string | null; notes: string | null },
   links: { titleId: string | null; entryId: string | null },
   sortKey: string,
 ) {
@@ -155,6 +163,7 @@ async function writeEvent(
       year: input.year,
       text: input.text,
       details: input.details,
+      notes: input.notes,
       titleId: links.titleId,
       entryId: links.entryId,
       sortKey,
