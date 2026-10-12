@@ -1,6 +1,6 @@
 # Marvel Directory: Product Plan
 
-**Status:** Draft v0.6. Not implemented yet. The database is connected, and the implementation details live in [`IMPLEMENTATION_PLAN.md`](./IMPLEMENTATION_PLAN.md). Hosting and backup are now decided.
+**Status:** Draft v0.7 (2026-10-12). Adds a universe designation on recaps and shows recaps with an in-universe year on the timeline (build phases 6 and 7). The database is connected, and the implementation details live in [`IMPLEMENTATION_PLAN.md`](./IMPLEMENTATION_PLAN.md). Hosting and backup are now decided.
 
 ## 1. Overview
 
@@ -15,7 +15,7 @@ Cross-cutting features: **watched tracking**, **global search**, **notes and tag
 **Basic principles**
 - Single user (me). **No login, no accounts.** Hosted online and reachable by link, without access protection (see §5).
 - **All data is entered by hand.** The forms for entering and editing data therefore need to be quick and comfortable to use, because they will be used constantly.
-- Recaps and Timeline are **two separate things**. Timeline events are not generated from recaps. I write them myself, though they can optionally link to a recap.
+- Recaps and Timeline are **two separate things**. Timeline events that I write myself are never generated from recaps, though they can optionally link to one. A recap with an in-universe year is different: it appears on the timeline automatically, as a read-only item (see 2.2).
 
 ---
 
@@ -31,7 +31,8 @@ Cross-cutting features: **watched tracking**, **global search**, **notes and tag
 - The custom order is **per episode**. Episodes of one show can be placed between other movies and shows, not just kept together.
 - The order is **adjustable at any time** (drag and drop, or move up and down), and the change is saved.
 - Each entry also stores an **in-universe year**. This is used to seed the order, and I can then adjust the order by hand. Changing the order never changes the year, and the reverse is also true.
-- Each recap shows: title (and season and episode number if it's an episode), release date, in-universe year, the recap text, the characters who appear in it, and my notes and tags.
+- Each entry also has an optional **universe designation**, such as Earth-616. I pick it from the universes list (§2.3), beside the in-universe year. A recap has one universe at most. It can be left empty, and the recap then shows "No universe set" so the gap is visible. A universe used by a recap can't be deleted, the same as for characters.
+- Each recap shows: title (and season and episode number if it's an episode), release date, in-universe year, universe designation, the recap text, the characters who appear in it, and my notes and tags. The universe designation is shown clearly on the recap page and in the list.
 - Previous and next buttons follow my custom order.
 - Each entry has a **watched** marker (see 2.4).
 
@@ -48,6 +49,13 @@ Cross-cutting features: **watched tracking**, **global search**, **notes and tag
 - The time axis **adapts to the years I've entered**. It has no fixed start or end, and it stretches or shrinks as I add events. Years with no events don't take up space.
 - **Hover (or tap on mobile) expands an event** to show its details: the year, the full event text, and which movie or show it belongs to.
 - An event can **optionally link to a recap** from 2.1. When linked, the expanded view has a link that opens that recap.
+- **Recaps appear here automatically.** Every movie and episode with an in-universe year is shown, even if its recap text is still empty. These items are shown, not copied: changing a recap's year moves it here, clearing the year removes it, and deleting the recap removes it. I edit them on the recap, not on the timeline.
+- **Order within a year:** my hand-written events come first, in my order. Recap items come after them, in recap order. Recap items can't be dragged. Only hand-written events can be reordered.
+- **Recap items look different** from events. They have a small "From recap" label, and their links are "Read recap →" and "Edit recap". They have no "Edit event" link.
+- If a hand-written event is linked to the same recap, both are shown. I delete the one I don't need.
+- Recap items follow the same filters as events: movies, shows and tags. A recap item's tags are its recap's tags.
+- Recap items are not separate search results, because recaps are already searchable.
+- The count at the top includes both kinds.
 - Navigation: scroll or drag along the time axis, zoom in and out on eras, and jump to a year.
 - Events from movies and shows look different (colour or icon), and I can filter by type.
 - Events are created and edited with a simple form: year, text, order, and the optional link to a title or episode.
@@ -138,12 +146,13 @@ Cross-cutting features: **watched tracking**, **global search**, **notes and tag
 ## 3. Shared Data Model (draft)
 
 - **Title**: a movie or a show. Fields: name, type, release date.
-- **Episode**: belongs to a show, with season and episode number. Fields: name, release date, in-universe year.
-- **Recap**: attached to a movie or an episode. Holds the pasted text.
+- **Episode**: belongs to a show, with season and episode number. Fields: name, release date, in-universe year, universe designation.
+- **Recap**: attached to a movie or an episode. Holds the pasted text. A movie's in-universe year and universe designation are kept on its recap.
 - **Recap order**: the custom position of each movie or episode. Stored separately from the content, so reordering never changes the content.
 - **Timeline event**: year, short text, tie-break order, and an optional link to a title or episode.
+- **Timeline item (from a recap, not stored)**: every movie and episode with an in-universe year, shown read-only on the timeline. Nothing is stored for it, so it always follows its recap.
 - **Character**: the fields from 2.3. Every variant is a separate record.
-- **Universe**: a name or number such as Earth-616. The list is maintained by me and feeds the character dropdown.
+- **Universe**: a name or number such as Earth-616. The list is maintained by me and feeds the character and recap dropdowns.
 - **Appearance**: links a character to every movie or episode they appear in.
 - **Watched**: a flag on each movie or episode.
 - **Note** and **Tag**: attached to recaps, timeline events and characters.
@@ -192,10 +201,13 @@ This is the high-level view. The task-by-task checklist for each phase is in [`I
 | **3. Timeline** | Event form. Year axis that fits the years entered. Tie-break order. Hover expand, optional link to a recap. Type filter and zoom | Events appear in the right year order, and hover shows details and a working recap link |
 | **4. Cross-cutting** | Notes and tags on recaps, events and characters, with a tag filter. Global search across everything | One search finds a recap, event, character or note, and tags filter every list |
 | **5. Backup and Polish** | Backup download and restore. Responsive layout check, empty and error states | I can download a backup, restore it, and the app is comfortable on my phone |
+| **6. Recap universe** | Universe field on movies and episodes: create, bulk add and recap edit. Universe chip on the recap page and in the list. Delete rule for universes used by recaps | I can set a universe on a recap, see it on the recap page and in the list, and a universe used by a recap can't be deleted |
+| **7. Recaps on the timeline** | Movies and episodes with an in-universe year appear on the timeline as read-only items. They sort after my events in each year and can't be dragged. Filters and links work | A recap's year shows on the timeline in the right place, moves when I change the year, and its link opens the recap |
 
 **Suggested checkpoints**
 - After phase 1, I enter a handful of real titles to test the data entry flow. It matters because everything is typed by hand.
 - After phase 3, I check the timeline with a real set of years, including the oldest and newest ones.
+- After phase 7, I check that recap years sit in the right place on the timeline, using real years.
 
 ---
 
@@ -212,6 +224,9 @@ This is the high-level view. The task-by-task checklist for each phase is in [`I
 - Web app with a Neon Postgres database, for one user.
 - Hosted online with no access protection. I accept that anyone with the link could edit it.
 - Backup and restore are included (2.7).
+- 2026-10-12: Recaps with an in-universe year appear on the timeline automatically, for movies and episodes. They are shown, not copied. This replaces the earlier rule that timeline events are never generated from recaps.
+- 2026-10-12: Within a year, my hand-written events come first, in my order. Recap items come after them, in recap order, and can't be dragged.
+- 2026-10-12: Each recap has one optional universe designation, chosen from the universes list and entered beside the in-universe year. A universe used by a recap can't be deleted.
 
 ---
 
