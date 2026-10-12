@@ -304,7 +304,7 @@ Phases match the product plan's build plan. Each phase ends with:
 - [x] Tag input on entries, events and characters, plus `/tags` management (rename, merge, delete)
 - [x] Tag filter on the Recaps, Timeline and Characters views
 - [x] Episode and character delete, with the typed DELETE confirmation (approved 2026-10-12, with the timeline event delete)
-- [ ] `/search` with grouped results, the header search box, `⌘K` and `/` shortcuts
+- [x] `/search` with grouped results, the header search box, `⌘K` and `/` shortcuts (Postgres full-text on the search columns, trigram for names, tag names; the design review ran on 390px and 1280px, light and dark)
 - **Done when:** one search finds a match in a recap's text, an event, a character and a note, and tag filters work on every list.
 
 ### Phase 5: Backup and Polish

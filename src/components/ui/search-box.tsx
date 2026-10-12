@@ -1,10 +1,30 @@
+"use client";
+
 import { Search } from "lucide-react";
+import { useEffect, useRef } from "react";
 
 import { cn } from "@/lib/utils";
 
-// DESIGN_GUIDE §7. A 42px pill with a magnifier and a ⌘K hint (the hint is hidden on phones).
-// Phase 0 renders the control only. Results and the ⌘K / "/" shortcuts arrive in Phase 4.
+// DESIGN_GUIDE §7. A 42px pill with a magnifier and a ⌘K hint (the hint is hidden on phones). Submitting goes to
+// /search. ⌘K (or Ctrl+K) and "/" focus the box from any page. "/" is ignored while typing in another field.
 export function SearchBox({ className }: { className?: string }) {
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      const input = inputRef.current;
+      if (!input) return;
+      const commandK = (event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k";
+      const slash = event.key === "/" && !event.metaKey && !event.ctrlKey && !event.altKey && !isTypingTarget(event.target);
+      if (!commandK && !slash) return;
+      event.preventDefault();
+      input.focus();
+      input.select();
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
+
   return (
     <form
       role="search"
@@ -19,10 +39,12 @@ export function SearchBox({ className }: { className?: string }) {
         Search
       </label>
       <input
+        ref={inputRef}
         id="site-search"
         name="q"
         type="search"
         placeholder="Search…"
+        autoComplete="off"
         className="min-w-0 flex-1 bg-transparent font-body text-sm font-medium text-ink placeholder:text-ink-3 focus:outline-none"
       />
       <kbd className="shrink-0 rounded-md border-[1.5px] border-line-soft bg-surface-2 px-1.5 py-1.5 font-mono text-[11px] leading-none font-bold text-ink-3 max-[860px]:hidden">
@@ -30,4 +52,9 @@ export function SearchBox({ className }: { className?: string }) {
       </kbd>
     </form>
   );
+}
+
+function isTypingTarget(target: EventTarget | null) {
+  if (!(target instanceof HTMLElement)) return false;
+  return target.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName);
 }
