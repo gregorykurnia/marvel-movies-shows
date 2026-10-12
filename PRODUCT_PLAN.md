@@ -215,5 +215,5 @@ This is the high-level view. The task-by-task checklist for each phase is in [`I
 
 ## 8. Open Questions
 
-1. **Automatic backups.** Do I also want the app to make a backup **automatically** (e.g. once a day), and keep the last 30? This matters more because the site is open: if someone else wipes it, a recent backup exists even if I forgot to download one. *Default if unanswered: yes, daily.*
+1. **Automatic backups.** *Decided 2026-10-12: no daily backups. Backups are made by hand from the Backup page. Restore still saves a copy of the current data before it replaces anything.*
 2. **Web address.** Is the free default address from the host fine (e.g. `marvel-directory.vercel.app`), or do I want my own domain? *Default: the free address.*

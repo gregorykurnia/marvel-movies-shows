@@ -14,8 +14,7 @@
 | Database | **Neon Postgres** (already connected) | Already set up. Postgres covers full-text search and ordering. |
 | DB access | **Drizzle ORM** + `@neondatabase/serverless` driver | Typed queries. The schema lives in code. Migrations are plain SQL files. The driver's WebSocket `Pool` mode is used, so restore can run as one all-or-nothing transaction. |
 | Hosting | **Vercel** | Built for Next.js. Free tier is enough. Gives a free `*.vercel.app` address. |
-| Backup storage | **Vercel Blob (private)** | Automatic backups are stored outside the database, so they survive even if the database is wiped. |
-| Scheduled jobs | **Vercel Cron** | Runs the daily automatic backup. |
+| Backups | **Manual download only** | No file store and no scheduled jobs. Each backup is downloaded from `/backup`. The only server-side copy is the pre-restore snapshot (§9). |
 | Migrations | **drizzle-kit** (generate + migrate) | Migration files are checked into the repo, so schema history is visible. |
 | Styling / UI | **Tailwind CSS v4 + shadcn/ui**, restyled with the design tokens | Ready-made accessible inputs, dialogs, comboboxes and tables. Every component is restyled to `DESIGN_GUIDE.md` §7, with no default shadcn look. |
 | Fonts | `next/font/google`: Bricolage Grotesque, Plus Jakarta Sans, JetBrains Mono | Self-hosted at build time, so there's no layout shift. See `DESIGN_GUIDE.md` §4. |
@@ -48,7 +47,6 @@
 - Migrations are always run on `test` first, then on `production`.
 - **Hosting:** Vercel production deployment on the free `*.vercel.app` address, **with no access protection**. This is a deliberate product decision (product plan §5). Mitigations:
   - `noindex` metadata on every page, plus a `robots.txt` that disallows everything, so the site stays out of search engines.
-  - Daily automatic backups (§5.6).
   - Pre-restore snapshots (§5.6).
   - Vercel's own preview deployments keep their default Vercel Authentication. Only production is open.
 - **Adding protection later** is a configuration change (Vercel Deployment Protection, or a single password check in middleware), not a rebuild.
@@ -144,9 +142,9 @@ Trigram index on `name` for fuzzy search.
 | Column | Type | Notes |
 |---|---|---|
 | id | uuid PK | |
-| kind | enum `manual` \| `automatic` \| `pre_restore` | |
+| kind | enum `manual` \| `automatic` (unused) \| `pre_restore` | |
 | created_at | timestamptz | |
-| blob_path | text, nullable | Set for automatic and pre-restore backups (stored in Blob). Null for manual downloads. |
+| blob_path | text, nullable | Unused since Blob was dropped (2026-10-12). Leave it, or remove it in a Phase 5 migration. |
 | size_bytes | int | |
 
 ### 3.2 Custom Ordering
@@ -183,9 +181,8 @@ Trigram index on `name` for fuzzy search.
 | `/universes` | Manage universes: add, rename, delete if not in use. |
 | `/tags` | Manage tags: rename, merge, delete. |
 | `/search?q=` | Global search results. |
-| `/backup` | Download a backup, restore from a file, see the last backup time, and list and download automatic backups. |
+| `/backup` | Download a backup, restore from a file, and see the last backup time. |
 | `/api/backup/export` | GET. Streams the full backup JSON as a file download and logs a `manual` backup. |
-| `/api/cron/backup` | Called daily by Vercel Cron. Writes an `automatic` backup to Blob and deletes all but the newest 30. It only accepts requests carrying Vercel's `CRON_SECRET`. |
 
 The global search box sits in the header on every page. Pressing `/` or `⌘K` focuses it.
 
@@ -234,11 +231,11 @@ Everything is typed by hand, so data entry speed is a priority:
 - **Export:** a single read of all tables, serialised to JSON. At this data size it is small (likely well under 10 MB, even with long recaps).
 - **Restore** is a Server Action and runs these steps in order:
   1. Validate the uploaded file with Zod (format, version, shape, references between rows).
-  2. Write a `pre_restore` snapshot of the current data to Blob.
+  2. Save a `pre_restore` snapshot of the current data (where it's kept is open, see §9).
   3. In **one transaction**, delete all data tables and insert the backup's rows in dependency order. If anything fails, nothing changes.
   4. Show a summary, e.g. "Restored 412 entries, 87 characters…".
 - **Confirmation:** I have to type `RESTORE` before the restore button is enabled.
-- **Automatic backups:** daily at a quiet hour via Vercel Cron. The newest 30 are kept in private Blob, and each can be downloaded from `/backup`.
+- **No automatic backups.** Each backup is made by hand from `/backup`. The only automatic copy is the `pre_restore` snapshot.
 
 ---
 
@@ -309,13 +306,12 @@ Phases match the product plan's build plan. Each phase ends with:
 
 ### Phase 5: Backup and Polish
 - [ ] Backup JSON format, a Zod schema for it, and the export endpoint
-- [ ] `/backup` page with download, last-backup time, and the list of automatic backups
+- [ ] `/backup` page with download and last-backup time
 - [ ] Restore flow: validation, pre-restore snapshot, one-transaction replace, typed confirmation, summary
-- [ ] Private Vercel Blob store connected to the project, plus the daily Vercel Cron backup with 30-copy retention (`CRON_SECRET` checked)
 - [ ] Responsive pass on phone width. Empty states ("No recaps yet, add a title"). Error pages
-- **Done when:** a downloaded backup restores the app to exactly the same state, a bad file is rejected without changing anything, the daily backup appears in the list, and the app is comfortable on my phone.
+- **Done when:** a downloaded backup restores the app to exactly the same state, a bad file is rejected without changing anything, and the app is comfortable on my phone.
 
-**Note:** backups only arrive in phase 5. Until then, Neon's built-in point-in-time restore is the safety net. If I'll be entering a lot of real data before phase 5, the backup **download** can be moved forward to the end of phase 1. It's about a day's work.
+**Note:** backups arrive in phase 5. Until then, Neon's built-in point-in-time restore is the safety net. Blob and automatic backups were dropped on 2026-10-12.
 
 ---
 
@@ -352,7 +348,7 @@ src/
     timeline-layout.ts # compressed axis + zoom buckets
     search.ts
   actions/             # Server Actions per area (titles, entries, events, characters, tags, backup)
-  lib/backup/          # backup format, Zod schema, export/restore, Blob storage
+  lib/backup/          # backup format, Zod schema, export/restore
 tests/
   unit/  db/  e2e/
 ```
@@ -363,9 +359,8 @@ tests/
 
 | Item | Blocks | Default if unanswered |
 |---|---|---|
-| Automatic daily backups (product plan, open question 1) | Phase 5 only | Yes, daily, keep 30 |
+| Where the pre-restore snapshot is kept (Blob is dropped) | Phase 5 restore | A JSON row in a `pre_restore_snapshots` table in Neon, outside the tables a restore replaces. Only the newest is kept. |
 | Custom domain (product plan, open question 2) | Nothing | The free `*.vercel.app` address |
-| Move backup download earlier (end of phase 1) | Nothing | Stays in phase 5 |
 | Neon CLI extras (`neon skills`, `neon mcp`, `neon.ts`, `neon deploy`) | Nothing | Skipped. The app connects with the connection strings. The CLI is only needed to create the `test` branch. |
 
 ## 10. Things I Need to Do Myself
