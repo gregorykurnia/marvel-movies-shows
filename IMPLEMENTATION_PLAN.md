@@ -327,7 +327,7 @@ Phases match the product plan's build plan. Each phase ends with:
 ---
 
 ### Phase 6: Universe designation on recaps
-- [x] Migration: add `entries.universe_id` (nullable, references `universes`, restrict delete). Run it on `test` first (`npm run db:migrate:test`). The production migration (`npm run db:migrate`) runs only when I approve it, and before this code reaches `main`, because the live site reads the new column. Done on the test branch (2026-10-12). Production is still waiting for the owner's approval.
+- [x] Migration: add `entries.universe_id` (nullable, references `universes`, restrict delete). Run it on `test` first (`npm run db:migrate:test`). The production migration (`npm run db:migrate`) runs only when I approve it, and before this code reaches `main`, because the live site reads the new column. Done on the test branch and on production (2026-10-12, after the owner approved it).
 - [x] Zod: an optional universe id on `titleFormSchema`, `episodeFormSchema`, `episodeRangeSchema`, `episodeEditSchema` and `movieEditSchema`.
 - [x] Actions save it: `createEpisode`, `addEpisodes`, `saveEpisode`, `saveMovie`, and the movie branch of title creation in `src/actions/titles.ts`.
 - [x] Universe combobox with an inline "+ Add universe", beside In-universe year, on the movie form (`title-forms.tsx`), the episode form for single and bulk add (`episode-form.tsx`), and the recap edit page (`recap-edit-form.tsx`). Reuse the pattern in `character-form.tsx`.
