@@ -181,7 +181,7 @@ Trigram index on `name` for fuzzy search.
 | `/universes` | Manage universes: add, rename, delete if not in use. |
 | `/tags` | Manage tags: rename, merge, delete. |
 | `/search?q=` | Global search results. |
-| `/backup` | Download a backup, restore from a file, and see the last backup time. |
+| `/backup` | Download a backup and see the last backup time. Restore from a file comes later. |
 | `/api/backup/export` | GET. Streams the full backup JSON as a file download and logs a `manual` backup. |
 
 The global search box sits in the header on every page. Pressing `/` or `⌘K` focuses it.
@@ -222,14 +222,14 @@ Everything is typed by hand, so data entry speed is a priority:
 - `remark-breaks` keeps single line breaks from pasted text, `remark-gfm` adds lists and tables, and `rehype-sanitize` blocks scripts and HTML.
 - The edit page shows a live preview next to the text area.
 
-### 5.6 Backup and Restore
+### 5.6 Backup and Restore (restore comes later)
 - **File format:**
   ```json
   { "format": "marvel-directory-backup", "version": 1, "exportedAt": "…", "tables": { "titles": [...], "entries": [...], ... } }
   ```
   It contains every data table (not `backup_log`). The `version` matches the schema, so future migrations can upgrade older backup files before restoring them.
 - **Export:** a single read of all tables, serialised to JSON. At this data size it is small (likely well under 10 MB, even with long recaps).
-- **Restore** is a Server Action and runs these steps in order:
+- **Restore** (later, not in Phase 5) is a Server Action and runs these steps in order:
   1. Validate the uploaded file with Zod (format, version, shape, references between rows).
   2. Save a `pre_restore` snapshot of the current data (where it's kept is open, see §9).
   3. In **one transaction**, delete all data tables and insert the backup's rows in dependency order. If anything fails, nothing changes.
@@ -304,12 +304,12 @@ Phases match the product plan's build plan. Each phase ends with:
 - [x] `/search` with grouped results, the header search box, `⌘K` and `/` shortcuts (Postgres full-text on the search columns, trigram for names, tag names; the design review ran on 390px and 1280px, light and dark)
 - **Done when:** one search finds a match in a recap's text, an event, a character and a note, and tag filters work on every list.
 
-### Phase 5: Backup and Polish
-- [ ] Backup JSON format, a Zod schema for it, and the export endpoint
-- [ ] `/backup` page with download and last-backup time
-- [ ] Restore flow: validation, pre-restore snapshot, one-transaction replace, typed confirmation, summary
+### Phase 5: Backup and Polish (download only; restore comes later)
+- [x] Backup export: the JSON format and `GET /api/backup/export`, which logs a `manual` backup
+- [x] `/backup` page with the Download button and the last backup time
 - [ ] Responsive pass on phone width. Empty states ("No recaps yet, add a title"). Error pages
-- **Done when:** a downloaded backup restores the app to exactly the same state, a bad file is rejected without changing anything, and the app is comfortable on my phone.
+- **Done when:** a downloaded backup contains every data table with the same row counts as the database (checked by the end-to-end test), and the app is comfortable on my phone.
+- **Later, not in Phase 5:** restore from a file (Zod validation, pre-restore snapshot, one-transaction replace, typed RESTORE, summary) and its round-trip test.
 
 **Note:** backups arrive in phase 5. Until then, Neon's built-in point-in-time restore is the safety net. Blob and automatic backups were dropped on 2026-10-12.
 
@@ -359,7 +359,7 @@ tests/
 
 | Item | Blocks | Default if unanswered |
 |---|---|---|
-| Where the pre-restore snapshot is kept (Blob is dropped) | Phase 5 restore | A JSON row in a `pre_restore_snapshots` table in Neon, outside the tables a restore replaces. Only the newest is kept. |
+| Where the pre-restore snapshot is kept (Blob is dropped) | Restore, which comes after Phase 5 | A JSON row in a `pre_restore_snapshots` table in Neon, outside the tables a restore replaces. Only the newest is kept. |
 | Custom domain (product plan, open question 2) | Nothing | The free `*.vercel.app` address |
 | Neon CLI extras (`neon skills`, `neon mcp`, `neon.ts`, `neon deploy`) | Nothing | Skipped. The app connects with the connection strings. The CLI is only needed to create the `test` branch. |
 

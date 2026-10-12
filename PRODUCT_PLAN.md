@@ -122,6 +122,8 @@ Cross-cutting features: **watched tracking**, **global search**, **notes and tag
 
 **Purpose:** Make sure the hand-typed data is never lost, whether through a mistake, a bug, or someone else editing the site.
 
+**Status (2026-10-12):** the first version is download-only: the Download button and the last backup time. Restoring from a file, including the typed confirmation and the automatic save before a restore, comes later.
+
 **Requirements**
 - A **Backup page** with a one-click **"Download backup"** button. It saves everything (titles, episodes, recaps, order, watched, events, characters, universes, appearances, notes, tags) as a single file on my device.
 - **Restore from a backup file:** upload a backup file to bring the app back to exactly that state.
