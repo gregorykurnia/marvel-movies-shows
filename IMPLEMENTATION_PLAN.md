@@ -326,7 +326,7 @@ Phases match the product plan's build plan. Each phase ends with:
 
 ---
 
-### Phase 6: Universe designation on recaps
+### Phase 6: Universe designation on recaps (done 2026-10-12)
 - [x] Migration: add `entries.universe_id` (nullable, references `universes`, restrict delete). Run it on `test` first (`npm run db:migrate:test`). The production migration (`npm run db:migrate`) runs only when I approve it, and before this code reaches `main`, because the live site reads the new column. Done on the test branch and on production (2026-10-12, after the owner approved it).
 - [x] Zod: an optional universe id on `titleFormSchema`, `episodeFormSchema`, `episodeRangeSchema`, `episodeEditSchema` and `movieEditSchema`.
 - [x] Actions save it: `createEpisode`, `addEpisodes`, `saveEpisode`, `saveMovie`, and the movie branch of title creation in `src/actions/titles.ts`.
@@ -335,7 +335,7 @@ Phases match the product plan's build plan. Each phase ends with:
 - [x] Recap list row: universe chip in the meta row when set.
 - [x] Delete rule: `deleteUniverse` and `loadUniverseRows` count recaps as well as characters. Update the in-use wording on `/universes` and in the universe manager.
 - [x] Tests: a schema unit test; a database test (a universe used by a recap can't be deleted); an end-to-end test (set a universe on a recap, see the chip, delete is blocked).
-- [ ] Design review (`DESIGN_GUIDE.md` §13) for the recap page, recap edit page, recap list, movie and episode forms, and `/universes`, at 390px and 1280px, light and dark. Screenshots are in `screenshots/phase-6/` (git-ignored, 32 captures, none scroll sideways at 390px). Seven were checked by eye. The keyboard pass and the owner's review are still to do.
+- [x] Design review (`DESIGN_GUIDE.md` §13) for the recap page, recap edit page, recap list, movie and episode forms, and `/universes`, at 390px and 1280px, light and dark. Screenshots are in `screenshots/phase-6/` (git-ignored, 32 captures, none scroll sideways at 390px). Seven were checked by eye, then the owner signed off on 2026-10-12.
 - **Done when:** I can set a universe on a movie or episode, see it on the recap page and in the list, and a universe used by a recap can't be deleted.
 
 ### Phase 7: Recaps on the timeline
