@@ -111,6 +111,23 @@ const columns = columnHelper.columns([
       </Chip>
     ),
   }),
+  // Every tag the character has, not sorted or filtered by column. The tag filter above the table narrows the rows.
+  columnHelper.display({
+    id: "tags",
+    header: "Tags",
+    cell: (info) =>
+      info.row.original.tags.length > 0 ? (
+        <div className="flex max-w-[260px] flex-wrap gap-2">
+          {info.row.original.tags.map((tag) => (
+            <Chip key={tag} tone="tag">
+              {tag}
+            </Chip>
+          ))}
+        </div>
+      ) : (
+        <span className="text-ink-3">—</span>
+      ),
+  }),
 ]);
 
 // The directory (IMPLEMENTATION_PLAN §5.3). Search by name, column filters, and sorting on any column. The search,

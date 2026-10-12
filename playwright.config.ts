@@ -5,6 +5,10 @@ import { parse } from "dotenv";
 
 import { assertTestDatabase } from "./tests/support/test-database";
 
+// The Neon endpoint publishes IPv6 addresses that don't answer from some networks, and a connection that picks one can
+// stall for minutes. Prefer IPv4 in every Node process of the test run. The dev server and the test workers inherit it.
+process.env.NODE_OPTIONS = [process.env.NODE_OPTIONS, "--dns-result-order=ipv4first"].filter(Boolean).join(" ");
+
 // Read both env files without changing process.env. The app server gets the test values only,
 // so it can never pick up the production connection string.
 const readEnv = (file: string) =>

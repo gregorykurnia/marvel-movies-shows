@@ -147,9 +147,12 @@ test("a character's tags save as they change, and the character can be deleted",
     await expect(page.getByRole("list", { name: "Add a tag, chosen" })).toContainText(characterTag);
   });
 
-  await test.step("the characters table filters by the tag", async () => {
+  await test.step("the characters table filters by the tag, and shows the tag in its row", async () => {
     await page.goto(`/characters?tag=${encodeURIComponent(characterTag)}`);
     await expect(page.getByRole("link", { name: character, exact: true })).toBeVisible();
+    await expect(page.getByRole("columnheader", { name: "Tags", exact: true })).toBeVisible();
+    const row = page.locator("tbody tr").filter({ hasText: character });
+    await expect(row.getByText(characterTag, { exact: true })).toBeVisible();
     await page.goto("/characters");
     await expect(page.getByRole("link", { name: character, exact: true })).toBeVisible();
   });

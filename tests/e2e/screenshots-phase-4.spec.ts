@@ -30,6 +30,8 @@ test.describe("phase 4 pages", () => {
     { name: "tags", path: () => "/tags" },
     { name: "recap-tags", path: () => `/recaps/${seeded().movieEntryId}` },
     { name: "character-tags", path: () => `/characters/${seeded().characterId}` },
+    // The directory table, with the seeded tag in the Tags column.
+    { name: "characters-tags", path: () => "/characters" },
     { name: "episode-edit", path: () => `/recaps/${seeded().episodeId}/edit` },
     // Searching the seeded tag finds the movie and the character through their tags.
     { name: "search", path: () => `/search?q=${encodeURIComponent(`${E2E_PREFIX} rewatch ${run}`)}` },
