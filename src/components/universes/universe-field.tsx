@@ -18,6 +18,9 @@ export function withUniverse(list: UniverseOption[], universe: UniverseOption): 
 // the form. The chosen id travels as a hidden field. Choosing "No universe" clears it.
 //
 // Other years (Phase 9) reuse it per row, with their own `name`, label, hint and clear option ("Same as recap").
+//
+// With `onPendingNameChange`, a name typed but not picked is kept (Phase 11). It goes out as the hidden `universeName`
+// field, and the server finds that universe by name or adds it on save. Pass `clearLabel={null}` for no clear option.
 export function UniverseField({
   universes,
   value,
@@ -30,6 +33,8 @@ export function UniverseField({
   clearLabel = "No universe",
   hint = "Optional. Shown on the recap and in the list.",
   placeholder = "Type to search or add…",
+  pendingName,
+  onPendingNameChange,
 }: {
   universes: UniverseOption[];
   value: string | null;
@@ -39,9 +44,11 @@ export function UniverseField({
   className?: string;
   name?: string;
   label?: string;
-  clearLabel?: string;
+  clearLabel?: string | null;
   hint?: string;
   placeholder?: string;
+  pendingName?: string;
+  onPendingNameChange?: (name: string) => void;
 }) {
   const [, startTransition] = useTransition();
   const [createError, setCreateError] = useState<string | undefined>();
@@ -69,12 +76,15 @@ export function UniverseField({
         value={value}
         onValueChange={onValueChange}
         onCreate={addUniverse}
-        clearLabel={clearLabel}
+        clearLabel={clearLabel ?? undefined}
+        text={pendingName}
+        onTextChange={onPendingNameChange}
         hint={hint}
         error={error ?? createError}
         className={className}
       />
       <input type="hidden" name={name} value={value ?? ""} />
+      {onPendingNameChange ? <input type="hidden" name="universeName" value={pendingName ?? ""} /> : null}
     </>
   );
 }

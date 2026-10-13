@@ -22,6 +22,15 @@ type ComboboxProps = {
   value: string | null;
   onValueChange: (value: string | null) => void;
   onCreate?: (text: string) => void;
+  // "＋ Add new…" at the end of the list, for a pick that opens a dialog instead of choosing an option.
+  onAddNew?: () => void;
+  addNewLabel?: string;
+  // The noun in the create row, e.g. "character" gives "＋ Add character “Loki”". Left out, it reads "＋ Add “Loki”".
+  createNoun?: string;
+  // Typed-but-not-picked text (opt-in). When onTextChange is set, typing clears the value and reports the text, so
+  // the form can keep it and save it. `text` is what shows while nothing is picked. Picking an option clears it.
+  text?: string;
+  onTextChange?: (text: string) => void;
   // When set, a value can be cleared: this row sits first in the list while a value is chosen and nothing is typed.
   clearLabel?: string;
   placeholder?: string;
@@ -35,6 +44,7 @@ type ComboboxProps = {
 type Item =
   | { kind: "option"; option: ComboOption }
   | { kind: "create"; text: string }
+  | { kind: "addNew" }
   | { kind: "clear" };
 
 export function Combobox({
@@ -43,6 +53,11 @@ export function Combobox({
   value,
   onValueChange,
   onCreate,
+  onAddNew,
+  addNewLabel = "＋ Add new…",
+  createNoun,
+  text,
+  onTextChange,
   clearLabel,
   placeholder,
   hint,
@@ -59,7 +74,7 @@ export function Combobox({
 
   const isOpen = openProp ?? openState;
   const selected = options.find((option) => option.value === value) ?? null;
-  const shownText = editing ? query : (selected?.label ?? "");
+  const shownText = editing ? query : (selected?.label ?? text ?? "");
 
   const needle = query.trim().toLowerCase();
   const matches = editing && needle
@@ -73,6 +88,7 @@ export function Combobox({
     ...(showClear ? [{ kind: "clear" } as Item] : []),
     ...matches.map((option): Item => ({ kind: "option", option })),
     ...(canCreate ? [{ kind: "create", text: query.trim() } as Item] : []),
+    ...(onAddNew ? [{ kind: "addNew" } as Item] : []),
   ];
   const activeIndex = items.length === 0 ? -1 : Math.min(active, items.length - 1);
   const activeItem = activeIndex >= 0 ? items[activeIndex] : undefined;
@@ -84,11 +100,14 @@ export function Combobox({
   function choose(item: Item) {
     if (item.kind === "create") {
       onCreate?.(item.text);
+    } else if (item.kind === "addNew") {
+      onAddNew?.();
     } else if (item.kind === "clear") {
       onValueChange(null);
     } else {
       onValueChange(item.option.value);
     }
+    if (onTextChange && item.kind !== "addNew") onTextChange("");
     setEditing(false);
     setOpenState(false);
     setQuery("");
@@ -139,6 +158,10 @@ export function Combobox({
             setEditing(true);
             setOpenState(true);
             setActive(0);
+            if (onTextChange) {
+              onTextChange(event.target.value);
+              if (value !== null) onValueChange(null);
+            }
           }}
           onFocus={() => setOpenState(true)}
           onBlur={() => {
@@ -162,10 +185,11 @@ export function Combobox({
             {items.map((item, index) => {
               const isActive = index === activeIndex;
               const isCreate = item.kind === "create";
+              const isAddNew = item.kind === "addNew";
               const isClear = item.kind === "clear";
               return (
                 <li
-                  key={isCreate ? "create" : isClear ? "clear" : item.option.value}
+                  key={isCreate ? "create" : isAddNew ? "add-new" : isClear ? "clear" : item.option.value}
                   id={optionId(index)}
                   role="option"
                   aria-selected={isActive}
@@ -175,14 +199,16 @@ export function Combobox({
                   className={cn(
                     "flex cursor-pointer items-center justify-between gap-2 rounded-md px-2.5 py-2 text-sm font-medium",
                     isActive && "bg-blue-soft font-bold text-blue-ink",
-                    isCreate &&
+                    (isCreate || isAddNew) &&
                       "mt-1 rounded-none border-t-[1.5px] border-dashed border-line-soft pt-2.5 font-bold text-violet-ink",
-                    isCreate && isActive && "bg-blue-soft text-violet-ink",
+                    (isCreate || isAddNew) && isActive && "bg-blue-soft text-violet-ink",
                     isClear && "border-b-[1.5px] border-dashed border-line-soft pb-2.5 text-ink-2",
                   )}
                 >
                   {isCreate ? (
-                    <span>＋ Add “{item.text}”</span>
+                    <span>{createNoun ? `＋ Add ${createNoun} “${item.text}”` : `＋ Add “${item.text}”`}</span>
+                  ) : isAddNew ? (
+                    <span>{addNewLabel}</span>
                   ) : isClear ? (
                     <>
                       <span>{clearLabel}</span>

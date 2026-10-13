@@ -16,6 +16,8 @@ export function AppearancesPicker({
   error,
   emptyText,
   className,
+  onCreate,
+  createNoun,
 }: {
   label: string;
   options: { value: string; label: string }[];
@@ -26,6 +28,9 @@ export function AppearancesPicker({
   error?: string;
   emptyText: string;
   className?: string;
+  // Adds a value that isn't in the list yet (Phase 11). The parent creates it and adds it to `options` and `selected`.
+  onCreate?: (text: string) => void;
+  createNoun?: string;
 }) {
   const remaining = options.filter((option) => !selected.includes(option.value));
   const chosen = selected
@@ -42,6 +47,8 @@ export function AppearancesPicker({
         onValueChange={(value) => {
           if (value && !selected.includes(value)) onChange([...selected, value]);
         }}
+        onCreate={onCreate}
+        createNoun={createNoun}
         hint={hint}
         error={error}
       />

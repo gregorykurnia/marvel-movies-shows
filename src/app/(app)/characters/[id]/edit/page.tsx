@@ -8,7 +8,7 @@ import { DangerZone } from "@/components/layout/danger-zone";
 import { PageHeader } from "@/components/layout/page-header";
 import { FormSkeleton } from "@/components/layout/page-skeleton";
 import { CharacterForm } from "@/components/characters/character-form";
-import { loadAppearanceIds, loadCharacterFormOptions, loadCharacterRecord } from "@/lib/data/characters";
+import { loadCharacterFormOptions, loadCharacterRecord } from "@/lib/data/characters";
 
 export const metadata: Metadata = { title: "Edit character" };
 
@@ -23,11 +23,7 @@ export default function EditCharacterPage({ params }: { params: Promise<{ id: st
 async function EditCharacterContent({ params }: { params: Promise<{ id: string }> }) {
   await connection();
   const { id } = await params;
-  const [character, appearanceIds, options] = await Promise.all([
-    loadCharacterRecord(id),
-    loadAppearanceIds(id),
-    loadCharacterFormOptions(),
-  ]);
+  const [character, options] = await Promise.all([loadCharacterRecord(id), loadCharacterFormOptions()]);
   if (!character) notFound();
 
   return (
@@ -50,7 +46,6 @@ async function EditCharacterContent({ params }: { params: Promise<{ id: string }
           firstEntryId: character.firstEntryId,
           lastEntryId: character.lastEntryId,
           notes: character.notes ?? "",
-          entryIds: appearanceIds,
         }}
         {...options}
       />
@@ -62,8 +57,7 @@ async function EditCharacterContent({ params }: { params: Promise<{ id: string }
           actionLabel="Delete character"
           action={deleteCharacter.bind(null, id, "/characters")}
         >
-          Removes this variant, its tags and its appearances. The recaps it appeared in stay as they are. This can&rsquo;t
-          be undone.
+          Removes this variant and its tags. The recaps it appeared in stay as they are. This can&rsquo;t be undone.
         </DangerZone>
       </div>
     </>

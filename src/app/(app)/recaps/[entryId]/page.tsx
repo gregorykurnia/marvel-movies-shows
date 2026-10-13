@@ -111,7 +111,7 @@ async function RecapContent({ params }: { params: Promise<{ entryId: string }> }
 
         <aside className="grid gap-4">
           <Panel className="p-5">
-            <h2 className="mb-3 font-display text-[15px] font-bold">Characters</h2>
+            <h2 className="mb-3 font-display text-[15px] font-bold">First appearances</h2>
             {recapCharacters.length > 0 ? (
               <ul className="flex flex-wrap gap-2">
                 {recapCharacters.map((character) => (
@@ -130,7 +130,7 @@ async function RecapContent({ params }: { params: Promise<{ entryId: string }> }
                 ))}
               </ul>
             ) : (
-              <p className="text-sm text-ink-3">No characters linked to this recap yet.</p>
+              <p className="text-sm text-ink-3">No first appearances in this recap yet.</p>
             )}
           </Panel>
           <Panel className="p-5">

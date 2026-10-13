@@ -13,15 +13,14 @@ import { RecapMarkdown } from "@/components/recaps/recap-markdown";
 import { buttonVariants } from "@/components/ui/button";
 import { Chip, EpisodeCode } from "@/components/ui/chip";
 import { Panel } from "@/components/ui/panel";
-import { loadCharacterDetail, loadNeighbouringCharacters } from "@/lib/data/characters";
+import { loadCharacterDetail, loadNeighbouringCharacters, type AppearanceLink } from "@/lib/data/characters";
 import { loadTagNames } from "@/lib/data/tags";
-import { formatCount } from "@/lib/format";
 import { importanceLabel, statusLabel } from "@/lib/labels";
 import { KIND_LABEL } from "@/lib/title-kind";
 
 export const metadata: Metadata = { title: "Character" };
 
-// One character variant (DESIGN_GUIDE §8, Detail): the fields, notes and tags, and the recaps it appears in.
+// One character variant (DESIGN_GUIDE §8, Detail): the fields, notes and tags, and its first and last appearance.
 export default function CharacterPage({ params }: { params: Promise<{ id: string }> }) {
   return (
     <Suspense fallback={<PageSkeleton rows={2} />}>
@@ -81,42 +80,23 @@ async function CharacterContent({ params }: { params: Promise<{ id: string }> })
             )}
           </Panel>
 
-          <section aria-labelledby="appearances" className="grid gap-3">
-            <h2 id="appearances" className="font-display text-[26px] leading-[1.15] font-bold tracking-[-0.02em]">
-              Appearances{" "}
-              <span className="font-mono text-base tabular-nums text-ink-3">{character.appearances.length}</span>
+          <section aria-labelledby="first-last-appearance" className="grid gap-3">
+            <h2
+              id="first-last-appearance"
+              className="font-display text-[26px] leading-[1.15] font-bold tracking-[-0.02em]"
+            >
+              First and last appearance
             </h2>
-            {character.appearances.length === 0 ? (
+            {character.firstAppearance === null && character.lastAppearance === null ? (
               <EmptyState icon="★" title="No appearances yet">
-                Link the movies and episodes this variant appears in, from its edit page.
+                Set the first and last appearance from this variant&rsquo;s edit page, or from the recap it first appears in.
               </EmptyState>
             ) : (
               <Panel className="overflow-hidden">
-                <ol>
-                  {character.appearances.map((appearance) => (
-                    <li
-                      key={appearance.id}
-                      className="flex flex-wrap items-center gap-x-3.5 gap-y-2 border-b-[1.5px] border-line-soft px-3.5 py-3 last:border-b-0"
-                    >
-                      {appearance.titleKind !== "show" ? (
-                        <Chip tone={appearance.titleKind} dot>
-                          {KIND_LABEL[appearance.titleKind]}
-                        </Chip>
-                      ) : (
-                        <EpisodeCode>{appearance.code}</EpisodeCode>
-                      )}
-                      <Link
-                        href={appearance.href}
-                        className="min-w-0 flex-1 font-semibold no-underline hover:underline hover:underline-offset-4"
-                      >
-                        {appearance.label}
-                      </Link>
-                      <Chip tone={appearance.watched ? "watched" : "unwatched"}>
-                        {appearance.watched ? "✓ Watched" : "Not watched"}
-                      </Chip>
-                    </li>
-                  ))}
-                </ol>
+                <dl>
+                  <AppearanceRow label="First" appearance={character.firstAppearance} />
+                  <AppearanceRow label="Last" appearance={character.lastAppearance} />
+                </dl>
               </Panel>
             )}
           </section>
@@ -142,31 +122,10 @@ async function CharacterContent({ params }: { params: Promise<{ id: string }> })
                   "—"
                 )}
               </dd>
-              <dt className="font-semibold text-ink-3">First</dt>
-              <dd className="text-right font-semibold">
-                {character.firstEntry ? (
-                  <Link href={`/recaps/${character.firstEntry.id}`} className="underline underline-offset-[3px]">
-                    {character.firstEntry.label}
-                  </Link>
-                ) : (
-                  "—"
-                )}
-              </dd>
-              <dt className="font-semibold text-ink-3">Last</dt>
-              <dd className="text-right font-semibold">
-                {character.lastEntry ? (
-                  <Link href={`/recaps/${character.lastEntry.id}`} className="underline underline-offset-[3px]">
-                    {character.lastEntry.label}
-                  </Link>
-                ) : (
-                  "—"
-                )}
-              </dd>
             </dl>
           </Panel>
 
           <CharacterTagsCard characterId={id} initial={character.tags} options={tagOptions} />
-          <p className="text-[13px] text-ink-3">{formatCount(character.appearances.length, "appearance")}</p>
         </aside>
       </div>
 
@@ -175,5 +134,36 @@ async function CharacterContent({ params }: { params: Promise<{ id: string }> })
         next={neighbours.next ? { href: `/characters/${neighbours.next.id}`, title: nameWithUniverse(neighbours.next) } : null}
       />
     </>
+  );
+}
+
+// One row of the first and last appearance list: the label, the entry's kind or code, a link, and its watched state.
+function AppearanceRow({ label, appearance }: { label: string; appearance: AppearanceLink | null }) {
+  return (
+    <div className="flex flex-wrap items-center gap-x-3.5 gap-y-2 border-b-[1.5px] border-line-soft px-3.5 py-3 last:border-b-0">
+      <dt className="w-12 shrink-0 font-mono text-xs font-bold tracking-[0.06em] text-ink-3 uppercase">{label}</dt>
+      {appearance ? (
+        <>
+          {appearance.titleKind !== "show" ? (
+            <Chip tone={appearance.titleKind} dot>
+              {KIND_LABEL[appearance.titleKind]}
+            </Chip>
+          ) : (
+            <EpisodeCode>{appearance.code}</EpisodeCode>
+          )}
+          {/* On a phone the title takes a line of its own, under the kind and the watched chip. */}
+          <dd className="order-3 min-w-0 basis-full font-semibold min-[640px]:order-none min-[640px]:flex-1 min-[640px]:basis-auto">
+            <Link href={appearance.href} className="no-underline hover:underline hover:underline-offset-4">
+              {appearance.label}
+            </Link>
+          </dd>
+          <Chip tone={appearance.watched ? "watched" : "unwatched"} className="ml-auto min-[640px]:ml-0">
+            {appearance.watched ? "✓ Watched" : "Not watched"}
+          </Chip>
+        </>
+      ) : (
+        <dd className="order-3 basis-full text-ink-3 min-[640px]:order-none min-[640px]:flex-1 min-[640px]:basis-auto">Not set</dd>
+      )}
+    </div>
   );
 }

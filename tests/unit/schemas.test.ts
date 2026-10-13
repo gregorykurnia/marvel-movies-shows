@@ -7,6 +7,8 @@ import {
   episodeEditSchema,
   episodeFormSchema,
   episodeRangeSchema,
+  firstAppearanceSchema,
+  inlineCharacterSchema,
   movieEditSchema,
   recapSchema,
   titleFormSchema,
@@ -15,7 +17,6 @@ import {
 } from "@/lib/schemas";
 
 const VALID_UUID = "9b2c6a4e-1f3d-4c8a-9e7b-2d5f6a7b8c9d";
-const OTHER_UUID = "1c2d3e4f-5a6b-4c7d-8e9f-0a1b2c3d4e5f";
 
 // The errors of a failed parse, keyed by field: the same shape the forms display.
 function errorsFor(result: { success: boolean; error?: unknown }) {
@@ -35,6 +36,7 @@ describe("titleFormSchema", () => {
       releaseDate: "2011-05-06",
       inUniverseYear: null,
       universeId: null,
+      universeName: null,
     });
   });
 
@@ -125,6 +127,7 @@ describe("episodeRangeSchema (bulk add)", () => {
       toEpisode: 9,
       inUniverseYear: 1950,
       universeId: null,
+      universeName: null,
     });
   });
 
@@ -176,6 +179,7 @@ describe("movieEditSchema", () => {
       releaseDate: null,
       inUniverseYear: null,
       universeId: null,
+      universeName: null,
       recap: "Text",
       notes: null,
       timeJumps: [],
@@ -278,6 +282,37 @@ describe("time jumps on a recap", () => {
   });
 });
 
+describe("firstAppearanceSchema", () => {
+  const movie = { kind: "movie", name: "Thor", showTitleId: null, showName: "", season: "", episode: "", episodeName: "" };
+  const show = { kind: "show", name: "", showTitleId: null, showName: "Loki", season: "1", episode: "2", episodeName: "" };
+
+  it("needs a title name for a movie or a short", () => {
+    expect(firstAppearanceSchema.parse(movie).name).toBe("Thor");
+    expect(errorsFor(firstAppearanceSchema.safeParse({ ...movie, name: "  " }))).toHaveProperty("name");
+    expect(firstAppearanceSchema.parse({ ...movie, kind: "short", name: "Item 47" }).kind).toBe("short");
+  });
+
+  it("takes a picked show, or a typed one, and needs a season and an episode", () => {
+    expect(firstAppearanceSchema.parse({ ...show, showName: "" , showTitleId: VALID_UUID }).showTitleId).toBe(VALID_UUID);
+    expect(firstAppearanceSchema.parse(show).showName).toBe("Loki");
+    expect(errorsFor(firstAppearanceSchema.safeParse({ ...show, showName: "" }))).toHaveProperty("showName");
+    expect(errorsFor(firstAppearanceSchema.safeParse({ ...show, season: "" }))).toHaveProperty("season");
+    expect(errorsFor(firstAppearanceSchema.safeParse({ ...show, episode: "" }))).toHaveProperty("episode");
+  });
+
+  it("makes the episode name optional", () => {
+    expect(firstAppearanceSchema.parse({ ...show, episodeName: "" }).episodeName).toBeNull();
+  });
+});
+
+describe("inlineCharacterSchema", () => {
+  it("needs a name, and takes the universe as an id or nothing", () => {
+    expect(inlineCharacterSchema.parse({ name: " Loki ", universeId: null })).toEqual({ name: "Loki", universeId: null });
+    expect(errorsFor(inlineCharacterSchema.safeParse({ name: "", universeId: null }))).toHaveProperty("name");
+    expect(() => inlineCharacterSchema.parse({ name: "Loki", universeId: "not-an-id" })).toThrow();
+  });
+});
+
 describe("characterFormSchema", () => {
   const base = {
     name: "Loki",
@@ -288,11 +323,19 @@ describe("characterFormSchema", () => {
     firstEntryId: "",
     lastEntryId: "",
     notes: "",
-    entryIds: [VALID_UUID, VALID_UUID, OTHER_UUID],
   };
 
-  it("removes duplicate appearances", () => {
-    expect(characterFormSchema.parse(base).entryIds).toEqual([VALID_UUID, OTHER_UUID]);
+  it("keeps a universe typed but not picked, and drops a blank one", () => {
+    expect(characterFormSchema.parse({ ...base, universeId: "", universeName: "  Earth-199999 " }).universeName).toBe(
+      "Earth-199999",
+    );
+    expect(characterFormSchema.parse({ ...base, universeName: "   " }).universeName).toBeNull();
+  });
+
+  it("refuses a universe name over 60 characters", () => {
+    expect(errorsFor(characterFormSchema.safeParse({ ...base, universeName: "x".repeat(61) }))).toHaveProperty(
+      "universeName",
+    );
   });
 
   it("treats blank dropdowns as no value", () => {

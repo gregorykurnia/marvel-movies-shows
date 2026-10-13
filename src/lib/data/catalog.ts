@@ -86,24 +86,40 @@ export type TitleRow = {
   watched: number;
   // A movie has exactly one entry. Its id is the one the recap page uses.
   movieEntryId: string | null;
+  // The universes set on its movie or episodes, by name (Phase 11).
+  universes: string[];
 };
 
 // Every title with its episode counts, for the titles list.
+// Every title, with its universes (Phase 11): one name for each universe set on its movie, short or episodes.
 export async function loadTitleRows(): Promise<TitleRow[]> {
-  return getDb()
-    .select({
-      id: titles.id,
-      name: titles.name,
-      kind: titles.kind,
-      releaseDate: titles.releaseDate,
-      total: sql<number>`count(${entries.id})::int`,
-      watched: sql<number>`(count(${entries.id}) filter (where ${entries.watched}))::int`,
-      movieEntryId: sql<string | null>`max(${entries.id}::text)`,
-    })
-    .from(titles)
-    .leftJoin(entries, eq(entries.titleId, titles.id))
-    .groupBy(titles.id)
-    .orderBy(asc(titles.name));
+  const [rows, universeRows] = await Promise.all([
+    getDb()
+      .select({
+        id: titles.id,
+        name: titles.name,
+        kind: titles.kind,
+        releaseDate: titles.releaseDate,
+        total: sql<number>`count(${entries.id})::int`,
+        watched: sql<number>`(count(${entries.id}) filter (where ${entries.watched}))::int`,
+        movieEntryId: sql<string | null>`max(${entries.id}::text)`,
+      })
+      .from(titles)
+      .leftJoin(entries, eq(entries.titleId, titles.id))
+      .groupBy(titles.id)
+      .orderBy(asc(titles.name)),
+    getDb()
+      .selectDistinct({ titleId: entries.titleId, universeName: universes.name })
+      .from(entries)
+      .innerJoin(universes, eq(entries.universeId, universes.id))
+      .orderBy(asc(universes.name)),
+  ]);
+
+  const universesByTitle = new Map<string, string[]>();
+  for (const row of universeRows) {
+    universesByTitle.set(row.titleId, [...(universesByTitle.get(row.titleId) ?? []), row.universeName]);
+  }
+  return rows.map((row) => ({ ...row, universes: universesByTitle.get(row.id) ?? [] }));
 }
 
 export type TitleRecord = {

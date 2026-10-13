@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
 import { useRef, useState, useTransition, type FormEvent } from "react";
 
+import { createCharacterInline } from "@/actions/characters";
 import { saveEpisode, saveMovie } from "@/actions/entries";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input, Select, Textarea } from "@/components/ui/field";
@@ -48,9 +49,12 @@ export function RecapEditForm({
   const [message, setMessage] = useState<string | null>(null);
   const [recap, setRecap] = useState(entry.recap ?? "");
   const [characterIds, setCharacterIds] = useState(initialCharacterIds);
+  const [characterList, setCharacterList] = useState(characterOptions);
+  const [, startCharacterTransition] = useTransition();
   const [tagNames, setTagNames] = useState(entry.tags);
   const [universeList, setUniverseList] = useState(universeOptions);
   const [universeId, setUniverseId] = useState<string | null>(entry.universeId);
+  const [universeName, setUniverseName] = useState("");
   const [jumpRows, setJumpRows] = useState<JumpRow[]>(() =>
     timeJumps.map((jump) => ({
       key: jump.id,
@@ -62,6 +66,22 @@ export function RecapEditForm({
   );
   const nextJumpKey = useRef(0);
   const oneRecap = hasOneRecap(entry.titleKind);
+
+  // Adds a character who isn't in the list yet, in the recap's universe, and picks them here (Phase 11).
+  function addCharacter(name: string) {
+    startCharacterTransition(async () => {
+      const result = await createCharacterInline({ name, universeId });
+      if (!result.ok) {
+        setErrors((current) => ({ ...current, characterId: result.message }));
+        return;
+      }
+      setErrors((current) => ({ ...current, characterId: "" }));
+      setCharacterList((list) =>
+        [...list, { value: result.data.id, label: result.data.label }].sort((a, b) => a.label.localeCompare(b.label)),
+      );
+      setCharacterIds((ids) => [...ids, result.data.id]);
+    });
+  }
 
   function addJumpRow() {
     nextJumpKey.current += 1;
@@ -124,6 +144,8 @@ export function RecapEditForm({
                 universes={universeList}
                 universeId={universeId}
                 onUniverseId={setUniverseId}
+                universeName={universeName}
+                onUniverseName={setUniverseName}
                 onCreated={(universe) => setUniverseList((list) => withUniverse(list, universe))}
                 errors={errors}
               />
@@ -164,6 +186,8 @@ export function RecapEditForm({
                 universes={universeList}
                 universeId={universeId}
                 onUniverseId={setUniverseId}
+                universeName={universeName}
+                onUniverseName={setUniverseName}
                 onCreated={(universe) => setUniverseList((list) => withUniverse(list, universe))}
                 errors={errors}
               />
@@ -203,13 +227,16 @@ export function RecapEditForm({
 
         <div className="mt-6">
           <AppearancesPicker
-            label="Characters in this recap"
+            label="First Appearance Characters"
             fieldName="characterId"
-            options={characterOptions}
+            options={characterList}
             selected={characterIds}
             onChange={setCharacterIds}
-            hint="Every character who appears in this recap. Each variant is listed with its universe."
-            emptyText="No characters linked yet."
+            onCreate={addCharacter}
+            createNoun="character"
+            hint="Characters who first appear in this movie or episode. Picking one moves their first appearance here. Each variant is listed with its universe."
+            error={errors.characterId}
+            emptyText="No first appearances here yet."
           />
         </div>
 
@@ -250,6 +277,8 @@ function YearAndUniverse({
   universes,
   universeId,
   onUniverseId,
+  universeName,
+  onUniverseName,
   onCreated,
   errors,
 }: {
@@ -257,6 +286,8 @@ function YearAndUniverse({
   universes: UniverseOption[];
   universeId: string | null;
   onUniverseId: (id: string | null) => void;
+  universeName: string;
+  onUniverseName: (name: string) => void;
   onCreated: (universe: UniverseOption) => void;
   errors: Record<string, string>;
 }) {
@@ -274,8 +305,10 @@ function YearAndUniverse({
         universes={universes}
         value={universeId}
         onValueChange={onUniverseId}
+        pendingName={universeName}
+        onPendingNameChange={onUniverseName}
         onCreated={onCreated}
-        error={errors.universeId}
+        error={errors.universeId ?? errors.universeName}
       />
     </div>
   );

@@ -7,10 +7,11 @@ import { redirect } from "next/navigation";
 import { getDb } from "@/db";
 import { entries, titles } from "@/db/schema";
 import { fail, ok, validationFailure, type ActionResult } from "@/lib/action-result";
-import { replaceRecapCharacters } from "@/lib/data/appearances";
+import { addFirstAppearanceEntry, replaceFirstAppearances } from "@/lib/data/first-appearances";
 import { replaceEntryTags, tagIdsFor } from "@/lib/data/tags";
 import { replaceEntryTimeJumps } from "@/lib/data/time-jumps";
 import { readPlaceables } from "@/lib/data/placeables";
+import { resolveUniverseId } from "@/lib/data/universes";
 import {
   isForeignKeyViolation,
   isMissingTimeJumpUniverseViolation,
@@ -25,6 +26,7 @@ import {
   episodeEditSchema,
   episodeFormSchema,
   episodeRangeSchema,
+  firstAppearanceSchema,
   moveEntrySchema,
   movieEditSchema,
   recapCharactersSchema,
@@ -67,6 +69,7 @@ export async function createEpisode(titleId: string, formData: FormData): Promis
       if (clash) throw new DuplicateEpisode();
 
       const sortKey = seededKey(await readPlaceables(tx), input.inUniverseYear);
+      const universeId = await resolveUniverseId(tx, input.universeId, input.universeName);
       const [row] = await tx
         .insert(entries)
         .values({
@@ -76,7 +79,7 @@ export async function createEpisode(titleId: string, formData: FormData): Promis
           name: input.name,
           releaseDate: input.releaseDate,
           inUniverseYear: input.inUniverseYear,
-          universeId: input.universeId,
+          universeId,
           sortKey,
           watched: false,
         })
@@ -131,6 +134,7 @@ export async function addEpisodes(titleId: string, formData: FormData): Promise<
       }
 
       const keys = seededKeys(await readPlaceables(tx), input.inUniverseYear, count);
+      const universeId = await resolveUniverseId(tx, input.universeId, input.universeName);
       await tx.insert(entries).values(
         keys.map((sortKey, index) => ({
           titleId,
@@ -139,7 +143,7 @@ export async function addEpisodes(titleId: string, formData: FormData): Promise<
           name: null,
           releaseDate: null,
           inUniverseYear: input.inUniverseYear,
-          universeId: input.universeId,
+          universeId,
           sortKey,
           watched: false,
         })),
@@ -177,6 +181,7 @@ export async function saveEpisode(entryId: string, formData: FormData): Promise<
 
   try {
     const saved = await getDb().transaction(async (tx) => {
+      const universeId = await resolveUniverseId(tx, input.universeId, input.universeName);
       const updated = await tx
         .update(entries)
         .set({
@@ -185,14 +190,14 @@ export async function saveEpisode(entryId: string, formData: FormData): Promise<
           name: input.name,
           releaseDate: input.releaseDate,
           inUniverseYear: input.inUniverseYear,
-          universeId: input.universeId,
+          universeId,
           recap: input.recap,
           notes: input.notes,
         })
         .where(and(eq(entries.id, entryId), sql`${entries.seasonNumber} is not null`))
         .returning({ id: entries.id });
       if (updated.length === 0) return false;
-      await replaceRecapCharacters(tx, entryId, characters.data);
+      await replaceFirstAppearances(tx, entryId, characters.data);
       await replaceEntryTags(tx, entryId, await tagIdsFor(tx, tagNames.data));
       await replaceEntryTimeJumps(tx, entryId, input.timeJumps);
       return true;
@@ -227,6 +232,7 @@ export async function saveMovie(entryId: string, formData: FormData): Promise<Ac
 
   try {
     const saved = await getDb().transaction(async (tx) => {
+      const universeId = await resolveUniverseId(tx, input.universeId, input.universeName);
       const [entry] = await tx
         .select({ titleId: entries.titleId })
         .from(entries)
@@ -240,9 +246,9 @@ export async function saveMovie(entryId: string, formData: FormData): Promise<Ac
         .where(eq(titles.id, entry.titleId));
       await tx
         .update(entries)
-        .set({ inUniverseYear: input.inUniverseYear, universeId: input.universeId, recap: input.recap, notes: input.notes })
+        .set({ inUniverseYear: input.inUniverseYear, universeId, recap: input.recap, notes: input.notes })
         .where(eq(entries.id, entryId));
-      await replaceRecapCharacters(tx, entryId, characters.data);
+      await replaceFirstAppearances(tx, entryId, characters.data);
       await replaceEntryTags(tx, entryId, await tagIdsFor(tx, tagNames.data));
       await replaceEntryTimeJumps(tx, entryId, input.timeJumps);
       return true;
@@ -257,6 +263,22 @@ export async function saveMovie(entryId: string, formData: FormData): Promise<Ac
 
   revalidatePath("/", "layout");
   return ok();
+}
+
+// Adds a movie, short or show episode from a character's First or Last appearance (Phase 11). Returns the entry and
+// its label, so the character form can select it at once.
+export async function createFirstAppearanceEntry(input: unknown): Promise<ActionResult<{ id: string; label: string }>> {
+  const parsed = firstAppearanceSchema.safeParse(input);
+  if (!parsed.success) return validationFailure(parsed.error);
+
+  try {
+    const created = await getDb().transaction((tx) => addFirstAppearanceEntry(tx, parsed.data));
+    revalidatePath("/", "layout");
+    return ok(created);
+  } catch (error) {
+    if (isUniqueViolation(error)) return fail(DUPLICATE_EPISODE);
+    throw error;
+  }
 }
 
 // Moves an entry so it sits directly after `afterId` (null: at the start). Only that row is written (§3.2).

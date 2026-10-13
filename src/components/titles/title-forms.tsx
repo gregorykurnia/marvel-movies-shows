@@ -30,6 +30,7 @@ export function TitleNewForm({ universes }: { universes: UniverseOption[] }) {
   const [version, setVersion] = useState(0);
   const [universeList, setUniverseList] = useState(universes);
   const [universeId, setUniverseId] = useState<string | null>(null);
+  const [universeName, setUniverseName] = useState("");
 
   function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -111,8 +112,10 @@ export function TitleNewForm({ universes }: { universes: UniverseOption[] }) {
               universes={universeList}
               value={universeId}
               onValueChange={setUniverseId}
+              pendingName={universeName}
+              onPendingNameChange={setUniverseName}
               onCreated={(universe) => setUniverseList((list) => withUniverse(list, universe))}
-              error={errors.universeId}
+              error={errors.universeId ?? errors.universeName}
             />
           </div>
         </FormGrid>

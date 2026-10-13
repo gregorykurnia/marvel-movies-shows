@@ -68,6 +68,13 @@ function optionalWhole(label: string, min: number, max: number) {
 const optionalYear = optionalWhole("the in-universe year", YEAR_MIN, YEAR_MAX);
 
 const uuid = z.uuid("That item no longer exists. Pick it again.");
+// A universe typed in a form but not picked. It is found by name or added when the form saves (PRODUCT_PLAN §2.1).
+const optionalUniverseName = z
+  .string()
+  .trim()
+  .max(60, "Keep the universe name under 60 characters")
+  .optional()
+  .transform((value) => value || null);
 const optionalUuid = z
   .string()
   .trim()
@@ -83,6 +90,7 @@ export const titleFormSchema = z.object({
   releaseDate: optionalDate,
   inUniverseYear: optionalYear,
   universeId: optionalUuid,
+  universeName: optionalUniverseName,
 });
 
 export const titleEditSchema = z.object({
@@ -99,6 +107,7 @@ export const episodeFormSchema = z.object({
   releaseDate: optionalDate,
   inUniverseYear: optionalYear,
   universeId: optionalUuid,
+  universeName: optionalUniverseName,
 });
 
 export const MAX_EPISODES_PER_BLOCK = 100;
@@ -111,6 +120,7 @@ export const episodeRangeSchema = z
     inUniverseYear: optionalYear,
     // One universe for the whole block (PRODUCT_PLAN §2.1).
     universeId: optionalUuid,
+    universeName: optionalUniverseName,
   })
   .superRefine((value, context) => {
     if (value.toEpisode < value.fromEpisode) {
@@ -224,6 +234,7 @@ export const movieEditSchema = z
     releaseDate: optionalDate,
     inUniverseYear: optionalYear,
     universeId: optionalUuid,
+    universeName: optionalUniverseName,
     recap: recapSchema,
     notes: optionalText(10_000),
     timeJumps: timeJumpsSchema,
@@ -263,12 +274,43 @@ export const characterFormSchema = z.object({
   importance: importanceSchema,
   status: statusSchema,
   universeId: optionalUuid,
+  universeName: optionalUniverseName,
   predominantTitleId: optionalUuid,
   firstEntryId: optionalUuid,
   lastEntryId: optionalUuid,
   notes: optionalText(10_000),
-  entryIds: z.array(uuid).max(500).transform((ids) => [...new Set(ids)]),
 });
+
+// A character made from the recap's First Appearance Characters picker: a name, and the recap's universe if one is set.
+export const inlineCharacterSchema = z.object({
+  name,
+  universeId: uuid.nullable(),
+});
+
+// A movie, short or show episode made from a character's First or Last appearance (Phase 11). A movie or short needs
+// a name. A show needs a show, either picked or typed, plus a season, an episode number and optionally an episode name.
+export const firstAppearanceSchema = z
+  .object({
+    kind: titleKind,
+    name: optionalText(160),
+    showTitleId: uuid.nullable(),
+    showName: optionalText(160),
+    season: optionalWhole("a season number", 0, 99),
+    episode: optionalWhole("an episode number", 1, 999),
+    episodeName: optionalText(160),
+  })
+  .superRefine((value, context) => {
+    if (value.kind !== "show") {
+      if (!value.name) context.addIssue({ code: "custom", path: ["name"], message: "Enter a title" });
+      return;
+    }
+    if (!value.showTitleId && !value.showName) {
+      context.addIssue({ code: "custom", path: ["showName"], message: "Pick a show, or type the name of a new one" });
+    }
+    if (value.season === null) context.addIssue({ code: "custom", path: ["season"], message: "Enter a season number" });
+    if (value.episode === null) context.addIssue({ code: "custom", path: ["episode"], message: "Enter an episode number" });
+  });
+export type FirstAppearanceInput = z.infer<typeof firstAppearanceSchema>;
 
 export const universeNameSchema = z
   .string()

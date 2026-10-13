@@ -62,7 +62,7 @@ test("several Loki variants in different universes, filtered by universe and sta
     }
   });
 
-  await test.step("three Loki variants in two universes, the first one with its links and appearances", async () => {
+  await test.step("three Loki variants in two universes, the first one with its first and last appearance", async () => {
     await page.goto("/characters/new");
     await field(page, "Name").fill(loki);
     await page.getByRole("radio", { name: "★ Major" }).click();
@@ -71,8 +71,6 @@ test("several Loki variants in different universes, filtered by universe and sta
     await pick(page, "Predominant title", thor);
     await pick(page, "First appearance", thor, `${thor} · Movie`);
     await pick(page, "Last appearance", avengers, `${avengers} · Movie`);
-    await pick(page, "Appears in", thor, `${thor} · Movie`);
-    await pick(page, "Appears in", avengers, `${avengers} · Movie`);
     await page.getByRole("button", { name: "Save & add another" }).click();
     await expect(field(page, "Name")).toHaveValue("");
     await expect(page.getByRole("status").filter({ hasText: "Add the next variant" })).toBeVisible();
@@ -141,11 +139,11 @@ test("several Loki variants in different universes, filtered by universe and sta
     await expect(firstHeader).toHaveAttribute("aria-sort", "ascending");
   });
 
-  await test.step("a character page lists its appearances, linked to their recaps", async () => {
+  await test.step("a character page shows its first and last appearance, linked to their recaps", async () => {
     await page.getByRole("link", { name: loki, exact: true }).first().click();
     await expect(page).toHaveURL(/\/characters\/[0-9a-f-]{36}$/);
-    const appearances = page.locator("section[aria-labelledby='appearances']");
-    await expect(appearances.getByRole("heading", { name: /Appearances/ })).toBeVisible();
+    const appearances = page.locator("section[aria-labelledby='first-last-appearance']");
+    await expect(appearances.getByRole("heading", { name: "First and last appearance" })).toBeVisible();
     await expect(appearances.getByRole("link", { name: `${thor} · Movie`, exact: true })).toHaveAttribute("href", /\/recaps\//);
     await expect(appearances.getByRole("link", { name: `${avengers} · Movie`, exact: true })).toHaveAttribute("href", /\/recaps\//);
   });
@@ -163,10 +161,10 @@ test("several Loki variants in different universes, filtered by universe and sta
     await page.goto("/recaps");
     await page.getByRole("link", { name: avengers, exact: true }).click();
     await page.getByRole("link", { name: "✎ Edit" }).click();
-    await pick(page, "Characters in this recap", loki, `${loki} · ${earth838}`);
+    await pick(page, "First Appearance Characters", loki, `${loki} · ${earth838}`);
     await page.getByRole("button", { name: "Save recap" }).click();
     await expect(page).toHaveURL(/\/recaps\/[0-9a-f-]{36}$/);
-    // The recap's characters card lists both variants now. Check the one added in this step, by its universe.
+    // The recap's First appearances card lists the variant added in this step, by its universe.
     await expect(page.locator("aside").getByRole("link", { name: new RegExp(earth838) })).toBeVisible();
   });
 

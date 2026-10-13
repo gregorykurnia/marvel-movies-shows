@@ -10,6 +10,7 @@ import { fail, ok, validationFailure, type ActionResult } from "@/lib/action-res
 import { isMissingUniverseViolation } from "@/lib/db-errors";
 import { formStrings } from "@/lib/form";
 import { readPlaceables } from "@/lib/data/placeables";
+import { resolveUniverseId } from "@/lib/data/universes";
 import { seededKey } from "@/lib/ordering";
 import { deleteConfirmSchema, titleEditSchema, titleFormSchema } from "@/lib/schemas";
 import type { TitleKind } from "@/lib/title-kind";
@@ -39,13 +40,14 @@ export async function createTitle(
       }
 
       const sortKey = seededKey(await readPlaceables(tx), input.inUniverseYear);
+      const universeId = await resolveUniverseId(tx, input.universeId, input.universeName);
       const [entry] = await tx
         .insert(entries)
         .values({
           titleId: title.id,
           sortKey,
           inUniverseYear: input.inUniverseYear,
-          universeId: input.universeId,
+          universeId,
           watched: false,
         })
         .returning({ id: entries.id });

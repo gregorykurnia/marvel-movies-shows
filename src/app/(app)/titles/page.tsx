@@ -90,6 +90,12 @@ function TitleListItem({ title }: { title: TitleRow }) {
                 {KIND_LABEL[title.kind]}
               </Chip>
               {year !== null ? <Year>{formatYear(year)}</Year> : null}
+              {/* One chip per universe set on the title's movie, short or episodes (Phase 11). */}
+              {title.universes.map((universe) => (
+                <Chip key={universe} tone="universe" className="max-w-full" title={universe}>
+                  <span className="min-w-0 truncate">{universe}</span>
+                </Chip>
+              ))}
               {!oneRecap ? (
                 <span className="font-mono text-[13px] font-bold tabular-nums text-ink-2">
                   {formatCount(title.total, "episode")}

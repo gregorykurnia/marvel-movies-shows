@@ -34,6 +34,7 @@ export function EpisodeForm({
   const [mode, setMode] = useState<Mode>("one");
   const [universeList, setUniverseList] = useState(universes);
   const [universeId, setUniverseId] = useState<string | null>(null);
+  const [universeName, setUniverseName] = useState("");
   const [season, setSeason] = useState("1");
   const [episode, setEpisode] = useState("1");
   const [name, setName] = useState("");
@@ -188,8 +189,10 @@ export function EpisodeForm({
               universes={universeList}
               value={universeId}
               onValueChange={setUniverseId}
+              pendingName={universeName}
+              onPendingNameChange={setUniverseName}
               onCreated={(universe) => setUniverseList((list) => withUniverse(list, universe))}
-              error={errors.universeId}
+              error={errors.universeId ?? errors.universeName}
             />
           </div>
         </FormGrid>

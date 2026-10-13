@@ -2,7 +2,7 @@
 import { asc, eq, sql } from "drizzle-orm";
 
 import { getDb } from "@/db";
-import { appearances, characters, entries, entryTimeJumps, titles, universes } from "@/db/schema";
+import { characters, entries, entryTimeJumps, titles, universes } from "@/db/schema";
 
 import { KIND_LABEL, hasOneRecap, type TitleKind } from "@/lib/title-kind";
 
@@ -61,20 +61,13 @@ export async function loadCharacterRecord(id: string): Promise<CharacterRecord |
   return row ?? null;
 }
 
-export async function loadAppearanceIds(characterId: string): Promise<string[]> {
-  const rows = await getDb()
-    .select({ entryId: appearances.entryId })
-    .from(appearances)
-    .where(eq(appearances.characterId, characterId));
-  return rows.map((row) => row.entryId);
-}
-
+// The characters whose first appearance is this recap (Phase 11). The First Appearance Characters picker shows them.
 export async function loadRecapCharacterIds(entryId: string): Promise<string[]> {
   const rows = await getDb()
-    .select({ characterId: appearances.characterId })
-    .from(appearances)
-    .where(eq(appearances.entryId, entryId));
-  return rows.map((row) => row.characterId);
+    .select({ id: characters.id })
+    .from(characters)
+    .where(eq(characters.firstEntryId, entryId));
+  return rows.map((row) => row.id);
 }
 
 // Every character, for pickers: "Loki · Earth-199999" tells variants apart.
@@ -153,10 +146,14 @@ export async function loadCharacterTable(): Promise<{ rows: CharacterTableRow[];
   return { rows, entries: [...chips.values()] };
 }
 
-// A character's page: its fields, notes, tags, and the recaps it appears in (in custom order).
+// A first or last appearance as the character page shows it: its link, its kind for the chip, and its code.
+export type AppearanceLink = EntryChip & { href: string; titleKind: TitleKind; code: string | null };
+
+// A character's page: its fields, notes, tags, and first and last appearance (Phase 11).
 export type CharacterDetail = CharacterTableRow & {
   notes: string | null;
-  appearances: (EntryChip & { href: string; titleKind: TitleKind; code: string | null })[];
+  firstAppearance: AppearanceLink | null;
+  lastAppearance: AppearanceLink | null;
 };
 
 export async function loadCharacterDetail(id: string): Promise<CharacterDetail | null> {
@@ -164,30 +161,29 @@ export async function loadCharacterDetail(id: string): Promise<CharacterDetail |
   const row = rows.find((candidate) => candidate.id === id);
   if (!row) return null;
 
-  const [record, appearanceRows, catalog] = await Promise.all([
-    loadCharacterRecord(id),
-    getDb().select({ entryId: appearances.entryId }).from(appearances).where(eq(appearances.characterId, id)),
-    loadCatalog(),
-  ]);
+  const [record, catalog] = await Promise.all([loadCharacterRecord(id), loadCatalog()]);
+  const byId = new Map(catalog.map((entry, index) => [entry.id, { entry, rank: index + 1 }]));
 
-  const appearingIds = new Set(appearanceRows.map((link) => link.entryId));
-  const appearancesList = catalog
-    .map((entry, index) => ({ entry, index }))
-    .filter(({ entry }) => appearingIds.has(entry.id))
-    .map(({ entry, index }) => ({
+  const link = (chip: EntryChip | null): AppearanceLink | null => {
+    const found = chip ? byId.get(chip.id) : undefined;
+    if (!found) return null;
+    const { entry } = found;
+    return {
       id: entry.id,
       label: entryLabel(entry),
       watched: entry.watched,
-      rank: index + 1,
+      rank: found.rank,
       href: `/recaps/${entry.id}`,
       titleKind: entry.titleKind,
       code: entry.seasonNumber === null ? null : `S${String(entry.seasonNumber).padStart(2, "0")}·E${String(entry.episodeNumber).padStart(2, "0")}`,
-    }));
+    };
+  };
 
   return {
     ...row,
     notes: record?.notes ?? null,
-    appearances: appearancesList,
+    firstAppearance: link(row.firstEntry),
+    lastAppearance: link(row.lastEntry),
   };
 }
 
@@ -206,19 +202,18 @@ export async function loadCharacterFormOptions() {
   const [universeRows, titleRows, catalog] = await Promise.all([loadUniverseRows(), loadTitleRowsForOptions(), loadCatalog()]);
   return {
     universes: universeRows.map((row) => ({ id: row.id, name: row.name })),
-    titles: titleRows.map((row) => ({ id: row.id, name: row.name })),
+    titles: titleRows.map((row) => ({ id: row.id, name: row.name, kind: row.kind })),
     entries: catalog.map((entry) => ({ id: entry.id, label: entryLabel(entry) })),
   };
 }
 
-// The characters who appear in one recap, for the recap page's side card.
+// The characters whose first appearance is this recap, for the recap page's side card (Phase 11).
 export async function loadRecapCharacters(entryId: string): Promise<{ id: string; name: string; universeName: string | null }[]> {
   return getDb()
     .select({ id: characters.id, name: characters.name, universeName: universes.name })
-    .from(appearances)
-    .innerJoin(characters, eq(appearances.characterId, characters.id))
+    .from(characters)
     .leftJoin(universes, eq(characters.universeId, universes.id))
-    .where(eq(appearances.entryId, entryId))
+    .where(eq(characters.firstEntryId, entryId))
     .orderBy(asc(characters.name));
 }
 
