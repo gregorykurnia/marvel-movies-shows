@@ -1,6 +1,6 @@
 # Marvel Directory: Implementation Plan
 
-**Status:** Draft v0.5 (2026-10-13). This version adds a universe on each flashback, flash-forward and time travel, shown on the timeline (Phase 9). v0.4 added flashbacks, flash-forwards and time travel on recaps and the timeline (Phase 8). v0.3 added the universe designation on recaps (Phase 6) and recaps on the timeline (Phase 7). Build progress is in §6.
+**Status:** Draft v0.6 (2026-10-13). This version adds the universe on recap items and a universe filter on the timeline (Phase 10). v0.5 added a universe on each flashback, flash-forward and time travel, shown on the timeline (Phase 9). v0.4 added flashbacks, flash-forwards and time travel on recaps and the timeline (Phase 8). v0.3 added the universe designation on recaps (Phase 6) and recaps on the timeline (Phase 7). Build progress is in §6.
 **Companion to:** [`PRODUCT_PLAN.md`](./PRODUCT_PLAN.md). That file is the source of truth for *what* the app does. This file covers *how* it gets built, and it will change as work progresses.
 **Look and feel:** [`DESIGN_GUIDE.md`](./DESIGN_GUIDE.md) and its visual reference [`design-preview.html`](./design-preview.html) are **binding for every page**, including forms, settings and error pages.
 
@@ -235,6 +235,13 @@ The global search box sits in the header on every page. Pressing `/` or `⌘K` f
   - **Toggle:** a "Show flashbacks" switch beside the type and tag filters, on by default, covers all three kinds. It's kept in the URL (`?jumps=off`) like the other filters. Turning it off counts as a filter, so reorder is off while it's off.
   - Type and tag filters use the entry's title kind and tags. The header count includes these items. They are not sortable and not separate search results.
   - **Universe (Phase 9):** each time jump item carries a universe name: its own `universe_id`, or the recap's universe when that's empty. The card shows it as a universe chip on its own line under the kind label and title, and the popover adds a "Universe" line. Both are built in `event-pin.tsx`. No chip when neither is set.
+- **Universe on recap items (Phase 10):** `TimelineRecap` gets `universeName` (the entry's universe, already in `loadCatalog`). The card shows the same universe chip as a time jump card, on its own line under "From recap", and the popover adds the same "Universe" line. Both come from one helper in `event-pin.tsx`, shared by recap and jump items. No chip when null.
+- **Universe filter (Phase 10):** a `FilterMenu` labelled "Universe", beside the tag filter, built like `TagFilter`. Its options are the universes used by the items on the timeline (not the whole universes list), sorted by name, plus a "No universe set" choice at the end. Single choice; ✕ clears it.
+  - **Matching:** each item's universe is the one it shows. A recap item uses its recap's universe, a time jump its own or the recap's (Phase 9). A hand-written event uses the universe of its linked entry (`timeline_events.entry_id` → `entries.universe_id`), so `TimelineEvent` gets `universeName` from `loadTimelineEvents` with a left join. An event without a linked entry has none. No table change and no migration.
+  - **Match by name, case-insensitive,** like the tag filter, because universe names are unique.
+  - **URL:** `?universe=<name>`, or `?universe=none` for "No universe set". It's read on load like `type`, `tag` and `jumps`, and an unknown name falls back to no filter.
+  - **Counts and reorder:** the header count follows the filter. A universe filter counts as a filter, so reorder is off while it's set, with the same "Clear the filters to reorder events." hint.
+  - The event popover does not get a "Universe" line: the event's universe is its recap's, which the linked recap item already shows.
 
 ### 5.3 Character Directory
 - A TanStack Table loaded with all characters plus joined names (universe, titles, entries).
@@ -401,6 +408,17 @@ Phases match the product plan's build plan. Each phase ends with:
 - [ ] Design review (`DESIGN_GUIDE.md` §13) for the recap edit page, recap page and timeline, at 390px and 1280px, light and dark. Screenshots are in `screenshots/phase-9/` (git-ignored, 16 captures from `tests/e2e/screenshots-phase-9.spec.ts`). Checked by eye so far: the recap edit page at 1280px and the timeline at 390px and 1280px. Waiting for the owner's sign-off.
 - **Done when:** I can pick a universe on a flashback, flash-forward or time travel, and the timeline shows that universe on its card and popover (or the recap's universe when I leave it empty).
 
+### Phase 10: Universe on recap items, and a universe filter on the timeline
+- [ ] Read model: `universeName` on `TimelineRecap` in `loadRecapItems`, and on `TimelineEvent` in `loadTimelineEvents` (left join through the linked entry to `universes`). No migration.
+- [ ] Recap item card and popover: the universe chip and "Universe" line from §5.2, through one helper in `event-pin.tsx` shared with time jump items. Tokens only.
+- [ ] Universe filter: a `UniverseFilter` on `FilterMenu`, beside the tag filter in `timeline-view.tsx`, with options from the items on the timeline and a "No universe set" choice.
+- [ ] Filtering: a pure `itemUniverse` helper and a filter function (e.g. in `src/lib/timeline-filter.ts`, new) that the `shown` memo calls, so the matching rules can be unit tested.
+- [ ] URL: `?universe=<name>` and `?universe=none`, read by the timeline page and written by the `replaceState` effect.
+- [ ] A universe filter turns reorder off, like the other filters. The header count follows it.
+- [ ] Tests: unit tests for the filter (recap item, jump with its own universe, jump falling back to the recap's, linked event, unlinked event, "No universe set", case-insensitive match); `tests/e2e/phase-10.spec.ts` (a recap item shows its universe chip and popover line; picking a universe hides items from other universes and keeps the URL; "No universe set" shows an unlinked event; clearing the filter brings everything back).
+- [ ] Design review (`DESIGN_GUIDE.md` §13) for the timeline at 390px and 1280px, light and dark, with the filter row wrapping cleanly at 390px. Screenshots go in `screenshots/phase-10/`.
+- **Done when:** every recap item on the timeline shows its universe, and picking a universe in the filter leaves only the items in that universe.
+
 ---
 
 ## 7. Testing and Verification
@@ -450,6 +468,7 @@ tests/
 |---|---|---|
 | Where the pre-restore snapshot is kept (Blob is dropped) | Restore, which comes after Phase 5 | A JSON row in a `pre_restore_snapshots` table in Neon, outside the tables a restore replaces. Only the newest is kept. |
 | Custom domain (product plan, open question 2) | Nothing | The free `*.vercel.app` address |
+| Universe of a hand-written event that isn't linked to a recap (Phase 10) | Nothing | It has none: hidden when a universe is picked, shown under "No universe set". A universe field on events would need a migration, so it waits until I ask for it. |
 | Neon CLI extras (`neon skills`, `neon mcp`, `neon.ts`, `neon deploy`) | Nothing | Skipped. The app connects with the connection strings. The CLI is only needed to create the `test` branch. |
 
 ## 10. Things I Need to Do Myself
