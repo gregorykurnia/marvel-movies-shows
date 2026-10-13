@@ -186,16 +186,16 @@ Trigram index on `name` for fuzzy search.
 |---|---|
 | `/` | Home: overall watched progress and quick links to each section. |
 | `/recaps` | The custom-ordered list of all entries. Filters: watched or unwatched, type, tag. A **Reorder mode** toggle enables drag-and-drop, so normal scrolling doesn't move things by accident. |
-| `/recaps/[entryId]` | One recap: header details (including the universe), rendered recap, characters, notes and tags, watched toggle, and previous and next buttons in custom order. |
-| `/recaps/[entryId]/edit` | Edit the recap text (large paste area with a preview), year, other years (Phase 8), universe, notes, tags and appearances. |
-| `/titles` | Manage movies and shows. |
+| `/recaps/[entryId]` | One recap: header details (including the universe), rendered recap, first-appearance characters (Phase 11), notes and tags, watched toggle, and previous and next buttons in custom order. |
+| `/recaps/[entryId]/edit` | Edit the recap text (large paste area with a preview), year, other years (Phase 8), universe, notes, tags and first-appearance characters (Phase 11). |
+| `/titles` | Manage movies and shows. Each title shows its universes (Phase 11). |
 | `/titles/new` | Add a movie or a show. |
 | `/titles/[id]` | For a show: its seasons and episodes, progress bars, and **bulk-add episodes**. For a movie: a redirect to its recap. |
 | `/timeline` | The grand timeline (§5.2). |
 | `/timeline/new`, `/timeline/[id]/edit` | Event form: year, text, details, title, optional episode link, notes, tags. |
 | `/characters` | The directory table (§5.3). |
 | `/characters/new`, `/characters/[id]/edit` | Character form. All dropdowns are searchable comboboxes. |
-| `/characters/[id]` | Character page: fields, notes, tags, and the appearances list (linked to recaps). |
+| `/characters/[id]` | Character page: fields, notes, tags, and first and last appearance (linked to recaps, Phase 11). |
 | `/universes` | Manage universes: add, rename, delete if not in use. |
 | `/tags` | Manage tags: rename, merge, delete. |
 | `/search?q=` | Global search results. |
@@ -252,7 +252,8 @@ The global search box sits in the header on every page. Pressing `/` or `⌘K` f
 ### 5.4 Forms (data entry)
 Everything is typed by hand, so data entry speed is a priority:
 - **Other years** (Phase 8) on the recap edit page, under In-universe year: a repeatable row of year, kind (select: Flashback, Flash-forward, Time travel), universe (Phase 9, the same universe combobox, placeholder "Same as recap") and note, with "+ Add another year" and a remove button per row. Saving replaces the entry's rows in one transaction.
-- Searchable comboboxes for titles, entries and universes. The universe combobox has an inline **"+ Add universe"** option.
+- Searchable comboboxes for titles, entries and universes. The universe combobox has an inline **"+ Add universe"** option, and a typed name that isn't picked is created on save (Phase 11).
+- First appearance and Last appearance have an inline **"+ Add new…"** that creates a movie, a short, or a show episode (creating the show if needed). The recap's First Appearance Characters picker has an inline **"+ Add character"** (Phase 11).
 - **"Save and add another"** on every create form.
 - Bulk episode add. The universe combobox sits beside In-universe year on the movie form, the episode form and the recap edit page. A bulk add gives every episode in the block the one universe that I pick.
 - A tag input with autocomplete that creates new tags on the fly.
@@ -418,6 +419,24 @@ Phases match the product plan's build plan. Each phase ends with:
 - [x] Tests: unit tests for the filter (recap item, jump with its own universe, jump falling back to the recap's, linked event, unlinked event, "No universe set", case-insensitive match); `tests/e2e/phase-10.spec.ts` (a recap item shows its universe chip and popover line; picking a universe hides items from other universes and keeps the URL; "No universe set" shows an unlinked event; clearing the filter brings everything back).
 - [ ] Design review (`DESIGN_GUIDE.md` §13) for the timeline at 390px and 1280px, light and dark, with the filter row wrapping cleanly at 390px. Screenshots are in `screenshots/phase-10/` (git-ignored, 12 captures from `tests/e2e/screenshots-phase-10.spec.ts`). Waiting for the owner's sign-off.
 - **Done when:** every recap item on the timeline shows its universe, and picking a universe in the filter leaves only the items in that universe.
+
+### Phase 11: First appearances, inline titles and characters, and universes on the titles list
+- [ ] Read model: no migration. `characters.first_entry_id` and `last_entry_id` already hold the first and last appearance. The `appearances` table and its rows are kept (and stay in the backup), but nothing reads or writes them any more.
+- [ ] Recap edit page: "Characters in this recap" becomes **"First Appearance Characters"**. Picking a character sets its `first_entry_id` to this entry. Removing one clears it. Picking a character whose first appearance is somewhere else moves it here, and the hint says so. A new `replaceFirstAppearances(tx, entryId, characterIds)` replaces `replaceRecapCharacters`.
+- [ ] Inline character create: typing a name that doesn't exist offers "＋ Add character". It creates a character with that name, importance Minor, status Unknown and the recap's universe, then selects it. The rest is filled in later on the character form.
+- [ ] Recap page: its characters section lists the characters who first appear in this entry, under "First appearances".
+- [ ] Character form: the "Appears in" picker is removed. First appearance and Last appearance stay as single comboboxes.
+- [ ] Inline title create from First appearance and Last appearance: "＋ Add new…" opens a small panel with a kind choice (Movie, Show or Short).
+  - Movie or short: name. Creates the title and its one entry (`createTitle` path), then selects the entry.
+  - Show: show name (pick an existing show or type a new one), season number, episode number, episode name. Creates the show if it doesn't exist and adds the episode (`createEpisode` path). If that show already has that season and episode, it's selected, not duplicated.
+  - New entries go at the end of the recap order, with no year and no universe, like any new title.
+  - One shared server action (e.g. `createEntryInline` in `src/actions/entries.ts`) so both comboboxes use the same code.
+- [ ] Universe comboboxes (character form, movie, episode and recap forms): a name that's typed but not picked is created when the form is saved, the same as "＋ Add universe". An existing name (ignoring case) is used, not duplicated.
+- [ ] Character page: the appearances list is replaced by **First appearance** and **Last appearance**, each linking to its recap, with the watched look (§2.4).
+- [ ] Titles list (`/titles`): each title shows a universe chip for each distinct universe set on its movie, short or episodes (recap universes only, not other years). Nothing set shows no chip. `loadTitleRows` gets a `universes: string[]` field. Tokens only.
+- [ ] Tests: schema unit tests for the inline title input; database tests (first appearance moves between entries; inline show create reuses an existing show and episode; a typed universe isn't duplicated by case); `tests/e2e/phase-11.spec.ts` (add a first-appearance character inline on a recap and see it on the character page; add a new show episode from the character form's First appearance; a title with two universes shows two chips). Existing appearance specs are updated or removed.
+- [ ] Design review (`DESIGN_GUIDE.md` §13) for the recap edit page, character form, character page and titles list, at 390px and 1280px, light and dark.
+- **Done when:** I can add a character's first appearance from a recap or from the character form, including a movie, short or episode I haven't entered yet, and the titles list shows each title's universes.
 
 ---
 

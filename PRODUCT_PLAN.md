@@ -33,7 +33,8 @@ Cross-cutting features: **watched tracking**, **global search**, **notes and tag
 - Each entry also stores an **in-universe year**. This is used to seed the order, and I can then adjust the order by hand. Changing the order never changes the year, and the reverse is also true.
 - Each entry also has an optional **universe designation**, such as Earth-616. I pick it from the universes list (§2.3), beside the in-universe year. A recap has one universe at most. It can be left empty, and the recap then shows "No universe set" so the gap is visible. A universe used by a recap can't be deleted, the same as for characters.
 - A movie, episode or short can also have **other years it visits**: a flashback, a flash-forward or time travel. Each one has a year, a kind (Flashback, Flash-forward or Time travel) and an optional short note, e.g. *1988: young Peter at his mother's bedside*. A recap can have any number of them, and two can share a year. They sit under the in-universe year on the recap edit page, which stays the main year. They need a main year to be set first. Each one can also have its own **universe**, picked from the universes list, e.g. time travel to another timeline. Left empty, it uses the recap's universe. On the timeline, each of these items shows its universe.
-- Each recap shows: title (and season and episode number if it's an episode), release date, in-universe year, other years (with their kind and note), universe designation, the recap text, the characters who appear in it, and my notes and tags. The universe designation is shown clearly on the recap page and in the list.
+- Each recap shows: title (and season and episode number if it's an episode), release date, in-universe year, other years (with their kind and note), universe designation, the recap text, the characters who first appear in it, and my notes and tags. The universe designation is shown clearly on the recap page and in the list.
+- On the recap edit page, **First Appearance Characters** sets which characters first appear in this movie or episode. I can pick existing characters or type a new name, which adds a new character (Minor, Unknown, with the recap's universe) that I fill in later.
 - Previous and next buttons follow my custom order.
 - Each entry has a **watched** marker (see 2.4).
 
@@ -86,13 +87,14 @@ Cross-cutting features: **watched tracking**, **global search**, **notes and tag
 
 **Requirements**
 - **Every variant is its own character entry.** For example, each Loki variant gets a separate row, with its own universe and status.
-- I enter characters, and the dropdowns are fed from lists I manage. I can add a new universe from a "manage universes" screen, or inline while filling in a character.
+- I enter characters, and the dropdowns are fed from lists I manage. I can add a new universe from a "manage universes" screen, or inline while filling in a character. A universe name I type that doesn't exist yet is added to the list.
+- In First appearance and Last appearance I can add a title that doesn't exist yet. I choose Movie, Show or Short. For a movie or short I type its name. For a show I type the show, season number, episode number and episode name, and the show is added too if it's new.
 - **Search:** free-text search by name.
 - **Filter:** by importance, status, multiverse designation, predominant title, and first or last appearance.
 - **Sort:** by any column, ascending or descending.
 - Several filters can be combined, and they can all be cleared in one click.
 - First and last appearance link to the matching recap.
-- A character page shows the character's fields, my notes and tags, and the movies and episodes they appear in.
+- A character page shows the character's fields, my notes and tags, and their first and last appearance. The full list of every appearance is no longer shown or edited. Earlier data is kept.
 
 ---
 
@@ -159,7 +161,7 @@ Cross-cutting features: **watched tracking**, **global search**, **notes and tag
 - **Other year (flashback, flash-forward or time travel)**: belongs to a movie, episode or short. Fields: year, kind, optional note. Shown read-only on the timeline, the same way as the main year.
 - **Character**: the fields from 2.3. Every variant is a separate record.
 - **Universe**: a name or number such as Earth-616. The list is maintained by me and feeds the character and recap dropdowns.
-- **Appearance**: links a character to every movie or episode they appear in.
+- **Appearance**: links a character to every movie or episode they appear in. Kept for earlier data, but no longer shown or edited (2026-10-13).
 - **Watched**: a flag on each movie or episode.
 - **Note** and **Tag**: attached to recaps, timeline events and characters.
 
@@ -212,6 +214,7 @@ This is the high-level view. The task-by-task checklist for each phase is in [`I
 | **8. Flashbacks on the timeline** | Other years on a recap (flashback, flash-forward, time travel), each with an optional note. Shown on the recap page and as marked, read-only items on the timeline, with a toggle to hide them | A flashback I add on a recap shows in its year on the timeline, clearly marked with its kind and title, and the toggle hides it |
 | **9. Universe on flashbacks** | A universe on each flashback, flash-forward or time travel, picked in its row on the recap edit page. Shown on the recap page and on its timeline card and popover | A universe I pick on a flashback shows on the timeline next to it, or the recap's universe when I leave it empty |
 | **10. Universe on the timeline** | The recap's universe on each "From recap" card and popover. A universe filter beside the type and tag filters, with a "No universe set" choice, kept in the address | Every recap item shows its universe, and picking a universe in the filter leaves only the items in that universe |
+| **11. First appearances and inline adds** | First Appearance Characters on the recap edit page, with inline character add. Inline movie, short or episode add from First and Last appearance. Typed universes added on save. First and last appearance on the character page instead of the appearances list. Universe chips on the titles list | I can add a character's first appearance, including a title I haven't entered yet, and the titles list shows each title's universes |
 
 **Suggested checkpoints**
 - After phase 1, I enter a handful of real titles to test the data entry flow. It matters because everything is typed by hand.
@@ -241,6 +244,8 @@ This is the high-level view. The task-by-task checklist for each phase is in [`I
 - 2026-10-13: A recap can list other years it visits, each marked Flashback, Flash-forward or Time travel, with an optional note. They appear on the timeline as marked, read-only items after the main recap items in each year, and a toggle hides them.
 - 2026-10-13: Each flashback, flash-forward or time travel can have its own universe. Left empty, it uses the recap's universe. The timeline shows it on the item.
 - 2026-10-13: Recap items on the timeline show their universe, and the timeline gets a universe filter. A hand-written event takes the universe of the recap it links to. This is a filter on the one timeline, not the separate multiverse timeline view that stays out of scope (§4).
+- 2026-10-13: Characters record their first and last appearance only. The full appearances list is no longer shown or edited, but its data is kept. A recap lists the characters who first appear in it. New characters, titles, episodes and universes can be added inline from the dropdowns that use them.
+- 2026-10-13: The titles list shows a chip for each universe set on a title's movie, short or episodes.
 
 ---
 
