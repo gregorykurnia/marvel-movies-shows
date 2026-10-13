@@ -21,7 +21,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Panel } from "@/components/ui/panel";
 import { Segmented } from "@/components/ui/segmented";
 import { useToast } from "@/components/ui/toast";
-import type { TimelineEvent, TimelineItem, TimelineRecap } from "@/lib/data/timeline";
+import type { TimelineEvent, TimelineItem, TimelineJump, TimelineRecap } from "@/lib/data/timeline";
 import {
   bucketStart,
   gapLabel,
@@ -52,18 +52,24 @@ const TYPE_OPTIONS = (["all", "movie", "show", "short"] as const).map((value) =>
 export function TimelineView({
   events,
   recaps,
+  jumps,
   initialType,
   initialTag,
+  initialShowJumps,
 }: {
   events: TimelineEvent[];
   recaps: TimelineRecap[];
+  jumps: TimelineJump[];
   initialType: TypeFilter;
   initialTag: string | null;
+  initialShowJumps: boolean;
 }) {
   const toast = useToast();
   const [, startTransition] = useTransition();
   const [type, setType] = useState<TypeFilter>(initialType);
   const [tag, setTag] = useState<string | null>(initialTag);
+  // "Show flashbacks" (Phase 8). On by default. Off hides flashbacks, flash-forwards and time travel together.
+  const [showJumps, setShowJumps] = useState(initialShowJumps);
   const [zoom, setZoom] = useState<Zoom>("year");
   const [reordering, setReordering] = useState(false);
   const [jumpText, setJumpText] = useState("");
@@ -74,8 +80,8 @@ export function TimelineView({
     (current: TimelineEvent[], move: { id: string; afterId: string | null }) =>
       moveWithinYear(current, move.id, move.afterId),
   );
-  // What is shown: events and recap items in one timeline order.
-  const displayed = useMemo<TimelineItem[]>(() => mergeTimeline(items, recaps), [items, recaps]);
+  // What is shown: events, recap items and time jump items in one timeline order.
+  const displayed = useMemo<TimelineItem[]>(() => mergeTimeline(items, recaps, jumps), [items, recaps, jumps]);
   // Set when a bucket is clicked, so the year it zooms into can be scrolled to after the zoom changes.
   const pendingScroll = useRef<number | null>(null);
 
@@ -89,9 +95,10 @@ export function TimelineView({
     const params = new URLSearchParams();
     if (type !== "all") params.set("type", type);
     if (tag) params.set("tag", tag);
+    if (!showJumps) params.set("jumps", "off");
     const query = params.toString();
     window.history.replaceState(null, "", `${window.location.pathname}${query ? `?${query}` : ""}`);
-  }, [type, tag]);
+  }, [type, tag, showJumps]);
 
   useEffect(() => {
     if (pendingScroll.current === null) return;
@@ -108,14 +115,16 @@ export function TimelineView({
     () =>
       displayed.filter(
         (item) =>
+          (showJumps || item.source !== "jump") &&
           (type === "all" || item.titleKind === type) &&
           (tag === null || item.tags.some((name) => name.toLowerCase() === tag.toLowerCase())),
       ),
-    [displayed, type, tag],
+    [displayed, type, tag, showJumps],
   );
   const axis = useMemo(() => layoutAxis(shown, zoom), [shown, zoom]);
   // Reordering needs every event of a year in view, so it's off while a filter hides some, and above year zoom.
-  const filtered = type !== "all" || tag !== null;
+  // Hiding flashbacks counts as a filter.
+  const filtered = type !== "all" || tag !== null || !showJumps;
   const reorderOn = reordering && zoom === "year" && !filtered;
 
   // The first and last years of everything on the timeline, which is sorted by year.
@@ -189,6 +198,7 @@ export function TimelineView({
   function clearFilters() {
     setType("all");
     setTag(null);
+    setShowJumps(true);
   }
 
   return (
@@ -226,6 +236,18 @@ export function TimelineView({
               options={TYPE_OPTIONS}
             />
             <TagFilter value={tag} options={tagOptions} onChange={setTag} />
+            <div className="flex items-center gap-2.5">
+              <span className="text-[13px] font-bold text-ink-2">Show flashbacks</span>
+              <Segmented
+                label="Show flashbacks"
+                value={showJumps ? "on" : "off"}
+                onValueChange={(value) => setShowJumps(value === "on")}
+                options={[
+                  { value: "on", label: "On" },
+                  { value: "off", label: "Off" },
+                ]}
+              />
+            </div>
             <Segmented
               label="Zoom"
               value={zoom}

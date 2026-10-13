@@ -11,6 +11,7 @@ import {
   characterTags,
   entries,
   entryTags,
+  entryTimeJumps,
   eventTags,
   tags,
   timelineEvents,
@@ -19,12 +20,13 @@ import {
 } from "@/db/schema";
 
 export const BACKUP_FORMAT = "marvel-directory-backup";
-export const BACKUP_VERSION = 1;
+export const BACKUP_VERSION = 2;
 
 // Every data table, by its database name. The unit test checks this against the schema.
 export const BACKUP_TABLE_NAMES = [
   "titles",
   "entries",
+  "entry_time_jumps",
   "timeline_events",
   "universes",
   "characters",
@@ -48,6 +50,7 @@ export async function readBackupTables() {
     async (tx) => ({
       titles: await tx.select().from(titles),
       entries: (await tx.select().from(entries)).map(withoutGenerated),
+      entry_time_jumps: await tx.select().from(entryTimeJumps),
       timeline_events: (await tx.select().from(timelineEvents)).map(withoutGenerated),
       universes: await tx.select().from(universes),
       characters: (await tx.select().from(characters)).map(withoutGenerated),

@@ -4,14 +4,14 @@ import { Suspense } from "react";
 
 import { PageSkeleton } from "@/components/layout/page-skeleton";
 import { TimelineView, type TypeFilter } from "@/components/timeline/timeline-view";
-import { loadRecapItems, loadTimelineEvents } from "@/lib/data/timeline";
+import { loadRecapItems, loadTimeJumpItems, loadTimelineEvents } from "@/lib/data/timeline";
 
 export const metadata: Metadata = { title: "Timeline" };
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
 // The grand timeline (DESIGN_GUIDE §8, Canvas). The filters start from the URL, so a filtered view can be bookmarked.
-// Hand-written events and recap items are loaded separately, so only events can be reordered.
+// Hand-written events, recap items and time jump items are loaded separately, so only events can be reordered.
 export default function TimelinePage({ searchParams }: { searchParams: SearchParams }) {
   return (
     <Suspense fallback={<PageSkeleton rows={3} />}>
@@ -27,6 +27,18 @@ async function TimelineContent({ searchParams }: { searchParams: SearchParams })
   const type: TypeFilter = requested === "movie" || requested === "show" || requested === "short" ? requested : "all";
   const tagParam = Array.isArray(params.tag) ? params.tag[0] : params.tag;
   const tag = tagParam?.trim() ? tagParam.trim() : null;
-  const [events, recaps] = await Promise.all([loadTimelineEvents(), loadRecapItems()]);
-  return <TimelineView events={events} recaps={recaps} initialType={type} initialTag={tag} />;
+  // Flashbacks, flash-forwards and time travel are on by default. ?jumps=off hides them (Phase 8).
+  const jumpsParam = Array.isArray(params.jumps) ? params.jumps[0] : params.jumps;
+  const showJumps = jumpsParam !== "off";
+  const [events, recaps, jumps] = await Promise.all([loadTimelineEvents(), loadRecapItems(), loadTimeJumpItems()]);
+  return (
+    <TimelineView
+      events={events}
+      recaps={recaps}
+      jumps={jumps}
+      initialType={type}
+      initialTag={tag}
+      initialShowJumps={showJumps}
+    />
+  );
 }

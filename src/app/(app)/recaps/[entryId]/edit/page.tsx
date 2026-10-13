@@ -11,6 +11,7 @@ import { FormSkeleton } from "@/components/layout/page-skeleton";
 import { RecapEditForm } from "@/components/recaps/recap-edit-form";
 import { loadCharacterPickerOptions, loadRecapCharacterIds, loadUniverseOptions } from "@/lib/data/characters";
 import { loadEntryDetail } from "@/lib/data/catalog";
+import { loadEntryTimeJumps } from "@/lib/data/time-jumps";
 import { loadTagNames } from "@/lib/data/tags";
 import { formatEpisodeCode } from "@/lib/format";
 import { KIND_ACCENT, KIND_LABEL, hasOneRecap } from "@/lib/title-kind";
@@ -28,12 +29,13 @@ export default function EditRecapPage({ params }: { params: Promise<{ entryId: s
 async function EditRecapContent({ params }: { params: Promise<{ entryId: string }> }) {
   await connection();
   const { entryId } = await params;
-  const [entry, characterOptions, characterIds, tagOptions, universeOptions] = await Promise.all([
+  const [entry, characterOptions, characterIds, tagOptions, universeOptions, timeJumps] = await Promise.all([
     loadEntryDetail(entryId),
     loadCharacterPickerOptions(),
     loadRecapCharacterIds(entryId),
     loadTagNames(),
     loadUniverseOptions(),
+    loadEntryTimeJumps(entryId),
   ]);
   if (!entry) notFound();
 
@@ -55,6 +57,7 @@ async function EditRecapContent({ params }: { params: Promise<{ entryId: string 
         initialCharacterIds={characterIds}
         tagOptions={tagOptions}
         universeOptions={universeOptions}
+        timeJumps={timeJumps}
       />
 
       {oneRecap ? (

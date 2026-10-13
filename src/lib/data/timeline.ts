@@ -3,8 +3,9 @@
 import { asc, eq } from "drizzle-orm";
 
 import { getDb, type Tx } from "@/db";
-import { timelineEvents, titles } from "@/db/schema";
+import { entryTimeJumps, timelineEvents, titles } from "@/db/schema";
 import type { YearPlaceable } from "@/lib/ordering";
+import type { TimeJumpKind } from "@/lib/time-jump";
 
 import { KIND_LABEL } from "@/lib/title-kind";
 
@@ -90,12 +91,76 @@ export type TimelineRecap = {
   tags: string[];
 };
 
-// Anything on the timeline: a hand-written event, or a recap item.
-export type TimelineItem = TimelineEvent | TimelineRecap;
+// One other year (flashback, flash-forward or time travel) on a movie or episode, as a read-only timeline item
+// (PRODUCT_PLAN §2.2, IMPLEMENTATION_PLAN §5.2 Phase 8). Read from entry_time_jumps every time the timeline loads, so
+// it always follows its recap. `id` is `jump:<id>`, which can't collide with an event id or a recap item id.
+export type TimelineJump = {
+  source: "jump";
+  id: string;
+  entryId: string;
+  year: number;
+  // The note, or the episode name, "Episode N" or the movie title when there's no note.
+  text: string;
+  // The show name for an episode. "Movie" or "Short" for a title with one recap.
+  chip: string;
+  titleKind: TitleKind;
+  // The show or movie or short name, shown on the card's kind label, e.g. "Flashback · Guardians of the Galaxy".
+  titleName: string;
+  // The episode label (the name, or "Episode N"), for the popover's "title and episode" line. Null for a movie or short.
+  episodeLabel: string | null;
+  jumpKind: TimeJumpKind;
+  note: string | null;
+  // The recap's main in-universe year, shown as "Main story: <year>" in the popover.
+  mainYear: number | null;
+  tags: string[];
+};
+
+// Anything on the timeline: a hand-written event, a recap item, or a time jump item.
+export type TimelineItem = TimelineEvent | TimelineRecap | TimelineJump;
 
 function recapText(entry: CatalogEntry): string {
   if (entry.titleKind !== "show") return entry.titleName;
   return entry.name ?? `Episode ${entry.episodeNumber}`;
+}
+
+// Every other year on every movie and episode, in recap order, and in sort_key order within one recap.
+export async function loadTimeJumpItems(): Promise<TimelineJump[]> {
+  const [catalog, rows] = await Promise.all([
+    loadCatalog(),
+    getDb()
+      .select({
+        id: entryTimeJumps.id,
+        entryId: entryTimeJumps.entryId,
+        year: entryTimeJumps.year,
+        kind: entryTimeJumps.kind,
+        note: entryTimeJumps.note,
+      })
+      .from(entryTimeJumps)
+      .orderBy(asc(entryTimeJumps.sortKey)),
+  ]);
+
+  const byEntry = new Map<string, typeof rows>();
+  for (const row of rows) {
+    byEntry.set(row.entryId, [...(byEntry.get(row.entryId) ?? []), row]);
+  }
+
+  return catalog.flatMap((entry): TimelineJump[] =>
+    (byEntry.get(entry.id) ?? []).map((row) => ({
+      source: "jump",
+      id: `jump:${row.id}`,
+      entryId: entry.id,
+      year: row.year,
+      text: row.note ?? recapText(entry),
+      chip: entry.titleKind === "show" ? entry.titleName : KIND_LABEL[entry.titleKind],
+      titleKind: entry.titleKind,
+      titleName: entry.titleName,
+      episodeLabel: entry.titleKind === "show" ? recapText(entry) : null,
+      jumpKind: row.kind,
+      note: row.note ?? null,
+      mainYear: entry.inUniverseYear,
+      tags: entry.tags,
+    })),
+  );
 }
 
 // Every movie and episode with an in-universe year, in recap order (the order the recap list shows).

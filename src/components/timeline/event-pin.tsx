@@ -3,7 +3,7 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import Link from "next/link";
-import { GripVertical } from "lucide-react";
+import { FastForward, GripVertical, History, Rewind, type LucideIcon } from "lucide-react";
 import { HoverCard } from "radix-ui";
 import { useId, useState, type CSSProperties, type ReactNode } from "react";
 
@@ -11,6 +11,7 @@ import { Chip, Year } from "@/components/ui/chip";
 import { ActionMenu } from "@/components/ui/dropdown-menu";
 import type { TimelineEvent, TimelineItem } from "@/lib/data/timeline";
 import { formatYear } from "@/lib/format";
+import { TIME_JUMP_LABEL, type TimeJumpKind } from "@/lib/time-jump";
 import { cn } from "@/lib/utils";
 
 import { useMediaQuery, TIMELINE_WIDE } from "./use-media-query";
@@ -22,36 +23,62 @@ import { useMediaQuery, TIMELINE_WIDE } from "./use-media-query";
 //
 // A recap item (IMPLEMENTATION_PLAN §5.2) uses the same card, with a "From recap" label. It has no edit-event link
 // and no drag handle or ⋯ menu, because it is shown from its recap and can't be moved.
+//
+// A time jump item (Phase 8) is a recap item for another year. It has its kind label in place of "From recap", the
+// title after it, a hollow dot and a tinted card, so it never reads as the title's main story. Dashed borders stay
+// reserved for events without a title.
 
 const KIND_COLOUR = { movie: "var(--movie)", show: "var(--show)", short: "var(--short)", none: "var(--ink-3)" } as const;
+
+// One icon per kind of other year. The icon always sits beside the kind's name, so the kind is never shown by colour
+// alone.
+const JUMP_ICON: Record<TimeJumpKind, LucideIcon> = {
+  flashback: Rewind,
+  flash_forward: FastForward,
+  time_travel: History,
+};
 
 function kindOf(item: TimelineItem): keyof typeof KIND_COLOUR {
   return item.titleKind ?? "none";
 }
 
-// The links in a card's details. An event links to its recap (if it has one) and to its edit page. A recap item links
-// to its recap and to its recap's edit page.
+// The links in a card's details. An event links to its recap (if it has one) and to its edit page. A recap item and a
+// time jump item both link to their recap and to the recap's edit page.
 function linksFor(item: TimelineItem): { readHref: string | null; editHref: string; editLabel: string } {
-  if (item.source === "recap") {
-    return { readHref: `/recaps/${item.entryId}`, editHref: `/recaps/${item.entryId}/edit`, editLabel: "Edit recap" };
+  if (item.source === "event") {
+    return {
+      readHref: item.entryId ? `/recaps/${item.entryId}` : null,
+      editHref: `/timeline/${item.id}/edit`,
+      editLabel: "Edit event",
+    };
   }
-  return {
-    readHref: item.entryId ? `/recaps/${item.entryId}` : null,
-    editHref: `/timeline/${item.id}/edit`,
-    editLabel: "Edit event",
-  };
+  return { readHref: `/recaps/${item.entryId}`, editHref: `/recaps/${item.entryId}/edit`, editLabel: "Edit recap" };
+}
+
+// A time jump's kind: its icon and name, in mono capitals.
+function JumpKindLabel({ kind, className }: { kind: TimeJumpKind; className?: string }) {
+  const Icon = JUMP_ICON[kind];
+  return (
+    <span className={cn("inline-flex items-center gap-1.5 font-mono font-bold tracking-[0.06em] uppercase", className)}>
+      <Icon aria-hidden strokeWidth={2.25} className="size-3 shrink-0" />
+      {TIME_JUMP_LABEL[kind]}
+    </span>
+  );
 }
 
 // The popover and inline panel share one body. `interactive` is false inside the popover, which is visual only.
 function EventDetails({ item, interactive }: { item: TimelineItem; interactive: boolean }) {
   const kind = kindOf(item);
   const links = linksFor(item);
-  // A recap item always has a title, so its chip is the show name or "Movie" or "Short".
-  const chipText = item.source === "recap" ? item.chip : item.titleName;
+  const jump = item.source === "jump" ? item : null;
+  // A recap or jump item always has a title, so its chip is the show name or "Movie" or "Short".
+  const chipText = item.source === "event" ? item.titleName : item.chip;
   return (
     <>
       <div className="flex flex-wrap items-center gap-2.5">
-        {chipText ? (
+        {jump ? (
+          <JumpKindLabel kind={jump.jumpKind} className="text-[12px] text-ink-2" />
+        ) : chipText ? (
           <Chip tone={kind === "none" ? "tag" : kind} dot>
             {chipText}
           </Chip>
@@ -61,6 +88,22 @@ function EventDetails({ item, interactive }: { item: TimelineItem; interactive: 
         <Year>{formatYear(item.year)}</Year>
       </div>
       <h4 className="mt-2 font-display text-[17px] leading-[1.25] font-bold tracking-[-0.01em]">{item.text}</h4>
+      {jump ? (
+        <div className="mt-2 flex flex-wrap items-center gap-x-2.5 gap-y-1.5 text-[13px] leading-normal font-semibold text-ink-2">
+          <Chip tone={kind === "none" ? "tag" : kind} dot>
+            {jump.chip}
+          </Chip>
+          <span className="min-w-0 break-words">
+            {jump.titleName}
+            {jump.episodeLabel ? ` · ${jump.episodeLabel}` : ""}
+          </span>
+        </div>
+      ) : null}
+      {jump && jump.mainYear !== null ? (
+        <p className="mt-1.5 font-mono text-[13px] font-bold tabular-nums text-ink-2">
+          Main story: {formatYear(jump.mainYear)}
+        </p>
+      ) : null}
       {item.source === "event" && item.details ? (
         <p className="mt-1.5 text-sm leading-normal whitespace-pre-line text-ink-2">{item.details}</p>
       ) : null}
@@ -95,8 +138,8 @@ function EventDetails({ item, interactive }: { item: TimelineItem; interactive: 
   );
 }
 
-// One event or recap item on the axis. `reorder` is set only for a hand-written event in Reorder mode: the drag handle
-// and the ⋯ menu, built by the sortable wrapper, so the card itself never touches a ref.
+// One event, recap item or time jump item on the axis. `reorder` is set only for a hand-written event in Reorder mode:
+// the drag handle and the ⋯ menu, built by the sortable wrapper, so the card itself never touches a ref.
 export function EventCard({ item, reorder }: { item: TimelineItem; reorder?: { handle: ReactNode; menu: ReactNode } }) {
   const wide = useMediaQuery(TIMELINE_WIDE);
   const [expanded, setExpanded] = useState(false);
@@ -115,7 +158,8 @@ export function EventCard({ item, reorder }: { item: TimelineItem; reorder?: { h
       aria-controls={tapToExpand ? panelId : undefined}
       onClick={tapToExpand ? () => setExpanded((open) => !open) : undefined}
       className={cn(
-        "block w-[136px] cursor-pointer rounded-[12px] border-2 border-line bg-surface p-2.5 text-left font-body text-[13px] leading-[1.35] font-semibold text-ink",
+        "block w-[136px] cursor-pointer rounded-[12px] border-2 border-line p-2.5 text-left font-body text-[13px] leading-[1.35] font-semibold text-ink",
+        item.source === "jump" ? "bg-surface-2" : "bg-surface",
         "shadow-[3px_3px_0_var(--kind)] transition-[transform,box-shadow] duration-token ease-token",
         "hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[5px_5px_0_var(--kind)]",
         "focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-blue",
@@ -123,9 +167,21 @@ export function EventCard({ item, reorder }: { item: TimelineItem; reorder?: { h
         kind === "none" && "border-dashed",
       )}
     >
-      <span aria-hidden className="mb-1.5 block size-2.5 rounded-full border-[1.5px] border-line bg-[var(--kind)]" />
+      <span
+        aria-hidden
+        className={cn(
+          "mb-1.5 block size-2.5 rounded-full border-[1.5px] border-line bg-[var(--kind)]",
+          item.source === "jump" && "border-[2.5px] border-[var(--kind)] bg-surface-2",
+        )}
+      />
       {item.source === "recap" ? (
         <span className="mb-0.5 block font-mono text-[10px] font-bold tracking-[0.06em] text-ink-3 uppercase">From recap</span>
+      ) : null}
+      {item.source === "jump" ? (
+        <span className="mb-0.5 block font-mono text-[10px] font-bold tracking-[0.06em] text-ink-2 uppercase break-words">
+          <JumpKindLabel kind={item.jumpKind} className="text-[10px]" />
+          <span className="block">{item.titleName}</span>
+        </span>
       ) : null}
       {item.text}
     </button>
@@ -169,7 +225,7 @@ export function EventCard({ item, reorder }: { item: TimelineItem; reorder?: { h
             </Link>
           ) : null}
           <Link href={links.editHref} className="sr-only text-[13px] font-bold text-ink-2 focus:not-sr-only">
-            {item.source === "recap" ? `Edit recap for “${item.text}”` : `Edit “${item.text}”`}
+            {item.source === "event" ? `Edit “${item.text}”` : `Edit recap for “${item.text}”`}
           </Link>
         </span>
       ) : null}

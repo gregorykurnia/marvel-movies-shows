@@ -9,6 +9,7 @@ import { entries, titles } from "@/db/schema";
 import { fail, ok, validationFailure, type ActionResult } from "@/lib/action-result";
 import { replaceRecapCharacters } from "@/lib/data/appearances";
 import { replaceEntryTags, tagIdsFor } from "@/lib/data/tags";
+import { replaceEntryTimeJumps } from "@/lib/data/time-jumps";
 import { readPlaceables } from "@/lib/data/placeables";
 import { isForeignKeyViolation, isMissingUniverseViolation, isUniqueViolation } from "@/lib/db-errors";
 import { formStrings } from "@/lib/form";
@@ -23,6 +24,7 @@ import {
   movieEditSchema,
   recapCharactersSchema,
   tagNamesSchema,
+  timeJumpRowsFrom,
   watchedSchema,
 } from "@/lib/schemas";
 
@@ -160,7 +162,7 @@ export async function addEpisodes(titleId: string, formData: FormData): Promise<
 // Saves an episode's details, its recap, and the characters who appear in it. Changing the year here doesn't
 // move the episode in the order.
 export async function saveEpisode(entryId: string, formData: FormData): Promise<ActionResult> {
-  const parsed = episodeEditSchema.safeParse(formStrings(formData));
+  const parsed = episodeEditSchema.safeParse({ ...formStrings(formData), timeJumps: timeJumpRowsFrom(formData) });
   if (!parsed.success) return validationFailure(parsed.error);
   const characters = recapCharactersSchema.safeParse(formData.getAll("characterId").map(String));
   if (!characters.success) return validationFailure(characters.error);
@@ -187,6 +189,7 @@ export async function saveEpisode(entryId: string, formData: FormData): Promise<
       if (updated.length === 0) return false;
       await replaceRecapCharacters(tx, entryId, characters.data);
       await replaceEntryTags(tx, entryId, await tagIdsFor(tx, tagNames.data));
+      await replaceEntryTimeJumps(tx, entryId, input.timeJumps);
       return true;
     });
     if (!saved) return fail("That episode no longer exists.");
@@ -208,7 +211,7 @@ export async function saveEpisode(entryId: string, formData: FormData): Promise<
 // A movie's name, release date and year, its recap, and its characters. The name and release date belong to the
 // title.
 export async function saveMovie(entryId: string, formData: FormData): Promise<ActionResult> {
-  const parsed = movieEditSchema.safeParse(formStrings(formData));
+  const parsed = movieEditSchema.safeParse({ ...formStrings(formData), timeJumps: timeJumpRowsFrom(formData) });
   if (!parsed.success) return validationFailure(parsed.error);
   const characters = recapCharactersSchema.safeParse(formData.getAll("characterId").map(String));
   if (!characters.success) return validationFailure(characters.error);
@@ -235,6 +238,7 @@ export async function saveMovie(entryId: string, formData: FormData): Promise<Ac
         .where(eq(entries.id, entryId));
       await replaceRecapCharacters(tx, entryId, characters.data);
       await replaceEntryTags(tx, entryId, await tagIdsFor(tx, tagNames.data));
+      await replaceEntryTimeJumps(tx, entryId, input.timeJumps);
       return true;
     });
     if (!saved) return fail("That movie no longer exists.");

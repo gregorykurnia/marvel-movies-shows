@@ -1,6 +1,6 @@
 import { describe, expect, it, afterAll } from "vitest";
 
-import { appearances, characters, entries, tags, titles, universes } from "../../src/db/schema";
+import { appearances, characters, entries, entryTimeJumps, tags, titles, universes } from "../../src/db/schema";
 import { isMissingUniverseViolation, isRestrictViolation, isUniqueViolation } from "../../src/lib/db-errors";
 import { connectTestDatabase, E2E_PREFIX, removeE2eData } from "../support/e2e-data";
 
@@ -75,6 +75,29 @@ describe("delete rules", () => {
       .where(eq(appearances.characterId, character.id));
     expect(remainingEntries).toHaveLength(0);
     expect(remainingAppearances).toHaveLength(0);
+  });
+
+  it("deleting an entry deletes its other years (Phase 8)", async () => {
+    const [show] = await db
+      .insert(titles)
+      .values({ name: label("jump show"), kind: "show" })
+      .returning({ id: titles.id });
+    const [episode] = await db
+      .insert(entries)
+      .values({ titleId: show.id, seasonNumber: 1, episodeNumber: 1, inUniverseYear: 2012, sortKey: `${run}-jump`, watched: false })
+      .returning({ id: entries.id });
+    await db.insert(entryTimeJumps).values([
+      { entryId: episode.id, year: 1988, kind: "flashback", note: "Young Peter", sortKey: `${run}-j1` },
+      { entryId: episode.id, year: 2099, kind: "flash_forward", note: null, sortKey: `${run}-j2` },
+    ]);
+
+    await db.delete(entries).where(eqEntry(episode.id));
+
+    const remaining = await db
+      .select({ id: entryTimeJumps.id })
+      .from(entryTimeJumps)
+      .where(eq(entryTimeJumps.entryId, episode.id));
+    expect(remaining).toHaveLength(0);
   });
 
   it("a universe that a character uses can't be deleted", async () => {

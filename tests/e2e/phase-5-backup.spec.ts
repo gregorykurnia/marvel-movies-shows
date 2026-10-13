@@ -14,6 +14,7 @@ const run = `backup${Date.now().toString(36)}`;
 const dataTables = [
   "titles",
   "entries",
+  "entry_time_jumps",
   "timeline_events",
   "universes",
   "characters",
@@ -47,7 +48,7 @@ test("the Backup page downloads every table, with the same row counts as the dat
     tables: Record<string, unknown[]>;
   };
   expect(doc.format).toBe("marvel-directory-backup");
-  expect(doc.version).toBe(1);
+  expect(doc.version).toBe(2);
   expect(Object.keys(doc.tables).sort()).toEqual([...dataTables].sort());
   expect(doc.tables.titles.length).toBeGreaterThan(0);
 

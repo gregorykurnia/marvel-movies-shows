@@ -16,11 +16,12 @@ export function fail(message: string, fieldErrors?: Record<string, string>): Act
   return { ok: false, message, fieldErrors };
 }
 
-// The first message for each field. Form-level problems (no field) go under "form".
+// The first message for each field. Form-level problems (no field) go under "form". A problem inside a list
+// is keyed by its full path, so a row's message can sit on that row: "timeJumps.2.year".
 export function fieldErrorsFrom(error: ZodError): Record<string, string> {
   const errors: Record<string, string> = {};
   for (const issue of error.issues) {
-    const key = typeof issue.path[0] === "string" ? issue.path[0] : "form";
+    const key = typeof issue.path[0] === "string" ? issue.path.map(String).join(".") : "form";
     errors[key] ??= issue.message;
   }
   return errors;

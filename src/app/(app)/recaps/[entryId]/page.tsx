@@ -16,7 +16,9 @@ import { Panel } from "@/components/ui/panel";
 import { CharacterAvatar } from "@/components/characters/character-avatar";
 import { loadRecapCharacters } from "@/lib/data/characters";
 import { loadCatalog, loadEntryDetail } from "@/lib/data/catalog";
+import { loadEntryTimeJumps } from "@/lib/data/time-jumps";
 import { formatDate, formatEpisodeCode, formatYear } from "@/lib/format";
+import { TIME_JUMP_LABEL } from "@/lib/time-jump";
 import { KIND_ACCENT, KIND_LABEL, hasOneRecap } from "@/lib/title-kind";
 
 export const metadata: Metadata = { title: "Recap" };
@@ -34,10 +36,11 @@ export default function RecapPage({ params }: { params: Promise<{ entryId: strin
 async function RecapContent({ params }: { params: Promise<{ entryId: string }> }) {
   await connection();
   const { entryId } = await params;
-  const [entry, catalog, recapCharacters] = await Promise.all([
+  const [entry, catalog, recapCharacters, timeJumps] = await Promise.all([
     loadEntryDetail(entryId),
     loadCatalog(),
     loadRecapCharacters(entryId),
+    loadEntryTimeJumps(entryId),
   ]);
   if (!entry) notFound();
 
@@ -151,6 +154,20 @@ async function RecapContent({ params }: { params: Promise<{ entryId: string }> }
               <dd className="text-right font-semibold">{formatDate(releaseDate) ?? "—"}</dd>
               <dt className="font-semibold text-ink-3">Year in universe</dt>
               <dd className="text-right font-mono font-semibold tabular-nums">{formatYear(entry.inUniverseYear)}</dd>
+              {timeJumps.length > 0 ? (
+                <>
+                  <dt className="font-semibold text-ink-3">Other years</dt>
+                  <dd className="grid min-w-0 justify-items-end gap-1.5 text-right">
+                    {timeJumps.map((jump) => (
+                      <span key={jump.id} className="min-w-0 break-words">
+                        <span className="font-mono font-semibold tabular-nums">{formatYear(jump.year)}</span>
+                        <span className="font-semibold"> · {TIME_JUMP_LABEL[jump.kind]}</span>
+                        {jump.note ? <span className="font-semibold text-ink-2"> · {jump.note}</span> : null}
+                      </span>
+                    ))}
+                  </dd>
+                </>
+              ) : null}
               <dt className="font-semibold text-ink-3">Universe</dt>
               {entry.universeName ? (
                 <dd className="text-right font-mono font-semibold">{entry.universeName}</dd>

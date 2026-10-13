@@ -371,17 +371,17 @@ Phases match the product plan's build plan. Each phase ends with:
 - **Done when:** a recap's in-universe year shows on the timeline in the right place, moves when I change the year, and its link opens the recap.
 
 ### Phase 8: Flashbacks, flash-forwards and time travel on the timeline
-- [ ] Migration: `entry_time_jumps` table and its `kind` enum (§3.1). Run it on `test` first (`npm run db:migrate:test`). The production migration (`npm run db:migrate`) runs only when I approve it, and before this code reaches `main`.
-- [ ] Zod: a `timeJumps` array (year, kind, optional note) on `episodeEditSchema` and `movieEditSchema`. It's rejected when the main in-universe year is empty.
-- [ ] Actions: `saveEpisode` and `saveMovie` replace the entry's time jumps in the same transaction as the rest of the recap.
-- [ ] Recap edit page: the "Other years" rows from §5.4 in `recap-edit-form.tsx`.
-- [ ] Recap page: an "Other years" row in Details, listing each as "1988 · Flashback · <note>", in `sort_key` order. Hidden when there are none.
-- [ ] Read model: `loadTimeJumpItems` in `src/lib/data/timeline.ts`, next to `loadRecapItems`, with ids `jump:<id>`.
-- [ ] Merge: `mergeTimeline` takes the time jump items as a third list, after recap items in each year. Unit tests in `tests/unit/timeline-merge.test.ts`: a year with all three kinds, BCE jumps, and two jumps from one entry in the same year.
-- [ ] Timeline cards and popover from §5.2, in `event-pin.tsx` and `timeline-view.tsx`. No drag handle, ⋯ menu or "Edit event".
-- [ ] "Show flashbacks" toggle, kept in the URL. Type and tag filters apply to these items, and the header count includes them.
-- [ ] Backup: `entry_time_jumps` in the export, and bump `BACKUP_VERSION` (§5.6).
-- [ ] Tests: a schema unit test; a database test (deleting an entry deletes its time jumps); an end-to-end test (`tests/e2e/phase-8.spec.ts`): add a flashback on a recap, see it in its year with its kind and title, the toggle hides it, and removing it on the recap removes it from the timeline.
+- [ ] Migration: `entry_time_jumps` table and its `kind` enum (§3.1). Run it on `test` first (`npm run db:migrate:test`). The production migration (`npm run db:migrate`) runs only when I approve it, and before this code reaches `main`. **Test branch done (2026-10-13). Production waits for the owner's approval, and this code is not pushed until it has run.**
+- [x] Zod: a `timeJumps` array (year, kind, optional note) on `episodeEditSchema` and `movieEditSchema`. It's rejected when the main in-universe year is empty.
+- [x] Actions: `saveEpisode` and `saveMovie` replace the entry's time jumps in the same transaction as the rest of the recap.
+- [x] Recap edit page: the "Other years" rows from §5.4 in `recap-edit-form.tsx`.
+- [x] Recap page: an "Other years" row in Details, listing each as "1988 · Flashback · <note>", in `sort_key` order. Hidden when there are none.
+- [x] Read model: `loadTimeJumpItems` in `src/lib/data/timeline.ts`, next to `loadRecapItems`, with ids `jump:<id>`.
+- [x] Merge: `mergeTimeline` takes the time jump items as a third list, after recap items in each year. Unit tests in `tests/unit/timeline-merge.test.ts`: a year with all three kinds, BCE jumps, and two jumps from one entry in the same year.
+- [x] Timeline cards and popover from §5.2, in `event-pin.tsx` and `timeline-view.tsx`. No drag handle, ⋯ menu or "Edit event".
+- [x] "Show flashbacks" toggle, kept in the URL. Type and tag filters apply to these items, and the header count includes them.
+- [x] Backup: `entry_time_jumps` in the export, and bump `BACKUP_VERSION` (§5.6).
+- [x] Tests: a schema unit test; a database test (deleting an entry deletes its time jumps); an end-to-end test (`tests/e2e/phase-8.spec.ts`): add a flashback on a recap, see it in its year with its kind and title, the toggle hides it, and removing it on the recap removes it from the timeline.
 - [ ] Design review (`DESIGN_GUIDE.md` §13) for the recap edit page, recap page and timeline, at 390px and 1280px, light and dark. Screenshots go in `screenshots/phase-8/`.
 - **Done when:** a flashback I add on a recap shows in its year on the timeline, clearly marked with its kind and title, the popover links to the recap, and the toggle hides it.
 

@@ -147,3 +147,24 @@ export async function seedMatchingEvents(word: string, count: number) {
     await db.insert(timelineEvents).values({ year: 1960, text: `${E2E_PREFIX} ${word} event ${index}`, sortKey });
   }
 }
+
+// Adds other years for the Phase 8 screenshot specs: a flashback with a note on the seeded movie, a time travel with no
+// note (the card then shows the movie title), a flash-forward on the episode with no note (it shows the episode name),
+// and a BCE flashback with a note. Rows use the E2E prefix in their notes, so removeE2eData() clears them with the recap.
+export async function seedTimeJumps(run: string, ids: { movieEntryId: string; episodeId: string }) {
+  const db = connectTestDatabase();
+  const { entryTimeJumps } = await import("../../src/db/schema");
+
+  await db.insert(entryTimeJumps).values([
+    {
+      entryId: ids.movieEntryId,
+      year: 1943,
+      kind: "flashback",
+      note: `${E2E_PREFIX} Young Thor at the Frost Giant war ${run}`,
+      sortKey: "a0",
+    },
+    { entryId: ids.movieEntryId, year: 2025, kind: "time_travel", note: null, sortKey: "a1" },
+    { entryId: ids.episodeId, year: 2100, kind: "flash_forward", note: null, sortKey: "a0" },
+    { entryId: ids.movieEntryId, year: -700, kind: "flashback", note: `${E2E_PREFIX} Odin ${run}`, sortKey: "a2" },
+  ]);
+}

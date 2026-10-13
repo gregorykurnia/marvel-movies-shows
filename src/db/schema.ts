@@ -17,6 +17,8 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
+import { TIME_JUMP_KINDS } from "../lib/time-jump";
+
 // Sort keys use the "C" collation, so Postgres orders them byte by byte, the same way
 // JavaScript compares strings. Fractional keys therefore sort identically in both places.
 const collatedText = customType<{ data: string }>({
@@ -93,6 +95,26 @@ export const entries = pgTable(
     ),
     index("entries_search_idx").using("gin", t.searchVector),
   ],
+);
+
+// Other years on a movie, episode or short (IMPLEMENTATION_PLAN §3.1, Phase 8). The kinds are the same as TIME_JUMP_KINDS.
+export const timeJumpKind = pgEnum("time_jump_kind", TIME_JUMP_KINDS);
+
+// The entry must have an in-universe year. That is enforced in app logic, not here.
+export const entryTimeJumps = pgTable(
+  "entry_time_jumps",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    entryId: uuid("entry_id")
+      .notNull()
+      .references(() => entries.id, { onDelete: "cascade" }),
+    year: integer("year").notNull(),
+    kind: timeJumpKind("kind").notNull(),
+    note: text("note"),
+    // Order on the recap edit page and the recap page.
+    sortKey: collatedText("sort_key").notNull(),
+  },
+  (t) => [index("entry_time_jumps_entry_idx").on(t.entryId)],
 );
 
 // Hand-written timeline events, placed by in-universe year.

@@ -1,17 +1,20 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useTransition, type FormEvent } from "react";
+import { X } from "lucide-react";
+import { useRef, useState, useTransition, type FormEvent } from "react";
 
 import { saveEpisode, saveMovie } from "@/actions/entries";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { Input, Textarea } from "@/components/ui/field";
+import { Input, Select, Textarea } from "@/components/ui/field";
 import { FormAlert, FormFooter, FormGrid, FormPanel, wide } from "@/components/ui/form-layout";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { Panel } from "@/components/ui/panel";
 import { useToast } from "@/components/ui/toast";
 import { UniverseField, withUniverse, type UniverseOption } from "@/components/universes/universe-field";
 import type { EntryDetail } from "@/lib/data/catalog";
+import { TIME_JUMP_KINDS, TIME_JUMP_LABEL, type TimeJump, type TimeJumpKind } from "@/lib/time-jump";
+import { cn } from "@/lib/utils";
 import { KIND_ACCENT, KIND_LABEL, hasOneRecap } from "@/lib/title-kind";
 import Link from "next/link";
 
@@ -29,12 +32,14 @@ export function RecapEditForm({
   initialCharacterIds,
   tagOptions,
   universeOptions,
+  timeJumps,
 }: {
   entry: EntryDetail;
   characterOptions: { value: string; label: string }[];
   initialCharacterIds: string[];
   tagOptions: string[];
   universeOptions: UniverseOption[];
+  timeJumps: TimeJump[];
 }) {
   const router = useRouter();
   const toast = useToast();
@@ -46,7 +51,25 @@ export function RecapEditForm({
   const [tagNames, setTagNames] = useState(entry.tags);
   const [universeList, setUniverseList] = useState(universeOptions);
   const [universeId, setUniverseId] = useState<string | null>(entry.universeId);
+  const [jumpRows, setJumpRows] = useState<JumpRow[]>(() =>
+    timeJumps.map((jump) => ({ key: jump.id, year: String(jump.year), kind: jump.kind, note: jump.note ?? "" })),
+  );
+  const nextJumpKey = useRef(0);
   const oneRecap = hasOneRecap(entry.titleKind);
+
+  function addJumpRow() {
+    nextJumpKey.current += 1;
+    const key = `new-${nextJumpKey.current}`;
+    setJumpRows((rows) => [...rows, { key, year: "", kind: "flashback", note: "" }]);
+  }
+
+  function changeJumpRow(key: string, change: Partial<Omit<JumpRow, "key">>) {
+    setJumpRows((rows) => rows.map((row) => (row.key === key ? { ...row, ...change } : row)));
+  }
+
+  function removeJumpRow(key: string) {
+    setJumpRows((rows) => rows.filter((row) => row.key !== key));
+  }
 
   function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -140,6 +163,13 @@ export function RecapEditForm({
               />
             </>
           )}
+          <OtherYears
+            rows={jumpRows}
+            errors={errors}
+            onAdd={addJumpRow}
+            onChange={changeJumpRow}
+            onRemove={removeJumpRow}
+          />
         </FormGrid>
 
         <div className="mt-6 grid gap-4 min-[1000px]:grid-cols-2">
@@ -240,5 +270,85 @@ function YearAndUniverse({
         error={errors.universeId}
       />
     </div>
+  );
+}
+
+// One Other years row, as the form holds it. `key` is only for React.
+type JumpRow = { key: string; year: string; kind: TimeJumpKind; note: string };
+
+// Other years (PRODUCT_PLAN §2.1, Phase 8): flashbacks, flash-forwards and time travel, under the in-universe year.
+// Each row is a year, a kind and a note, labelled like every other field. A row with no year and no note is dropped
+// on save. An error sits on its own row, under the field it belongs to.
+function OtherYears({
+  rows,
+  errors,
+  onAdd,
+  onChange,
+  onRemove,
+}: {
+  rows: JumpRow[];
+  errors: Record<string, string>;
+  onAdd: () => void;
+  onChange: (key: string, change: Partial<Omit<JumpRow, "key">>) => void;
+  onRemove: (key: string) => void;
+}) {
+  return (
+    <fieldset className={cn("grid min-w-0 content-start gap-3", wide)}>
+      <legend className="text-sm font-bold">Other years</legend>
+      <p className="text-[13px] text-ink-3">
+        Flashbacks, flash-forwards and time travel. Each one shows on the timeline in its year, marked with its kind, and
+        the note (e.g. Young Peter at his mother&rsquo;s bedside) is shown there too. Needs the in-universe year above.
+      </p>
+      {rows.map((row, index) => (
+        <div
+          key={row.key}
+          className="grid gap-3 min-[640px]:grid-cols-[140px_180px_minmax(0,1fr)_auto] min-[640px]:items-start"
+        >
+          <Input
+            name="timeJumpYear"
+            label="Year"
+            inputMode="numeric"
+            value={row.year}
+            onChange={(event) => onChange(row.key, { year: event.target.value })}
+            error={errors[`timeJumps.${index}.year`]}
+          />
+          <Select
+            name="timeJumpKind"
+            label="Kind"
+            value={row.kind}
+            onChange={(event) => onChange(row.key, { kind: event.target.value as TimeJumpKind })}
+            error={errors[`timeJumps.${index}.kind`]}
+          >
+            {TIME_JUMP_KINDS.map((kind) => (
+              <option key={kind} value={kind}>
+                {TIME_JUMP_LABEL[kind]}
+              </option>
+            ))}
+          </Select>
+          <Input
+            name="timeJumpNote"
+            label="Note"
+            value={row.note}
+            onChange={(event) => onChange(row.key, { note: event.target.value })}
+            error={errors[`timeJumps.${index}.note`]}
+          />
+          <Button
+            variant="ghost"
+            size="sm"
+            aria-label={`Remove other year ${index + 1}`}
+            onClick={() => onRemove(row.key)}
+            className="justify-self-start min-[640px]:mt-6"
+          >
+            <X aria-hidden strokeWidth={2.25} className="size-4" />
+            Remove
+          </Button>
+        </div>
+      ))}
+      <div>
+        <Button variant="secondary" size="sm" onClick={onAdd}>
+          ＋ Add another year
+        </Button>
+      </div>
+    </fieldset>
   );
 }

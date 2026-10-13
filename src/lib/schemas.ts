@@ -3,6 +3,7 @@
 import { z } from "zod";
 
 import { cleanTagName } from "./tag-name";
+import { TIME_JUMP_KINDS, type TimeJumpKind } from "./time-jump";
 
 const MINUS = "−";
 
@@ -134,20 +135,87 @@ export const recapSchema = z
   .max(RECAP_MAX_LENGTH, "The recap is too long to save")
   .transform((value) => (value.trim() === "" ? null : value));
 
-// Notes on a recap are stored on its entry (PRODUCT_PLAN §2.6). Tags are read separately with tagNamesSchema.
-export const episodeEditSchema = episodeFormSchema.extend({
-  recap: recapSchema,
-  notes: optionalText(10_000),
-});
+// Other years (PRODUCT_PLAN §2.1, Phase 8). The form sends three parallel fields, one value per row. A row with no
+// year and no note is an empty "Add another year" row, so it's dropped rather than blocking the save. Each error's
+// path names its row, e.g. "timeJumps.2.year", so the message sits on that row.
+export const TIME_JUMP_NOTE_MAX = 200;
 
-export const movieEditSchema = z.object({
-  name,
-  releaseDate: optionalDate,
-  inUniverseYear: optionalYear,
-  universeId: optionalUuid,
-  recap: recapSchema,
-  notes: optionalText(10_000),
-});
+export const timeJumpsSchema = z
+  .array(z.object({ year: z.string(), kind: z.string(), note: z.string() }))
+  .transform((rows, context) => {
+    const kept: { year: number; kind: TimeJumpKind; note: string | null }[] = [];
+    rows.forEach((row, index) => {
+      const yearText = row.year.trim();
+      const note = row.note.trim();
+      if (yearText === "" && note === "") return;
+
+      const year = parseWhole(yearText, "the year", YEAR_MIN, YEAR_MAX);
+      if (typeof year === "string") {
+        context.addIssue({ code: "custom", message: year, path: [index, "year"] });
+      }
+
+      const kindCheck = z.enum(TIME_JUMP_KINDS, { error: "Choose flashback, flash-forward or time travel" }).safeParse(row.kind);
+      if (!kindCheck.success) {
+        context.addIssue({ code: "custom", message: kindCheck.error.issues[0].message, path: [index, "kind"] });
+      }
+
+      if (note.length > TIME_JUMP_NOTE_MAX) {
+        context.addIssue({
+          code: "custom",
+          message: `Keep the note under ${TIME_JUMP_NOTE_MAX} characters`,
+          path: [index, "note"],
+        });
+      }
+
+      if (typeof year === "number" && kindCheck.success) {
+        kept.push({ year, kind: kindCheck.data, note: note || null });
+      }
+    });
+    return kept;
+  });
+
+// A recap's other years need its main in-universe year, which is where the recap sits on the timeline (Phase 8).
+function requireMainYearForTimeJumps(
+  value: { inUniverseYear: number | null; timeJumps: unknown[] },
+  context: z.RefinementCtx,
+) {
+  if (value.timeJumps.length > 0 && value.inUniverseYear === null) {
+    context.addIssue({
+      code: "custom",
+      message: "Set the in-universe year before adding other years",
+      path: ["inUniverseYear"],
+    });
+  }
+}
+
+// Reads the Other years rows from the form, in row order. The three fields always have one value per row.
+export function timeJumpRowsFrom(formData: FormData) {
+  const years = formData.getAll("timeJumpYear").map(String);
+  const kinds = formData.getAll("timeJumpKind").map(String);
+  const notes = formData.getAll("timeJumpNote").map(String);
+  return years.map((year, index) => ({ year, kind: kinds[index] ?? "", note: notes[index] ?? "" }));
+}
+
+// Notes on a recap are stored on its entry (PRODUCT_PLAN §2.6). Tags are read separately with tagNamesSchema.
+export const episodeEditSchema = episodeFormSchema
+  .extend({
+    recap: recapSchema,
+    notes: optionalText(10_000),
+    timeJumps: timeJumpsSchema,
+  })
+  .superRefine(requireMainYearForTimeJumps);
+
+export const movieEditSchema = z
+  .object({
+    name,
+    releaseDate: optionalDate,
+    inUniverseYear: optionalYear,
+    universeId: optionalUuid,
+    recap: recapSchema,
+    notes: optionalText(10_000),
+    timeJumps: timeJumpsSchema,
+  })
+  .superRefine(requireMainYearForTimeJumps);
 
 // Tags (PRODUCT_PLAN §2.6). A name is cleaned the same way as in the form (no "#", single spaces, 40 characters
 // at most). A list drops blanks and repeats, ignoring case, and keeps the first spelling.
