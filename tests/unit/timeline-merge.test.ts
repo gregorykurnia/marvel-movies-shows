@@ -74,3 +74,33 @@ describe("mergeTimeline", () => {
     expect(ids(recaps)).toEqual(["recap"]);
   });
 });
+
+// Time jump items (Phase 8) come after the recap items in each year, and a year can hold all three kinds.
+describe("mergeTimeline with time jump items", () => {
+  it("puts a year's events, then its recap items, then its time jump items", () => {
+    const events: Item[] = [{ id: "event-1986", year: 1986 }];
+    const recaps: Item[] = [{ id: "recap-1986", year: 1986 }];
+    const jumps: Item[] = [{ id: "jump-1986", year: 1986 }, { id: "jump-1990", year: 1990 }];
+    expect(ids(mergeTimeline(events, recaps, jumps))).toEqual(["event-1986", "recap-1986", "jump-1986", "jump-1990"]);
+  });
+
+  it("places BCE time jumps before AD years", () => {
+    const jumps: Item[] = [{ id: "jump-2014", year: 2014 }, { id: "jump-bce", year: -700 }];
+    expect(ids(mergeTimeline([], [], jumps))).toEqual(["jump-bce", "jump-2014"]);
+  });
+
+  it("keeps two jumps from one entry in the order they were given, when they share a year", () => {
+    // loadTimeJumpItems gives one entry's jumps in sort_key order, so the same-year pair keeps that order.
+    const jumps: Item[] = [
+      { id: "jump-first-of-entry", year: 1988 },
+      { id: "jump-second-of-entry", year: 1988 },
+    ];
+    expect(ids(mergeTimeline([], [], jumps))).toEqual(["jump-first-of-entry", "jump-second-of-entry"]);
+  });
+
+  it("is unchanged when no time jump items are given", () => {
+    const events: Item[] = [{ id: "event", year: 2000 }];
+    const recaps: Item[] = [{ id: "recap", year: 2000 }];
+    expect(ids(mergeTimeline(events, recaps, []))).toEqual(ids(mergeTimeline(events, recaps)));
+  });
+});
