@@ -42,6 +42,8 @@ test("a character added inline on a recap is its first appearance, shown on the 
 
   await test.step("the picker is named First Appearance Characters, and a new name adds a character", async () => {
     await expect(page.getByRole("combobox", { name: "First Appearance Characters", exact: true }).filter({ visible: true })).toBeVisible();
+    // The importance beside the picker applies to the character added from it.
+    await page.getByRole("radio", { name: "★ Major" }).click();
     await addCharacterInline(page, newCharacter);
     const chosen = page.getByRole("list", { name: "First Appearance Characters, chosen" });
     await expect(chosen).toContainText(newCharacter);
@@ -61,6 +63,13 @@ test("a character added inline on a recap is its first appearance, shown on the 
     const section = page.locator("section[aria-labelledby='first-last-appearance']");
     await expect(section.getByRole("heading", { name: "First and last appearance" })).toBeVisible();
     await expect(section.getByRole("link", { name: `${movieName} · Movie`, exact: true })).toHaveAttribute("href", /\/recaps\//);
+  });
+
+  await test.step("the characters tab shows the character as major", async () => {
+    await page.goto("/characters");
+    const row = page.locator("tbody tr").filter({ hasText: newCharacter });
+    await expect(row).toHaveCount(1);
+    await expect(row.getByText("★ Major", { exact: true })).toBeVisible();
   });
 });
 

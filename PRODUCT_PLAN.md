@@ -34,7 +34,7 @@ Cross-cutting features: **watched tracking**, **global search**, **notes and tag
 - Each entry also has an optional **universe designation**, such as Earth-616. I pick it from the universes list (§2.3), beside the in-universe year. A recap has one universe at most. It can be left empty, and the recap then shows "No universe set" so the gap is visible. A universe used by a recap can't be deleted, the same as for characters.
 - A movie, episode or short can also have **other years it visits**: a flashback, a flash-forward or time travel. Each one has a year, a kind (Flashback, Flash-forward or Time travel) and an optional short note, e.g. *1988: young Peter at his mother's bedside*. A recap can have any number of them, and two can share a year. They sit under the in-universe year on the recap edit page, which stays the main year. They need a main year to be set first. Each one can also have its own **universe**, picked from the universes list, e.g. time travel to another timeline. Left empty, it uses the recap's universe. On the timeline, each of these items shows its universe.
 - Each recap shows: title (and season and episode number if it's an episode), release date, in-universe year, other years (with their kind and note), universe designation, the recap text, the characters who first appear in it, and my notes and tags. The universe designation is shown clearly on the recap page and in the list.
-- On the recap edit page, **First Appearance Characters** sets which characters first appear in this movie or episode. I can pick existing characters or type a new name, which adds a new character (Minor, Unknown, with the recap's universe) that I fill in later.
+- On the recap edit page, **First Appearance Characters** sets which characters first appear in this movie or episode. I can pick existing characters or type a new name, which adds a new character with the recap's universe, status Unknown, and the importance I've chosen beside the picker (Major or Minor, Minor by default). I fill in the rest later.
 - Previous and next buttons follow my custom order.
 - Each entry has a **watched** marker (see 2.4).
 
@@ -245,6 +245,7 @@ This is the high-level view. The task-by-task checklist for each phase is in [`I
 - 2026-10-13: Each flashback, flash-forward or time travel can have its own universe. Left empty, it uses the recap's universe. The timeline shows it on the item.
 - 2026-10-13: Recap items on the timeline show their universe, and the timeline gets a universe filter. A hand-written event takes the universe of the recap it links to. This is a filter on the one timeline, not the separate multiverse timeline view that stays out of scope (§4).
 - 2026-10-13: Characters record their first and last appearance only. The full appearances list is no longer shown or edited, but its data is kept. A recap lists the characters who first appear in it. New characters, titles, episodes and universes can be added inline from the dropdowns that use them.
+- 2026-10-13: A character added from a recap's First Appearance Characters picker takes the importance chosen beside the picker, Major or Minor, Minor by default. It shows in the characters table with that importance.
 - 2026-10-13: The titles list shows a chip for each universe set on a title's movie, short or episodes.
 
 ---

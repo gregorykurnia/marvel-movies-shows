@@ -21,6 +21,7 @@ import Link from "next/link";
 
 import { AppearancesPicker } from "@/components/characters/appearances-picker";
 import { TagInput } from "@/components/tags/tag-input";
+import { RadioPills } from "@/components/ui/radio-pills";
 
 import { RecapMarkdown } from "./recap-markdown";
 
@@ -51,6 +52,8 @@ export function RecapEditForm({
   const [characterIds, setCharacterIds] = useState(initialCharacterIds);
   const [characterList, setCharacterList] = useState(characterOptions);
   const [, startCharacterTransition] = useTransition();
+  // The importance a character added from the picker gets. Minor unless it's changed beside the picker.
+  const [newCharacterImportance, setNewCharacterImportance] = useState<"major" | "minor">("minor");
   const [tagNames, setTagNames] = useState(entry.tags);
   const [universeList, setUniverseList] = useState(universeOptions);
   const [universeId, setUniverseId] = useState<string | null>(entry.universeId);
@@ -67,10 +70,11 @@ export function RecapEditForm({
   const nextJumpKey = useRef(0);
   const oneRecap = hasOneRecap(entry.titleKind);
 
-  // Adds a character who isn't in the list yet, in the recap's universe, and picks them here (Phase 11).
+  // Adds a character who isn't in the list yet, with the importance chosen beside the picker, in the recap's universe,
+  // and picks them here (Phase 11).
   function addCharacter(name: string) {
     startCharacterTransition(async () => {
-      const result = await createCharacterInline({ name, universeId });
+      const result = await createCharacterInline({ name, importance: newCharacterImportance, universeId });
       if (!result.ok) {
         setErrors((current) => ({ ...current, characterId: result.message }));
         return;
@@ -238,6 +242,19 @@ export function RecapEditForm({
             error={errors.characterId}
             emptyText="No first appearances here yet."
           />
+          <div className="mt-4 grid gap-1.5">
+            <span className="text-sm font-bold">Importance of a new character</span>
+            <RadioPills
+              label="Importance of a new character"
+              value={newCharacterImportance}
+              onValueChange={(value) => setNewCharacterImportance(value as "major" | "minor")}
+              options={[
+                { value: "major", label: "★ Major", tone: "violet" },
+                { value: "minor", label: "Minor", tone: "neutral" },
+              ]}
+            />
+            <p className="text-[13px] text-ink-3">Used for a character you add from this picker. Change it on their character page later.</p>
+          </div>
         </div>
 
         <div className="mt-6 grid gap-4">

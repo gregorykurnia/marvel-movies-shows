@@ -281,9 +281,11 @@ export const characterFormSchema = z.object({
   notes: optionalText(10_000),
 });
 
-// A character made from the recap's First Appearance Characters picker: a name, and the recap's universe if one is set.
+// A character made from the recap's First Appearance Characters picker: a name, its importance (chosen beside the
+// picker), and the recap's universe if one is set.
 export const inlineCharacterSchema = z.object({
   name,
+  importance: importanceSchema,
   universeId: uuid.nullable(),
 });
 

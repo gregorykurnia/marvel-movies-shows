@@ -307,9 +307,20 @@ describe("firstAppearanceSchema", () => {
 
 describe("inlineCharacterSchema", () => {
   it("needs a name, and takes the universe as an id or nothing", () => {
-    expect(inlineCharacterSchema.parse({ name: " Loki ", universeId: null })).toEqual({ name: "Loki", universeId: null });
-    expect(errorsFor(inlineCharacterSchema.safeParse({ name: "", universeId: null }))).toHaveProperty("name");
-    expect(() => inlineCharacterSchema.parse({ name: "Loki", universeId: "not-an-id" })).toThrow();
+    expect(inlineCharacterSchema.parse({ name: " Loki ", importance: "minor", universeId: null })).toEqual({
+      name: "Loki",
+      importance: "minor",
+      universeId: null,
+    });
+    expect(errorsFor(inlineCharacterSchema.safeParse({ name: "", importance: "minor", universeId: null }))).toHaveProperty("name");
+    expect(() => inlineCharacterSchema.parse({ name: "Loki", importance: "minor", universeId: "not-an-id" })).toThrow();
+  });
+
+  it("takes major or minor, as chosen beside the picker", () => {
+    expect(inlineCharacterSchema.parse({ name: "Loki", importance: "major", universeId: null }).importance).toBe("major");
+    expect(errorsFor(inlineCharacterSchema.safeParse({ name: "Loki", importance: "huge", universeId: null }))).toHaveProperty(
+      "importance",
+    );
   });
 });
 

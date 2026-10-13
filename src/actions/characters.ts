@@ -95,13 +95,13 @@ export async function updateCharacter(id: string, formData: FormData): Promise<A
 export async function createCharacterInline(input: unknown): Promise<ActionResult<{ id: string; label: string }>> {
   const parsed = inlineCharacterSchema.safeParse(input);
   if (!parsed.success) return validationFailure(parsed.error);
-  const { name, universeId } = parsed.data;
+  const { name, importance, universeId } = parsed.data;
 
   try {
     const created = await getDb().transaction(async (tx) => {
       const [row] = await tx
         .insert(characters)
-        .values({ name, importance: "minor", status: "unknown", universeId })
+        .values({ name, importance, status: "unknown", universeId })
         .returning({ id: characters.id });
       const [universe] = universeId
         ? await tx.select({ name: universes.name }).from(universes).where(eq(universes.id, universeId)).limit(1)
