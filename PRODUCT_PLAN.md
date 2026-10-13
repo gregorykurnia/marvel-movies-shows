@@ -1,6 +1,6 @@
 # Marvel Directory: Product Plan
 
-**Status:** Draft v0.7 (2026-10-12). Adds a universe designation on recaps and shows recaps with an in-universe year on the timeline (build phases 6 and 7). The database is connected, and the implementation details live in [`IMPLEMENTATION_PLAN.md`](./IMPLEMENTATION_PLAN.md). Hosting and backup are now decided.
+**Status:** Draft v0.8 (2026-10-13). Adds flashbacks, flash-forwards and time travel on recaps, shown on the timeline (build phase 8). v0.7 added a universe designation on recaps and recaps on the timeline (phases 6 and 7). The database is connected, and the implementation details live in [`IMPLEMENTATION_PLAN.md`](./IMPLEMENTATION_PLAN.md). Hosting and backup are now decided.
 
 ## 1. Overview
 
@@ -32,7 +32,8 @@ Cross-cutting features: **watched tracking**, **global search**, **notes and tag
 - The order is **adjustable at any time** (drag and drop, or move up and down), and the change is saved.
 - Each entry also stores an **in-universe year**. This is used to seed the order, and I can then adjust the order by hand. Changing the order never changes the year, and the reverse is also true.
 - Each entry also has an optional **universe designation**, such as Earth-616. I pick it from the universes list (§2.3), beside the in-universe year. A recap has one universe at most. It can be left empty, and the recap then shows "No universe set" so the gap is visible. A universe used by a recap can't be deleted, the same as for characters.
-- Each recap shows: title (and season and episode number if it's an episode), release date, in-universe year, universe designation, the recap text, the characters who appear in it, and my notes and tags. The universe designation is shown clearly on the recap page and in the list.
+- A movie, episode or short can also have **other years it visits**: a flashback, a flash-forward or time travel. Each one has a year, a kind (Flashback, Flash-forward or Time travel) and an optional short note, e.g. *1988: young Peter at his mother's bedside*. A recap can have any number of them, and two can share a year. They sit under the in-universe year on the recap edit page, which stays the main year. They need a main year to be set first.
+- Each recap shows: title (and season and episode number if it's an episode), release date, in-universe year, other years (with their kind and note), universe designation, the recap text, the characters who appear in it, and my notes and tags. The universe designation is shown clearly on the recap page and in the list.
 - Previous and next buttons follow my custom order.
 - Each entry has a **watched** marker (see 2.4).
 
@@ -52,6 +53,8 @@ Cross-cutting features: **watched tracking**, **global search**, **notes and tag
 - **Recaps appear here automatically.** Every movie and episode with an in-universe year is shown, even if its recap text is still empty. These items are shown, not copied: changing a recap's year moves it here, clearing the year removes it, and deleting the recap removes it. I edit them on the recap, not on the timeline.
 - **Order within a year:** my hand-written events come first, in my order. Recap items come after them, in recap order. Recap items can't be dragged. Only hand-written events can be reordered.
 - **Recap items look different** from events. They have a small "From recap" label, and their links are "Read recap →" and "Edit recap". They have no "Edit event" link.
+- **Flashbacks, flash-forwards and time travel** (§2.1) also appear here, one item per year, in the same read-only way. Each is clearly marked with its kind and the title it comes from, e.g. "Flashback · Guardians of the Galaxy", so it doesn't read as the title's main story. The expanded view shows the note and the main year ("Main story: 2014"), with the same "Read recap →" and "Edit recap" links. In a year, they come after the main recap items, in recap order.
+- A **"Show flashbacks" toggle**, on by default, hides or shows these items (all three kinds). They follow the type and tag filters too, and the count at the top includes them.
 - If a hand-written event is linked to the same recap, both are shown. I delete the one I don't need.
 - Recap items follow the same filters as events: movies, shows and tags. A recap item's tags are its recap's tags.
 - Recap items are not separate search results, because recaps are already searchable.
@@ -151,6 +154,7 @@ Cross-cutting features: **watched tracking**, **global search**, **notes and tag
 - **Recap order**: the custom position of each movie or episode. Stored separately from the content, so reordering never changes the content.
 - **Timeline event**: year, short text, tie-break order, and an optional link to a title or episode.
 - **Timeline item (from a recap, not stored)**: every movie and episode with an in-universe year, shown read-only on the timeline. Nothing is stored for it, so it always follows its recap.
+- **Other year (flashback, flash-forward or time travel)**: belongs to a movie, episode or short. Fields: year, kind, optional note. Shown read-only on the timeline, the same way as the main year.
 - **Character**: the fields from 2.3. Every variant is a separate record.
 - **Universe**: a name or number such as Earth-616. The list is maintained by me and feeds the character and recap dropdowns.
 - **Appearance**: links a character to every movie or episode they appear in.
@@ -203,11 +207,13 @@ This is the high-level view. The task-by-task checklist for each phase is in [`I
 | **5. Backup and Polish** | Backup download and restore. Responsive layout check, empty and error states | I can download a backup, restore it, and the app is comfortable on my phone |
 | **6. Recap universe** | Universe field on movies and episodes: create, bulk add and recap edit. Universe chip on the recap page and in the list. Delete rule for universes used by recaps | I can set a universe on a recap, see it on the recap page and in the list, and a universe used by a recap can't be deleted |
 | **7. Recaps on the timeline** | Movies and episodes with an in-universe year appear on the timeline as read-only items. They sort after my events in each year and can't be dragged. Filters and links work | A recap's year shows on the timeline in the right place, moves when I change the year, and its link opens the recap |
+| **8. Flashbacks on the timeline** | Other years on a recap (flashback, flash-forward, time travel), each with an optional note. Shown on the recap page and as marked, read-only items on the timeline, with a toggle to hide them | A flashback I add on a recap shows in its year on the timeline, clearly marked with its kind and title, and the toggle hides it |
 
 **Suggested checkpoints**
 - After phase 1, I enter a handful of real titles to test the data entry flow. It matters because everything is typed by hand.
 - After phase 3, I check the timeline with a real set of years, including the oldest and newest ones.
 - After phase 7, I check that recap years sit in the right place on the timeline, using real years.
+- After phase 8, I enter a few real flashbacks and check that they read clearly as flashbacks, not main story.
 
 ---
 
@@ -228,6 +234,7 @@ This is the high-level view. The task-by-task checklist for each phase is in [`I
 - 2026-10-12: Within a year, my hand-written events come first, in my order. Recap items come after them, in recap order, and can't be dragged.
 - 2026-10-12: Each recap has one optional universe designation, chosen from the universes list and entered beside the in-universe year. A universe used by a recap can't be deleted.
 - 2026-10-12: Shorts are a third title kind, next to movies and shows. A short works like a movie: one recap, no episodes, with its own in-universe year and universe. It is shown in orange (DESIGN_GUIDE §2).
+- 2026-10-13: A recap can list other years it visits, each marked Flashback, Flash-forward or Time travel, with an optional note. They appear on the timeline as marked, read-only items after the main recap items in each year, and a toggle hides them.
 
 ---
 

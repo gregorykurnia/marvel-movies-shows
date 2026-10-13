@@ -1,6 +1,6 @@
 # Marvel Directory: Implementation Plan
 
-**Status:** Draft v0.3 (2026-10-12). This version adds the universe designation on recaps (Phase 6) and recaps on the timeline (Phase 7). Build progress is in §6.
+**Status:** Draft v0.4 (2026-10-13). This version adds flashbacks, flash-forwards and time travel on recaps and the timeline (Phase 8). v0.3 added the universe designation on recaps (Phase 6) and recaps on the timeline (Phase 7). Build progress is in §6.
 **Companion to:** [`PRODUCT_PLAN.md`](./PRODUCT_PLAN.md). That file is the source of truth for *what* the app does. This file covers *how* it gets built, and it will change as work progresses.
 **Look and feel:** [`DESIGN_GUIDE.md`](./DESIGN_GUIDE.md) and its visual reference [`design-preview.html`](./design-preview.html) are **binding for every page**, including forms, settings and error pages.
 
@@ -110,6 +110,19 @@ Index on `(year, sort_key)`.
 
 Recap items (Phase 7) are not stored here. They are read from `entries` when the timeline loads (§5.2).
 
+**`entry_time_jumps`** (Phase 8): the other years a movie, episode or short visits.
+
+| Column | Type | Notes |
+|---|---|---|
+| id | uuid PK | |
+| entry_id | uuid FK → entries, not null, cascade delete | |
+| year | int, not null | Can be negative. |
+| kind | enum `flashback` \| `flash_forward` \| `time_travel` | Set by hand, never worked out from the main year. Time travel can go either way. |
+| note | text, nullable | Short, e.g. "Young Peter at his mother's bedside". |
+| sort_key | text COLLATE "C", not null | Order on the recap edit page and the recap page. |
+
+Index on `entry_id`. An entry with time jumps must have an `in_universe_year`. This is enforced in app logic (Zod and the save action), not by the database.
+
 **`universes`**: the list I maintain.
 
 | Column | Type | Notes |
@@ -173,7 +186,7 @@ Trigram index on `name` for fuzzy search.
 | `/` | Home: overall watched progress and quick links to each section. |
 | `/recaps` | The custom-ordered list of all entries. Filters: watched or unwatched, type, tag. A **Reorder mode** toggle enables drag-and-drop, so normal scrolling doesn't move things by accident. |
 | `/recaps/[entryId]` | One recap: header details (including the universe), rendered recap, characters, notes and tags, watched toggle, and previous and next buttons in custom order. |
-| `/recaps/[entryId]/edit` | Edit the recap text (large paste area with a preview), year, universe, notes, tags and appearances. |
+| `/recaps/[entryId]/edit` | Edit the recap text (large paste area with a preview), year, other years (Phase 8), universe, notes, tags and appearances. |
 | `/titles` | Manage movies and shows. |
 | `/titles/new` | Add a movie or a show. |
 | `/titles/[id]` | For a show: its seasons and episodes, progress bars, and **bulk-add episodes**. For a movie: a redirect to its recap. |
@@ -214,6 +227,12 @@ The global search box sits in the header on every page. Pressing `/` or `⌘K` f
 - **Filters and count:** the type filter uses the title kind, and the tag filter uses the recap's tags. The header count includes both kinds.
 - **Merge:** a pure function in `src/lib/timeline-merge.ts` (new) puts the two lists in that order. `timeline-layout.ts` stays as it is.
 - **Search:** recap items are not separate search results, because recaps are already searchable.
+- **Time jump items (Phase 8):** one read-only item per `entry_time_jumps` row, read when the timeline loads, with ids `jump:<id>`. Each carries the recap item fields plus `kind`, `note` and the entry's main year.
+  - **Card:** the kind label ("Flashback", "Flash-forward" or "Time travel") replaces "From recap", followed by the title, e.g. "Flashback · Guardians of the Galaxy". The text is the note, or the episode name or movie title when there's no note. A visual cue built from tokens marks these cards. Dashed borders stay reserved for events without a title.
+  - **Popover:** kind, note, title (and episode), "Main story: <year>", then "Read recap →" and "Edit recap".
+  - **Order in a year:** hand-written events, then main recap items, then time jump items, each in recap order. Jumps of the same entry keep their `sort_key` order.
+  - **Toggle:** a "Show flashbacks" switch beside the type and tag filters, on by default, covers all three kinds. It's kept in the URL (`?jumps=off`) like the other filters. Turning it off counts as a filter, so reorder is off while it's off.
+  - Type and tag filters use the entry's title kind and tags. The header count includes these items. They are not sortable and not separate search results.
 
 ### 5.3 Character Directory
 - A TanStack Table loaded with all characters plus joined names (universe, titles, entries).
@@ -223,6 +242,7 @@ The global search box sits in the header on every page. Pressing `/` or `⌘K` f
 
 ### 5.4 Forms (data entry)
 Everything is typed by hand, so data entry speed is a priority:
+- **Other years** (Phase 8) on the recap edit page, under In-universe year: a repeatable row of year, kind (select: Flashback, Flash-forward, Time travel) and note, with "+ Add another year" and a remove button per row. Saving replaces the entry's rows in one transaction.
 - Searchable comboboxes for titles, entries and universes. The universe combobox has an inline **"+ Add universe"** option.
 - **"Save and add another"** on every create form.
 - Bulk episode add. The universe combobox sits beside In-universe year on the movie form, the episode form and the recap edit page. A bulk add gives every episode in the block the one universe that I pick.
@@ -350,14 +370,29 @@ Phases match the product plan's build plan. Each phase ends with:
 - [ ] Design review (`DESIGN_GUIDE.md` §13) for the timeline at 390px and 1280px, light and dark. Screenshots are in `screenshots/phase-7/` (git-ignored, 4 captures, none scroll sideways at 390px). Checked by eye against the guide, not yet side by side with `design-preview.html`. Waiting for the owner's sign-off.
 - **Done when:** a recap's in-universe year shows on the timeline in the right place, moves when I change the year, and its link opens the recap.
 
+### Phase 8: Flashbacks, flash-forwards and time travel on the timeline
+- [ ] Migration: `entry_time_jumps` table and its `kind` enum (§3.1). Run it on `test` first (`npm run db:migrate:test`). The production migration (`npm run db:migrate`) runs only when I approve it, and before this code reaches `main`.
+- [ ] Zod: a `timeJumps` array (year, kind, optional note) on `episodeEditSchema` and `movieEditSchema`. It's rejected when the main in-universe year is empty.
+- [ ] Actions: `saveEpisode` and `saveMovie` replace the entry's time jumps in the same transaction as the rest of the recap.
+- [ ] Recap edit page: the "Other years" rows from §5.4 in `recap-edit-form.tsx`.
+- [ ] Recap page: an "Other years" row in Details, listing each as "1988 · Flashback · <note>", in `sort_key` order. Hidden when there are none.
+- [ ] Read model: `loadTimeJumpItems` in `src/lib/data/timeline.ts`, next to `loadRecapItems`, with ids `jump:<id>`.
+- [ ] Merge: `mergeTimeline` takes the time jump items as a third list, after recap items in each year. Unit tests in `tests/unit/timeline-merge.test.ts`: a year with all three kinds, BCE jumps, and two jumps from one entry in the same year.
+- [ ] Timeline cards and popover from §5.2, in `event-pin.tsx` and `timeline-view.tsx`. No drag handle, ⋯ menu or "Edit event".
+- [ ] "Show flashbacks" toggle, kept in the URL. Type and tag filters apply to these items, and the header count includes them.
+- [ ] Backup: `entry_time_jumps` in the export, and bump `BACKUP_VERSION` (§5.6).
+- [ ] Tests: a schema unit test; a database test (deleting an entry deletes its time jumps); an end-to-end test (`tests/e2e/phase-8.spec.ts`): add a flashback on a recap, see it in its year with its kind and title, the toggle hides it, and removing it on the recap removes it from the timeline.
+- [ ] Design review (`DESIGN_GUIDE.md` §13) for the recap edit page, recap page and timeline, at 390px and 1280px, light and dark. Screenshots go in `screenshots/phase-8/`.
+- **Done when:** a flashback I add on a recap shows in its year on the timeline, clearly marked with its kind and title, the popover links to the recap, and the toggle hides it.
+
 ---
 
 ## 7. Testing and Verification
 
 | Level | Tool | What it covers |
 |---|---|---|
-| Unit | Vitest | Ordering keys and year-seeded placement, timeline axis compression and zoom bucketing, Zod schemas, timeline merge order (Phase 7). |
-| Database | Vitest against the `test` branch | Constraints (unique episodes, delete rules, a universe used by a recap), generated search columns, search ranking, and a **backup round trip**: export, wipe, restore, export again, and both files are identical. |
+| Unit | Vitest | Ordering keys and year-seeded placement, timeline axis compression and zoom bucketing, Zod schemas, timeline merge order (Phase 7), time jump order (Phase 8). |
+| Database | Vitest against the `test` branch | Constraints (unique episodes, delete rules, a universe used by a recap, time jumps deleted with their entry), generated search columns, search ranking, and a **backup round trip**: export, wipe, restore, export again, and both files are identical. |
 | End-to-end | Playwright against the `test` branch | Each phase's "done when" scenario, run as a script in a real browser. |
 | Visual | Playwright screenshots | Every page at 390px and 1280px, in light and dark mode, compared by eye with `design-preview.html` (`DESIGN_GUIDE.md` §13). |
 | Manual | Me | A short check at the end of each phase with real data. |
@@ -383,7 +418,7 @@ src/
   lib/
     ordering.ts        # fractional keys + year-seeded placement
     timeline-layout.ts # compressed axis + zoom buckets
-    timeline-merge.ts  # hand-written events and recap items, in one order (Phase 7)
+    timeline-merge.ts  # hand-written events, recap items and time jumps, in one order (Phases 7 and 8)
     search.ts
   actions/             # Server Actions per area (titles, entries, events, characters, tags, backup)
   lib/backup/          # backup format, Zod schema, export/restore
@@ -412,3 +447,4 @@ These need me at the keyboard. Everything else can run hands-free.
 | Phase 0 | Approve the Node.js 24 upgrade | It changes my machine's global Node version. |
 | End of each phase | A quick check with real data | Confirms it works the way I want before moving on. |
 | Phase 6 | Approve running the production migration (`npm run db:migrate`) | The live site reads the new column, so it has to run before the Phase 6 code is pushed. Migrations never run on production automatically. |
+| Phase 8 | Approve running the production migration (`npm run db:migrate`) | The live site reads the new `entry_time_jumps` table, so it has to run before the Phase 8 code is pushed. |
