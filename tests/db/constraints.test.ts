@@ -1,7 +1,12 @@
 import { describe, expect, it, afterAll } from "vitest";
 
 import { appearances, characters, entries, entryTimeJumps, tags, titles, universes } from "../../src/db/schema";
-import { isMissingUniverseViolation, isRestrictViolation, isUniqueViolation } from "../../src/lib/db-errors";
+import {
+  isMissingTimeJumpUniverseViolation,
+  isMissingUniverseViolation,
+  isRestrictViolation,
+  isUniqueViolation,
+} from "../../src/lib/db-errors";
 import { connectTestDatabase, E2E_PREFIX, removeE2eData } from "../support/e2e-data";
 
 // Database rules (IMPLEMENTATION_PLAN §7): unique episodes, delete rules, and the case-insensitive tag constraint.
@@ -138,6 +143,63 @@ describe("delete rules", () => {
     await db.update(entries).set({ universeId: null }).where(eqEntry(episode.id));
     const freed = await errorFrom(db.delete(universes).where(eqUniverse(universe.id)));
     expect(freed).toBeNull();
+  });
+
+  it("a universe that another year uses can't be deleted, and is freed once no year uses it (Phase 9)", async () => {
+    const [universe] = await db
+      .insert(universes)
+      .values({ name: label("other year universe") })
+      .returning({ id: universes.id });
+    const [show] = await db
+      .insert(titles)
+      .values({ name: label("other year universe show"), kind: "show" })
+      .returning({ id: titles.id });
+    const [episode] = await db
+      .insert(entries)
+      .values({ titleId: show.id, seasonNumber: 1, episodeNumber: 1, inUniverseYear: 2012, sortKey: `${run}-y1`, watched: false })
+      .returning({ id: entries.id });
+    const [jump] = await db
+      .insert(entryTimeJumps)
+      .values({ entryId: episode.id, year: 2099, kind: "time_travel", note: null, sortKey: `${run}-y2`, universeId: universe.id })
+      .returning({ id: entryTimeJumps.id });
+
+    const error = await errorFrom(db.delete(universes).where(eqUniverse(universe.id)));
+    expect(error).not.toBeNull();
+    expect(isRestrictViolation(error)).toBe(true);
+
+    await db.update(entryTimeJumps).set({ universeId: null }).where(eq(entryTimeJumps.id, jump.id));
+    const freed = await errorFrom(db.delete(universes).where(eqUniverse(universe.id)));
+    expect(freed).toBeNull();
+  });
+
+  it("another year can't point at a universe that no longer exists, and the error says which link failed (Phase 9)", async () => {
+    const [show] = await db
+      .insert(titles)
+      .values({ name: label("missing jump universe show"), kind: "show" })
+      .returning({ id: titles.id });
+    const [episode] = await db
+      .insert(entries)
+      .values({ titleId: show.id, seasonNumber: 1, episodeNumber: 1, sortKey: `${run}-y3`, watched: false })
+      .returning({ id: entries.id });
+    const [gone] = await db
+      .insert(universes)
+      .values({ name: label("gone jump universe") })
+      .returning({ id: universes.id });
+    await db.delete(universes).where(eqUniverse(gone.id));
+
+    const error = await errorFrom(
+      db.insert(entryTimeJumps).values({
+        entryId: episode.id,
+        year: 1988,
+        kind: "flashback",
+        note: null,
+        sortKey: `${run}-y4`,
+        universeId: gone.id,
+      }),
+    );
+    expect(error).not.toBeNull();
+    expect(isMissingTimeJumpUniverseViolation(error)).toBe(true);
+    expect(isMissingUniverseViolation(error)).toBe(false);
   });
 
   it("a recap can't point at a universe that no longer exists, and the error says which link failed", async () => {

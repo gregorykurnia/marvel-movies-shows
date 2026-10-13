@@ -4,9 +4,9 @@
 import { asc, eq } from "drizzle-orm";
 
 import { getDb, type Tx } from "@/db";
-import { entryTimeJumps } from "@/db/schema";
+import { entryTimeJumps, universes } from "@/db/schema";
 import { keysBetween } from "@/lib/ordering";
-import type { TimeJump, TimeJumpKind } from "@/lib/time-jump";
+import type { TimeJump, TimeJumpInput } from "@/lib/time-jump";
 
 // One recap's other years, in sort_key order (the order the recap page and the edit form show them in).
 export async function loadEntryTimeJumps(entryId: string): Promise<TimeJump[]> {
@@ -16,8 +16,11 @@ export async function loadEntryTimeJumps(entryId: string): Promise<TimeJump[]> {
       year: entryTimeJumps.year,
       kind: entryTimeJumps.kind,
       note: entryTimeJumps.note,
+      universeId: entryTimeJumps.universeId,
+      universeName: universes.name,
     })
     .from(entryTimeJumps)
+    .leftJoin(universes, eq(entryTimeJumps.universeId, universes.id))
     .where(eq(entryTimeJumps.entryId, entryId))
     .orderBy(asc(entryTimeJumps.sortKey));
 }
@@ -27,7 +30,7 @@ export async function loadEntryTimeJumps(entryId: string): Promise<TimeJump[]> {
 export async function replaceEntryTimeJumps(
   tx: Tx,
   entryId: string,
-  jumps: { year: number; kind: TimeJumpKind; note: string | null }[],
+  jumps: TimeJumpInput[],
 ) {
   await tx.delete(entryTimeJumps).where(eq(entryTimeJumps.entryId, entryId));
   if (jumps.length === 0) return;
@@ -38,6 +41,7 @@ export async function replaceEntryTimeJumps(
       year: jump.year,
       kind: jump.kind,
       note: jump.note,
+      universeId: jump.universeId,
       sortKey: keys[index],
     })),
   );

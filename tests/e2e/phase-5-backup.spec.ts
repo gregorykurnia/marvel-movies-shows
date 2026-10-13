@@ -48,7 +48,7 @@ test("the Backup page downloads every table, with the same row counts as the dat
     tables: Record<string, unknown[]>;
   };
   expect(doc.format).toBe("marvel-directory-backup");
-  expect(doc.version).toBe(2);
+  expect(doc.version).toBe(3);
   expect(Object.keys(doc.tables).sort()).toEqual([...dataTables].sort());
   expect(doc.tables.titles.length).toBeGreaterThan(0);
 

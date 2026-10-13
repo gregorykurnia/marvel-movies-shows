@@ -83,7 +83,7 @@ function UniverseRowItem({ universe }: { universe: UniverseRow }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(universe.name);
   const [error, setError] = useState<string | undefined>();
-  const inUse = universe.characters > 0 || universe.recaps > 0;
+  const inUse = universe.characters > 0 || universe.recaps > 0 || universe.otherYears > 0;
 
   function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -147,7 +147,8 @@ function UniverseRowItem({ universe }: { universe: UniverseRow }) {
             <div className="flex flex-wrap items-center gap-3">
               <Chip tone="universe">{universe.name}</Chip>
               <span className="font-mono text-[13px] font-bold tabular-nums text-ink-2">
-                {formatCount(universe.characters, "character")} · {formatCount(universe.recaps, "recap")}
+                {formatCount(universe.characters, "character")} · {formatCount(universe.recaps, "recap")} ·{" "}
+                {formatCount(universe.otherYears, "other year")}
               </span>
             </div>
             <div className="flex flex-wrap items-center gap-2.5">
@@ -166,7 +167,7 @@ function UniverseRowItem({ universe }: { universe: UniverseRow }) {
               </Button>
               {inUse ? (
                 <span id={`in-use-${universe.id}`} className="text-[13px] text-ink-3">
-                  In use. Clear it from its characters and recaps first.
+                  In use. Clear it from its characters, recaps and other years first.
                 </span>
               ) : null}
             </div>

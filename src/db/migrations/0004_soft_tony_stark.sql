@@ -1,0 +1,2 @@
+ALTER TABLE "entry_time_jumps" ADD COLUMN "universe_id" uuid;--> statement-breakpoint
+ALTER TABLE "entry_time_jumps" ADD CONSTRAINT "entry_time_jumps_universe_id_universes_id_fk" FOREIGN KEY ("universe_id") REFERENCES "public"."universes"("id") ON DELETE restrict ON UPDATE no action;

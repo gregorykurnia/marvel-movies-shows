@@ -104,6 +104,11 @@ function EventDetails({ item, interactive }: { item: TimelineItem; interactive: 
           Main story: {formatYear(jump.mainYear)}
         </p>
       ) : null}
+      {jump && jump.universeName ? (
+        <p className="mt-1.5 flex flex-wrap items-center gap-x-2 text-[13px] font-semibold text-ink-2">
+          Universe: <Chip tone="universe">{jump.universeName}</Chip>
+        </p>
+      ) : null}
       {item.source === "event" && item.details ? (
         <p className="mt-1.5 text-sm leading-normal whitespace-pre-line text-ink-2">{item.details}</p>
       ) : null}
@@ -181,6 +186,13 @@ export function EventCard({ item, reorder }: { item: TimelineItem; reorder?: { h
         <span className="mb-0.5 block font-mono text-[10px] font-bold tracking-[0.06em] text-ink-2 uppercase break-words">
           <JumpKindLabel kind={item.jumpKind} className="text-[10px]" />
           <span className="block">{item.titleName}</span>
+        </span>
+      ) : null}
+      {item.source === "jump" && item.universeName ? (
+        <span className="mb-1 block max-w-full">
+          <Chip tone="universe" className="max-w-full truncate font-mono text-[10px]">
+            {item.universeName}
+          </Chip>
         </span>
       ) : null}
       {item.text}

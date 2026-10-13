@@ -127,13 +127,13 @@ test("a universe on a movie and on an episode, shown on the recap and in the lis
 
     // Earth-199999 is used by the movie and both episodes.
     const inUse = universeRow(page, earth199999);
-    await expect(inUse.getByText("0 characters · 3 recaps", { exact: true })).toBeVisible();
+    await expect(inUse.getByText("0 characters · 3 recaps · 0 other years", { exact: true })).toBeVisible();
     await expect(inUse.getByRole("button", { name: "Delete" })).toBeDisabled();
-    await expect(inUse.getByText("In use. Clear it from its characters and recaps first.")).toBeVisible();
+    await expect(inUse.getByText("In use. Clear it from its characters, recaps and other years first.")).toBeVisible();
 
     // Earth-616 is no longer used by anything.
     const unused = universeRow(page, earth616);
-    await expect(unused.getByText("0 characters · 0 recaps", { exact: true })).toBeVisible();
+    await expect(unused.getByText("0 characters · 0 recaps · 0 other years", { exact: true })).toBeVisible();
     await unused.getByRole("button", { name: "Delete" }).click();
     await expect(page.getByRole("list", { name: "Universes" }).getByText(earth616, { exact: true })).toHaveCount(0);
   });

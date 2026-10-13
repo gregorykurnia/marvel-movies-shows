@@ -16,6 +16,8 @@ export function withUniverse(list: UniverseOption[], universe: UniverseOption): 
 // The universe designation on a movie, an episode or a recap (PRODUCT_PLAN §2.1). It sits beside the in-universe year.
 // The form holds the list and the chosen id, so a universe added inline survives "Save & add another", which remounts
 // the form. The chosen id travels as a hidden field. Choosing "No universe" clears it.
+//
+// Other years (Phase 9) reuse it per row, with their own `name`, label, hint and clear option ("Same as recap").
 export function UniverseField({
   universes,
   value,
@@ -23,6 +25,11 @@ export function UniverseField({
   onCreated,
   error,
   className,
+  name = "universeId",
+  label = "Universe",
+  clearLabel = "No universe",
+  hint = "Optional. Shown on the recap and in the list.",
+  placeholder = "Type to search or add…",
 }: {
   universes: UniverseOption[];
   value: string | null;
@@ -30,6 +37,11 @@ export function UniverseField({
   onCreated: (universe: UniverseOption) => void;
   error?: string;
   className?: string;
+  name?: string;
+  label?: string;
+  clearLabel?: string;
+  hint?: string;
+  placeholder?: string;
 }) {
   const [, startTransition] = useTransition();
   const [createError, setCreateError] = useState<string | undefined>();
@@ -51,18 +63,18 @@ export function UniverseField({
   return (
     <>
       <Combobox
-        label="Universe"
-        placeholder="Type to search or add…"
+        label={label}
+        placeholder={placeholder}
         options={universes.map((universe) => ({ value: universe.id, label: universe.name, mono: true }))}
         value={value}
         onValueChange={onValueChange}
         onCreate={addUniverse}
-        clearLabel="No universe"
-        hint="Optional. Shown on the recap and in the list."
+        clearLabel={clearLabel}
+        hint={hint}
         error={error ?? createError}
         className={className}
       />
-      <input type="hidden" name="universeId" value={value ?? ""} />
+      <input type="hidden" name={name} value={value ?? ""} />
     </>
   );
 }

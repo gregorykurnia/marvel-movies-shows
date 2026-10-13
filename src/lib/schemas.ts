@@ -3,7 +3,7 @@
 import { z } from "zod";
 
 import { cleanTagName } from "./tag-name";
-import { TIME_JUMP_KINDS, type TimeJumpKind } from "./time-jump";
+import { TIME_JUMP_KINDS, type TimeJumpInput } from "./time-jump";
 
 const MINUS = "−";
 
@@ -135,19 +135,26 @@ export const recapSchema = z
   .max(RECAP_MAX_LENGTH, "The recap is too long to save")
   .transform((value) => (value.trim() === "" ? null : value));
 
-// Other years (PRODUCT_PLAN §2.1, Phase 8). The form sends three parallel fields, one value per row. A row with no
-// year and no note is an empty "Add another year" row, so it's dropped rather than blocking the save. Each error's
-// path names its row, e.g. "timeJumps.2.year", so the message sits on that row.
+// Other years (PRODUCT_PLAN §2.1, Phase 8, and the universe of each year in Phase 9). The form sends one value per row
+// for each field. A row with no year, no note and no universe is an empty "Add another year" row, so it's dropped
+// rather than blocking the save. Each error's path names its row, e.g. "timeJumps.2.year", so the message sits on
+// that row.
 export const TIME_JUMP_NOTE_MAX = 200;
 
 export const timeJumpsSchema = z
-  .array(z.object({ year: z.string(), kind: z.string(), note: z.string() }))
+  .array(z.object({ year: z.string(), kind: z.string(), note: z.string(), universeId: z.string().optional() }))
   .transform((rows, context) => {
-    const kept: { year: number; kind: TimeJumpKind; note: string | null }[] = [];
+    const kept: TimeJumpInput[] = [];
     rows.forEach((row, index) => {
       const yearText = row.year.trim();
       const note = row.note.trim();
-      if (yearText === "" && note === "") return;
+      const universeText = (row.universeId ?? "").trim();
+      if (yearText === "" && note === "" && universeText === "") return;
+
+      const universeCheck = optionalUuid.safeParse(universeText);
+      if (!universeCheck.success) {
+        context.addIssue({ code: "custom", message: "Pick a universe from the list", path: [index, "universeId"] });
+      }
 
       const year = parseWhole(yearText, "the year", YEAR_MIN, YEAR_MAX);
       if (typeof year === "string") {
@@ -167,8 +174,8 @@ export const timeJumpsSchema = z
         });
       }
 
-      if (typeof year === "number" && kindCheck.success) {
-        kept.push({ year, kind: kindCheck.data, note: note || null });
+      if (typeof year === "number" && kindCheck.success && universeCheck.success) {
+        kept.push({ year, kind: kindCheck.data, note: note || null, universeId: universeCheck.data });
       }
     });
     return kept;
@@ -188,12 +195,18 @@ function requireMainYearForTimeJumps(
   }
 }
 
-// Reads the Other years rows from the form, in row order. The three fields always have one value per row.
+// Reads the Other years rows from the form, in row order. Each field has one value per row.
 export function timeJumpRowsFrom(formData: FormData) {
   const years = formData.getAll("timeJumpYear").map(String);
   const kinds = formData.getAll("timeJumpKind").map(String);
   const notes = formData.getAll("timeJumpNote").map(String);
-  return years.map((year, index) => ({ year, kind: kinds[index] ?? "", note: notes[index] ?? "" }));
+  const universes = formData.getAll("timeJumpUniverseId").map(String);
+  return years.map((year, index) => ({
+    year,
+    kind: kinds[index] ?? "",
+    note: notes[index] ?? "",
+    universeId: universes[index] ?? "",
+  }));
 }
 
 // Notes on a recap are stored on its entry (PRODUCT_PLAN §2.6). Tags are read separately with tagNamesSchema.

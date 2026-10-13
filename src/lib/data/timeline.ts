@@ -3,7 +3,7 @@
 import { asc, eq } from "drizzle-orm";
 
 import { getDb, type Tx } from "@/db";
-import { entryTimeJumps, timelineEvents, titles } from "@/db/schema";
+import { entryTimeJumps, timelineEvents, titles, universes } from "@/db/schema";
 import type { YearPlaceable } from "@/lib/ordering";
 import type { TimeJumpKind } from "@/lib/time-jump";
 
@@ -112,6 +112,8 @@ export type TimelineJump = {
   note: string | null;
   // The recap's main in-universe year, shown as "Main story: <year>" in the popover.
   mainYear: number | null;
+  // This year's universe, or the recap's universe when this year has none (Phase 9). Null when neither is set.
+  universeName: string | null;
   tags: string[];
 };
 
@@ -134,8 +136,10 @@ export async function loadTimeJumpItems(): Promise<TimelineJump[]> {
         year: entryTimeJumps.year,
         kind: entryTimeJumps.kind,
         note: entryTimeJumps.note,
+        universeName: universes.name,
       })
       .from(entryTimeJumps)
+      .leftJoin(universes, eq(entryTimeJumps.universeId, universes.id))
       .orderBy(asc(entryTimeJumps.sortKey)),
   ]);
 
@@ -158,6 +162,7 @@ export async function loadTimeJumpItems(): Promise<TimelineJump[]> {
       jumpKind: row.kind,
       note: row.note ?? null,
       mainYear: entry.inUniverseYear,
+      universeName: row.universeName ?? entry.universeName,
       tags: entry.tags,
     })),
   );

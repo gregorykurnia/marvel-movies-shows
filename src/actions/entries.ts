@@ -11,7 +11,12 @@ import { replaceRecapCharacters } from "@/lib/data/appearances";
 import { replaceEntryTags, tagIdsFor } from "@/lib/data/tags";
 import { replaceEntryTimeJumps } from "@/lib/data/time-jumps";
 import { readPlaceables } from "@/lib/data/placeables";
-import { isForeignKeyViolation, isMissingUniverseViolation, isUniqueViolation } from "@/lib/db-errors";
+import {
+  isForeignKeyViolation,
+  isMissingTimeJumpUniverseViolation,
+  isMissingUniverseViolation,
+  isUniqueViolation,
+} from "@/lib/db-errors";
 import { formStrings } from "@/lib/form";
 import { formatEpisodeCode } from "@/lib/format";
 import { keyForMove, seededKey, seededKeys } from "@/lib/ordering";
@@ -200,6 +205,7 @@ export async function saveEpisode(entryId: string, formData: FormData): Promise<
       });
     }
     if (isMissingUniverseViolation(error)) return fail(MISSING_UNIVERSE, { universeId: MISSING_UNIVERSE });
+    if (isMissingTimeJumpUniverseViolation(error)) return fail(MISSING_UNIVERSE);
     if (isForeignKeyViolation(error)) return fail(MISSING_CHARACTER);
     throw error;
   }
@@ -244,6 +250,7 @@ export async function saveMovie(entryId: string, formData: FormData): Promise<Ac
     if (!saved) return fail("That movie no longer exists.");
   } catch (error) {
     if (isMissingUniverseViolation(error)) return fail(MISSING_UNIVERSE, { universeId: MISSING_UNIVERSE });
+    if (isMissingTimeJumpUniverseViolation(error)) return fail(MISSING_UNIVERSE);
     if (isForeignKeyViolation(error)) return fail(MISSING_CHARACTER);
     throw error;
   }

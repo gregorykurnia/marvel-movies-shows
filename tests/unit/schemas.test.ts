@@ -213,19 +213,19 @@ describe("time jumps on a recap", () => {
       timeJumps: [row("1988", "flashback", " Young Peter at his mother's bedside "), row("2014", "time_travel", "")],
     });
     expect(parsed.timeJumps).toEqual([
-      { year: 1988, kind: "flashback", note: "Young Peter at his mother's bedside" },
-      { year: 2014, kind: "time_travel", note: null },
+      { year: 1988, kind: "flashback", note: "Young Peter at his mother's bedside", universeId: null },
+      { year: 2014, kind: "time_travel", note: null, universeId: null },
     ]);
   });
 
   it("accepts a flash-forward and a BCE year typed with a real minus sign", () => {
     const parsed = movieEditSchema.parse({ ...base, timeJumps: [row("−5000", "flash_forward")] });
-    expect(parsed.timeJumps).toEqual([{ year: -5000, kind: "flash_forward", note: null }]);
+    expect(parsed.timeJumps).toEqual([{ year: -5000, kind: "flash_forward", note: null, universeId: null }]);
   });
 
   it("drops a row with no year and no note, so an empty added row doesn't block the save", () => {
     const parsed = movieEditSchema.parse({ ...base, timeJumps: [row(""), row("1988", "flashback", "x"), row("", "flashback", "")] });
-    expect(parsed.timeJumps).toEqual([{ year: 1988, kind: "flashback", note: "x" }]);
+    expect(parsed.timeJumps).toEqual([{ year: 1988, kind: "flashback", note: "x", universeId: null }]);
   });
 
   it("puts a bad year on its own row", () => {
@@ -270,7 +270,7 @@ describe("time jumps on a recap", () => {
       notes: "",
     };
     expect(episodeEditSchema.parse({ ...episode, timeJumps: [row("1988", "flashback", "Peter")] }).timeJumps).toEqual([
-      { year: 1988, kind: "flashback", note: "Peter" },
+      { year: 1988, kind: "flashback", note: "Peter", universeId: null },
     ]);
     expect(errorsFor(episodeEditSchema.safeParse({ ...episode, inUniverseYear: "", timeJumps: [row("1988")] }))).toHaveProperty(
       "inUniverseYear",
@@ -332,5 +332,53 @@ describe("watchedSchema and deleteConfirmSchema", () => {
   it("requires the typed word DELETE, in capitals", () => {
     expect(deleteConfirmSchema.safeParse("DELETE").success).toBe(true);
     expect(deleteConfirmSchema.safeParse("delete").success).toBe(false);
+  });
+});
+
+// The universe of each other year (Phase 9). A year with no universe uses the recap's universe, so it's stored as null.
+describe("universes on other years", () => {
+  const base = { name: "Thor", releaseDate: "", inUniverseYear: "2011", universeId: "", recap: "", notes: "", timeJumps: [] };
+  const row = (year: string, kind = "time_travel", note = "", universeId = "") => ({ year, kind, note, universeId });
+
+  it("keeps each row's universe, and stores a blank one as null", () => {
+    const parsed = movieEditSchema.parse({
+      ...base,
+      timeJumps: [row("2014", "time_travel", "", VALID_UUID), row("1988", "flashback", "", "")],
+    });
+    expect(parsed.timeJumps).toEqual([
+      { year: 2014, kind: "time_travel", note: null, universeId: VALID_UUID },
+      { year: 1988, kind: "flashback", note: null, universeId: null },
+    ]);
+  });
+
+  it("accepts rows from a form that doesn't send a universe at all", () => {
+    const parsed = episodeEditSchema.parse({
+      season: "1",
+      episode: "1",
+      name: "",
+      releaseDate: "",
+      inUniverseYear: "2012",
+      universeId: "",
+      recap: "",
+      notes: "",
+      timeJumps: [{ year: "1988", kind: "flashback", note: "" }],
+    });
+    expect(parsed.timeJumps).toEqual([{ year: 1988, kind: "flashback", note: null, universeId: null }]);
+  });
+
+  it("keeps a row that has only a universe, so the missing year is named rather than the row dropped", () => {
+    const result = movieEditSchema.safeParse({ ...base, timeJumps: [row("", "flashback", "", VALID_UUID)] });
+    expect(errorsFor(result)).toHaveProperty("timeJumps.0.year");
+  });
+
+  it("refuses a universe that isn't an id, on its own row", () => {
+    const result = movieEditSchema.safeParse({ ...base, timeJumps: [row("1988"), row("2014", "time_travel", "", "not-an-id")] });
+    expect(errorsFor(result)).toHaveProperty("timeJumps.1.universeId");
+    expect(errorsFor(result)).not.toHaveProperty("timeJumps.0.universeId");
+  });
+
+  it("still drops a row that is empty in every field, universe included", () => {
+    const parsed = movieEditSchema.parse({ ...base, timeJumps: [row("", "flashback", "", ""), row("1988")] });
+    expect(parsed.timeJumps).toEqual([{ year: 1988, kind: "time_travel", note: null, universeId: null }]);
   });
 });

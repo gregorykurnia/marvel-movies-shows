@@ -52,7 +52,13 @@ export function RecapEditForm({
   const [universeList, setUniverseList] = useState(universeOptions);
   const [universeId, setUniverseId] = useState<string | null>(entry.universeId);
   const [jumpRows, setJumpRows] = useState<JumpRow[]>(() =>
-    timeJumps.map((jump) => ({ key: jump.id, year: String(jump.year), kind: jump.kind, note: jump.note ?? "" })),
+    timeJumps.map((jump) => ({
+      key: jump.id,
+      year: String(jump.year),
+      kind: jump.kind,
+      note: jump.note ?? "",
+      universeId: jump.universeId,
+    })),
   );
   const nextJumpKey = useRef(0);
   const oneRecap = hasOneRecap(entry.titleKind);
@@ -60,7 +66,7 @@ export function RecapEditForm({
   function addJumpRow() {
     nextJumpKey.current += 1;
     const key = `new-${nextJumpKey.current}`;
-    setJumpRows((rows) => [...rows, { key, year: "", kind: "flashback", note: "" }]);
+    setJumpRows((rows) => [...rows, { key, year: "", kind: "flashback", note: "", universeId: null }]);
   }
 
   function changeJumpRow(key: string, change: Partial<Omit<JumpRow, "key">>) {
@@ -165,10 +171,12 @@ export function RecapEditForm({
           )}
           <OtherYears
             rows={jumpRows}
+            universes={universeList}
             errors={errors}
             onAdd={addJumpRow}
             onChange={changeJumpRow}
             onRemove={removeJumpRow}
+            onCreated={(universe) => setUniverseList((list) => withUniverse(list, universe))}
           />
         </FormGrid>
 
@@ -273,36 +281,42 @@ function YearAndUniverse({
   );
 }
 
-// One Other years row, as the form holds it. `key` is only for React.
-type JumpRow = { key: string; year: string; kind: TimeJumpKind; note: string };
+// One Other years row, as the form holds it. `key` is only for React. `universeId` is the year's own universe, or null
+// for the recap's universe (Phase 9).
+type JumpRow = { key: string; year: string; kind: TimeJumpKind; note: string; universeId: string | null };
 
 // Other years (PRODUCT_PLAN §2.1, Phase 8): flashbacks, flash-forwards and time travel, under the in-universe year.
-// Each row is a year, a kind and a note, labelled like every other field. A row with no year and no note is dropped
-// on save. An error sits on its own row, under the field it belongs to.
+// Each row is a year, a kind, a universe (Phase 9) and a note, labelled like every other field. A row with nothing in
+// it is dropped on save. An error sits on its own row, under the field it belongs to.
 function OtherYears({
   rows,
+  universes,
   errors,
   onAdd,
   onChange,
   onRemove,
+  onCreated,
 }: {
   rows: JumpRow[];
+  universes: UniverseOption[];
   errors: Record<string, string>;
   onAdd: () => void;
   onChange: (key: string, change: Partial<Omit<JumpRow, "key">>) => void;
   onRemove: (key: string) => void;
+  onCreated: (universe: UniverseOption) => void;
 }) {
   return (
     <fieldset className={cn("grid min-w-0 content-start gap-3", wide)}>
       <legend className="text-sm font-bold">Other years</legend>
       <p className="text-[13px] text-ink-3">
         Flashbacks, flash-forwards and time travel. Each one shows on the timeline in its year, marked with its kind, and
-        the note (e.g. Young Peter at his mother&rsquo;s bedside) is shown there too. Needs the in-universe year above.
+        the note (e.g. Young Peter at his mother&rsquo;s bedside) is shown there too. Needs the in-universe year above. A
+        year in another universe gets its own universe; left as “Same as recap” it uses the recap&rsquo;s.
       </p>
       {rows.map((row, index) => (
         <div
           key={row.key}
-          className="grid gap-3 min-[640px]:grid-cols-[140px_180px_minmax(0,1fr)_auto] min-[640px]:items-start"
+          className="grid gap-3 min-[640px]:grid-cols-[120px_170px_minmax(0,1fr)_auto] min-[640px]:items-start"
         >
           <Input
             name="timeJumpYear"
@@ -325,13 +339,27 @@ function OtherYears({
               </option>
             ))}
           </Select>
-          <Input
-            name="timeJumpNote"
-            label="Note"
-            value={row.note}
-            onChange={(event) => onChange(row.key, { note: event.target.value })}
-            error={errors[`timeJumps.${index}.note`]}
-          />
+          <div className="grid min-w-0 gap-3 min-[900px]:grid-cols-2">
+            <UniverseField
+              name="timeJumpUniverseId"
+              label="Universe for this year"
+              placeholder="Same as recap"
+              clearLabel="Same as recap"
+              hint=""
+              universes={universes}
+              value={row.universeId}
+              onValueChange={(id) => onChange(row.key, { universeId: id })}
+              onCreated={onCreated}
+              error={errors[`timeJumps.${index}.universeId`]}
+            />
+            <Input
+              name="timeJumpNote"
+              label="Note"
+              value={row.note}
+              onChange={(event) => onChange(row.key, { note: event.target.value })}
+              error={errors[`timeJumps.${index}.note`]}
+            />
+          </div>
           <Button
             variant="ghost"
             size="sm"

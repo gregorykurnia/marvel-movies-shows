@@ -162,6 +162,9 @@ async function RecapContent({ params }: { params: Promise<{ entryId: string }> }
                       <span key={jump.id} className="min-w-0 break-words">
                         <span className="font-mono font-semibold tabular-nums">{formatYear(jump.year)}</span>
                         <span className="font-semibold"> · {TIME_JUMP_LABEL[jump.kind]}</span>
+                        {jump.universeName && jump.universeId !== entry.universeId ? (
+                          <span className="font-mono font-semibold"> · {jump.universeName}</span>
+                        ) : null}
                         {jump.note ? <span className="font-semibold text-ink-2"> · {jump.note}</span> : null}
                       </span>
                     ))}

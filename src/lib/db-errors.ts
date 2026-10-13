@@ -32,3 +32,9 @@ function constraintName(error: unknown): string | undefined {
 export function isMissingUniverseViolation(error: unknown): boolean {
   return isForeignKeyViolation(error) && constraintName(error) === "entries_universe_id_universes_id_fk";
 }
+
+// The universe of one other year was rejected, because that universe was deleted in the meantime (Phase 9). Same
+// as above, for entry_time_jumps.universe_id.
+export function isMissingTimeJumpUniverseViolation(error: unknown): boolean {
+  return isForeignKeyViolation(error) && constraintName(error) === "entry_time_jumps_universe_id_universes_id_fk";
+}

@@ -10,10 +10,16 @@ export const TIME_JUMP_LABEL: Record<TimeJumpKind, string> = {
   time_travel: "Time travel",
 };
 
-// One other year, as the recap page and the edit form read it.
+// One other year, as the recap page and the edit form read it. The universe is the year's own (Phase 9), or null when
+// it uses the recap's universe. `universeName` is the name of that universe, for the recap page.
 export type TimeJump = {
   id: string;
   year: number;
   kind: TimeJumpKind;
   note: string | null;
+  universeId: string | null;
+  universeName: string | null;
 };
+
+// What a save needs for one other year.
+export type TimeJumpInput = Pick<TimeJump, "year" | "kind" | "note" | "universeId">;

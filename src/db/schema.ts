@@ -113,6 +113,8 @@ export const entryTimeJumps = pgTable(
     note: text("note"),
     // Order on the recap edit page and the recap page.
     sortKey: collatedText("sort_key").notNull(),
+    // The universe of this year (Phase 9). Empty means the recap's own universe. A universe in use can't be deleted.
+    universeId: uuid("universe_id").references(() => universes.id, { onDelete: "restrict" }),
   },
   (t) => [index("entry_time_jumps_entry_idx").on(t.entryId)],
 );

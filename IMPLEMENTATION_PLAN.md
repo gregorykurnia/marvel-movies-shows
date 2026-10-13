@@ -234,7 +234,7 @@ The global search box sits in the header on every page. Pressing `/` or `⌘K` f
   - **Order in a year:** hand-written events, then main recap items, then time jump items, each in recap order. Jumps of the same entry keep their `sort_key` order.
   - **Toggle:** a "Show flashbacks" switch beside the type and tag filters, on by default, covers all three kinds. It's kept in the URL (`?jumps=off`) like the other filters. Turning it off counts as a filter, so reorder is off while it's off.
   - Type and tag filters use the entry's title kind and tags. The header count includes these items. They are not sortable and not separate search results.
-  - **Universe (Phase 9):** each time jump item carries a universe name: its own `universe_id`, or the recap's universe when that's empty. The card shows it as a universe chip next to the kind label, and the popover adds a "Universe" line. No chip when neither is set.
+  - **Universe (Phase 9):** each time jump item carries a universe name: its own `universe_id`, or the recap's universe when that's empty. The card shows it as a universe chip on its own line under the kind label and title, and the popover adds a "Universe" line. Both are built in `event-pin.tsx`. No chip when neither is set.
 
 ### 5.3 Character Directory
 - A TanStack Table loaded with all characters plus joined names (universe, titles, entries).
@@ -388,17 +388,17 @@ Phases match the product plan's build plan. Each phase ends with:
 - **Done when:** a flashback I add on a recap shows in its year on the timeline, clearly marked with its kind and title, the popover links to the recap, and the toggle hides it.
 
 ### Phase 9: A universe on each flashback, flash-forward and time travel
-- [ ] Migration: add `entry_time_jumps.universe_id` (nullable, references `universes`, restrict delete). Run it on `test` first (`npm run db:migrate:test`). The production migration (`npm run db:migrate`) runs only when I approve it, and before this code reaches `main`.
-- [ ] Zod: an optional universe id on each `timeJumps` row in `episodeEditSchema` and `movieEditSchema` (`src/lib/schemas.ts`, `src/lib/time-jump.ts`).
-- [ ] Actions: `saveEpisode` and `saveMovie` save the universe with each row, in the same transaction as now.
-- [ ] Recap edit page: a universe combobox in each "Other years" row (`recap-edit-form.tsx`), with "+ Add universe" and the placeholder "Same as recap". Reuse the Phase 6 combobox.
-- [ ] Recap page: the "Other years" row shows the universe when it's set and differs from the recap's, e.g. "2014 · Time travel · Earth-199999 · <note>".
-- [ ] Read model: `loadTimeJumpItems` joins `universes` for the jump's universe and falls back to the entry's universe. The item gets a `universeName` field.
-- [ ] Timeline: a universe chip on time jump cards (`event-pin.tsx`) and a "Universe" line in the popover (`timeline-view.tsx`). Token colours only.
-- [ ] Delete rule: `deleteUniverse` and `loadUniverseRows` count time jumps as well as recaps and characters. Update the in-use wording.
-- [ ] Backup: `universe_id` is in the `entry_time_jumps` export, and bump `BACKUP_VERSION` to 3 (§5.6).
-- [ ] Tests: a schema unit test (a row with and without a universe); a database test (a universe used by a time jump can't be deleted); extend `tests/e2e/phase-8.spec.ts` or add `tests/e2e/phase-9.spec.ts` (set a universe on a flashback, see it on the timeline card and popover; clear it and the recap's universe shows instead).
-- [ ] Design review (`DESIGN_GUIDE.md` §13) for the recap edit page, recap page and timeline, at 390px and 1280px, light and dark. Screenshots go in `screenshots/phase-9/`.
+- [ ] Migration: add `entry_time_jumps.universe_id` (nullable, references `universes`, restrict delete). File `0004_soft_tony_stark.sql`. Run it on `test` first (`npm run db:migrate:test`). **Test branch done (2026-10-13). The production migration (`npm run db:migrate`) waits for the owner's approval, and this code is not pushed until it has run.**
+- [x] Zod: an optional universe id on each `timeJumps` row in `episodeEditSchema` and `movieEditSchema` (`src/lib/schemas.ts`, `src/lib/time-jump.ts`).
+- [x] Actions: `saveEpisode` and `saveMovie` save the universe with each row, in the same transaction as now. A deleted universe is named on the form (`isMissingTimeJumpUniverseViolation` in `src/lib/db-errors.ts`).
+- [x] Recap edit page: a universe combobox in each "Other years" row (`recap-edit-form.tsx`), labelled "Universe for this year", with "Same as recap" as its clear option. It reuses `UniverseField`, which now takes a field name and labels.
+- [x] Recap page: the "Other years" row shows the universe when it's set and differs from the recap's.
+- [x] Read model: `loadTimeJumpItems` joins `universes` for the jump's universe and falls back to the entry's universe. The item gets a `universeName` field.
+- [x] Timeline: a universe chip on time jump cards and a "Universe" line in the popover, both built in `event-pin.tsx`. No chip when null. Tokens only.
+- [x] Delete rule: `deleteUniverse` and `loadUniverseRows` count time jumps as well as recaps and characters. The in-use wording on `/universes` and in the manager is updated.
+- [x] Backup: `universe_id` is in the `entry_time_jumps` export (the export selects every column), and `BACKUP_VERSION` is 3 (§5.6).
+- [x] Tests: schema unit tests (`tests/unit/schemas.test.ts`); database tests (`tests/db/constraints.test.ts`: a universe used by another year can't be deleted, and a missing one is named); `tests/e2e/phase-9.spec.ts` (set a universe on a flashback, see it on the card and popover, clear it and the recap's universe shows instead, and a universe in use shows "In use"). Phase 6's in-use test and the backup spec were updated for the new wording and version.
+- [ ] Design review (`DESIGN_GUIDE.md` §13) for the recap edit page, recap page and timeline, at 390px and 1280px, light and dark. Screenshots are in `screenshots/phase-9/` (git-ignored, 16 captures from `tests/e2e/screenshots-phase-9.spec.ts`). Checked by eye so far: the recap edit page at 1280px and the timeline at 390px and 1280px. Waiting for the owner's sign-off.
 - **Done when:** I can pick a universe on a flashback, flash-forward or time travel, and the timeline shows that universe on its card and popover (or the recap's universe when I leave it empty).
 
 ---

@@ -2,19 +2,19 @@
 import { asc, eq, sql } from "drizzle-orm";
 
 import { getDb } from "@/db";
-import { appearances, characters, entries, titles, universes } from "@/db/schema";
+import { appearances, characters, entries, entryTimeJumps, titles, universes } from "@/db/schema";
 
 import { KIND_LABEL, hasOneRecap, type TitleKind } from "@/lib/title-kind";
 
 import { loadCatalog, loadTitleRows as loadTitleRowsForOptions, type CatalogEntry } from "./catalog";
 import { loadCharacterTagNames } from "./tags";
 
-export type UniverseRow = { id: string; name: string; characters: number; recaps: number };
+export type UniverseRow = { id: string; name: string; characters: number; recaps: number; otherYears: number };
 
-// The universes for the form and the directory, with how many characters and recaps use each one. A universe in use
-// by either can't be deleted (PRODUCT_PLAN §2.1, §2.3).
+// The universes for the form and the directory, with how many characters, recaps and other years use each one. A
+// universe in use by any of them can't be deleted (PRODUCT_PLAN §2.1, §2.3).
 export async function loadUniverseRows(): Promise<UniverseRow[]> {
-  // Two joins, each counted with DISTINCT, so a character and a recap are counted once each. (Correlated subqueries
+  // Three joins, each counted with DISTINCT, so each row is counted once. (Correlated subqueries
   // would render "id" without its table, and compare the wrong column.)
   return getDb()
     .select({
@@ -22,10 +22,12 @@ export async function loadUniverseRows(): Promise<UniverseRow[]> {
       name: universes.name,
       characters: sql<number>`count(distinct ${characters.id})::int`,
       recaps: sql<number>`count(distinct ${entries.id})::int`,
+      otherYears: sql<number>`count(distinct ${entryTimeJumps.id})::int`,
     })
     .from(universes)
     .leftJoin(characters, eq(characters.universeId, universes.id))
     .leftJoin(entries, eq(entries.universeId, universes.id))
+    .leftJoin(entryTimeJumps, eq(entryTimeJumps.universeId, universes.id))
     .groupBy(universes.id)
     .orderBy(asc(universes.name));
 }

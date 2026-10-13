@@ -17,11 +17,11 @@ describe("backup export", () => {
     const doc = buildBackupDocument({ titles: [{ id: "a" }] }, new Date("2026-10-12T07:00:00Z"));
     expect(doc).toEqual({
       format: "marvel-directory-backup",
-      version: 2,
+      version: 3,
       exportedAt: "2026-10-12T07:00:00.000Z",
       tables: { titles: [{ id: "a" }] },
     });
     expect(BACKUP_FORMAT).toBe("marvel-directory-backup");
-    expect(BACKUP_VERSION).toBe(2);
+    expect(BACKUP_VERSION).toBe(3);
   });
 });

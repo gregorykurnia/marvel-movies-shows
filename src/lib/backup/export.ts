@@ -20,7 +20,7 @@ import {
 } from "@/db/schema";
 
 export const BACKUP_FORMAT = "marvel-directory-backup";
-export const BACKUP_VERSION = 2;
+export const BACKUP_VERSION = 3;
 
 // Every data table, by its database name. The unit test checks this against the schema.
 export const BACKUP_TABLE_NAMES = [
