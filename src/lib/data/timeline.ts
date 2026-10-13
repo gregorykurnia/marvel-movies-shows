@@ -3,7 +3,7 @@
 import { asc, eq } from "drizzle-orm";
 
 import { getDb, type Tx } from "@/db";
-import { entryTimeJumps, timelineEvents, titles, universes } from "@/db/schema";
+import { entries, entryTimeJumps, timelineEvents, titles, universes } from "@/db/schema";
 import type { YearPlaceable } from "@/lib/ordering";
 import type { TimeJumpKind } from "@/lib/time-jump";
 
@@ -26,6 +26,9 @@ export type TimelineEvent = {
   titleKind: TitleKind | null;
   entryId: string | null;
   entryLabel: string | null;
+  // The universe of the recap this event links to (Phase 10). Used for the timeline's universe filter only, so it's
+  // never shown on the event card. Null when the event has no linked recap, or the recap has no universe.
+  universeName: string | null;
   sortKey: string;
   tags: string[];
 };
@@ -54,9 +57,12 @@ export async function loadTimelineEvents(): Promise<TimelineEvent[]> {
         titleKind: titles.kind,
         entryId: timelineEvents.entryId,
         sortKey: timelineEvents.sortKey,
+        universeName: universes.name,
       })
       .from(timelineEvents)
       .leftJoin(titles, eq(timelineEvents.titleId, titles.id))
+      .leftJoin(entries, eq(timelineEvents.entryId, entries.id))
+      .leftJoin(universes, eq(entries.universeId, universes.id))
       .orderBy(asc(timelineEvents.year), asc(timelineEvents.sortKey)),
     loadCatalog(),
     loadEventTagNames(),
@@ -71,6 +77,7 @@ export async function loadTimelineEvents(): Promise<TimelineEvent[]> {
     titleName: row.titleName ?? null,
     titleKind: row.titleKind ?? null,
     entryLabel: row.entryId ? (labels.get(row.entryId) ?? null) : null,
+    universeName: row.universeName ?? null,
     tags: tagNames.get(row.id) ?? [],
   }));
 }
@@ -88,6 +95,8 @@ export type TimelineRecap = {
   // The show name for an episode. "Movie" or "Short" for a title with one recap.
   chip: string;
   titleKind: TitleKind;
+  // The recap's own universe, shown on its card and popover (Phase 10). Null when the recap has none.
+  universeName: string | null;
   tags: string[];
 };
 
@@ -182,6 +191,7 @@ export async function loadRecapItems(): Promise<TimelineRecap[]> {
         text: recapText(entry),
         chip: entry.titleKind === "show" ? entry.titleName : KIND_LABEL[entry.titleKind],
         titleKind: entry.titleKind,
+        universeName: entry.universeName,
         tags: entry.tags,
       },
     ];

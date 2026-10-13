@@ -168,3 +168,77 @@ export async function seedTimeJumps(run: string, ids: { movieEntryId: string; ep
     { entryId: ids.movieEntryId, year: -700, kind: "flashback", note: `${E2E_PREFIX} Odin ${run}`, sortKey: "a2" },
   ]);
 }
+
+// Data for the Phase 10 specs (the universe on recap items and the universe filter). Two universes, three movies (two
+// in a universe, one with none), a flashback in its own universe (Earth-838) on the first movie, a flashback with no
+// universe that falls back to the second movie's (Earth-838), and two timeline events: one linked to the first movie's
+// recap, which is in Earth-616, and one with no recap. Every name carries the run, so specs can find their own cards.
+export async function seedUniverseFilterData(run: string) {
+  const db = connectTestDatabase();
+  const { titles, entries, universes, entryTimeJumps, timelineEvents } = await import("../../src/db/schema");
+  const { readPlaceables } = await import("../../src/lib/data/placeables");
+  const { readEventPlaceables } = await import("../../src/lib/data/timeline");
+  const { keyInYear, seededKey } = await import("../../src/lib/ordering");
+
+  const [earth616] = await db
+    .insert(universes)
+    .values({ name: `${E2E_PREFIX} Earth-616 ${run}` })
+    .returning({ id: universes.id, name: universes.name });
+  const [earth838] = await db
+    .insert(universes)
+    .values({ name: `${E2E_PREFIX} Earth-838 ${run}` })
+    .returning({ id: universes.id, name: universes.name });
+
+  const movieSpecs = [
+    { name: `${E2E_PREFIX} Odinson ${run}`, year: 2011, universeId: earth616.id },
+    { name: `${E2E_PREFIX} Sylvie ${run}`, year: 2014, universeId: earth838.id },
+    { name: `${E2E_PREFIX} Wanda ${run}`, year: 2016, universeId: null },
+  ];
+  const movies: { titleId: string; entryId: string; name: string }[] = [];
+  for (const spec of movieSpecs) {
+    const [title] = await db
+      .insert(titles)
+      .values({ name: spec.name, kind: "movie", releaseDate: "2011-05-06" })
+      .returning({ id: titles.id });
+    const [entry] = await db
+      .insert(entries)
+      .values({
+        titleId: title.id,
+        sortKey: seededKey(await readPlaceables(db), spec.year),
+        inUniverseYear: spec.year,
+        universeId: spec.universeId,
+      })
+      .returning({ id: entries.id });
+    movies.push({ titleId: title.id, entryId: entry.id, name: spec.name });
+  }
+
+  const ownJump = `${E2E_PREFIX} Own universe jump ${run}`;
+  const fallbackJump = `${E2E_PREFIX} Fallback jump ${run}`;
+  await db.insert(entryTimeJumps).values([
+    { entryId: movies[0].entryId, year: 1943, kind: "flashback", note: ownJump, universeId: earth838.id, sortKey: "a0" },
+    { entryId: movies[1].entryId, year: 1988, kind: "flashback", note: fallbackJump, universeId: null, sortKey: "a0" },
+  ]);
+
+  const unlinked = `${E2E_PREFIX} Unlinked event ${run}`;
+  const linked = `${E2E_PREFIX} Linked event ${run}`;
+  const eventRows = [
+    { year: 1960, text: unlinked, titleId: null, entryId: null },
+    { year: 2012, text: linked, titleId: movies[0].titleId, entryId: movies[0].entryId },
+  ];
+  for (const row of eventRows) {
+    const sortKey = keyInYear(await readEventPlaceables(db), row.year, undefined);
+    await db.insert(timelineEvents).values({ ...row, sortKey });
+  }
+
+  return {
+    universe616: earth616.name,
+    universe838: earth838.name,
+    movieA: movies[0].name,
+    movieB: movies[1].name,
+    movieC: movies[2].name,
+    ownJump,
+    fallbackJump,
+    unlinked,
+    linked,
+  };
+}

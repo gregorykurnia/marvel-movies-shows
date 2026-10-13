@@ -30,6 +30,9 @@ async function TimelineContent({ searchParams }: { searchParams: SearchParams })
   // Flashbacks, flash-forwards and time travel are on by default. ?jumps=off hides them (Phase 8).
   const jumpsParam = Array.isArray(params.jumps) ? params.jumps[0] : params.jumps;
   const showJumps = jumpsParam !== "off";
+  // The universe filter (Phase 10): a universe's name, or "none" for items with no universe. Resolved in the view.
+  const universeParam = Array.isArray(params.universe) ? params.universe[0] : params.universe;
+  const universe = universeParam?.trim() ? universeParam.trim() : null;
   const [events, recaps, jumps] = await Promise.all([loadTimelineEvents(), loadRecapItems(), loadTimeJumpItems()]);
   return (
     <TimelineView
@@ -39,6 +42,7 @@ async function TimelineContent({ searchParams }: { searchParams: SearchParams })
       initialType={type}
       initialTag={tag}
       initialShowJumps={showJumps}
+      initialUniverse={universe}
     />
   );
 }

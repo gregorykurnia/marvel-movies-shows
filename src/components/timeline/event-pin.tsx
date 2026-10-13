@@ -21,8 +21,8 @@ import { useMediaQuery, TIMELINE_WIDE } from "./use-media-query";
 // details open inline on tap. Popover links are not in the tab order, so a keyboard user gets the same links as
 // visually hidden links that show when focused.
 //
-// A recap item (IMPLEMENTATION_PLAN §5.2) uses the same card, with a "From recap" label. It has no edit-event link
-// and no drag handle or ⋯ menu, because it is shown from its recap and can't be moved.
+// A recap item (IMPLEMENTATION_PLAN §5.2) uses the same card, with a "From recap" label and the recap's universe. It has
+// no edit-event link and no drag handle or ⋯ menu, because it is shown from its recap and can't be moved.
 //
 // A time jump item (Phase 8) is a recap item for another year. It has its kind label in place of "From recap", the
 // title after it, a hollow dot and a tinted card, so it never reads as the title's main story. Dashed borders stay
@@ -53,6 +53,26 @@ function linksFor(item: TimelineItem): { readHref: string | null; editHref: stri
     };
   }
   return { readHref: `/recaps/${item.entryId}`, editHref: `/recaps/${item.entryId}/edit`, editLabel: "Edit recap" };
+}
+
+// The universe of a recap item or a time jump item (Phase 9, Phase 10). The card and the popover both use this, so the
+// chip is the same in both places. Nothing is drawn when the item has no universe.
+function UniverseNote({ name, variant }: { name: string | null; variant: "card" | "popover" }) {
+  if (!name) return null;
+  if (variant === "card") {
+    return (
+      <span className="mb-1 block max-w-full">
+        <Chip tone="universe" className="max-w-full truncate font-mono text-[10px]">
+          {name}
+        </Chip>
+      </span>
+    );
+  }
+  return (
+    <p className="mt-1.5 flex flex-wrap items-center gap-x-2 text-[13px] font-semibold text-ink-2">
+      Universe: <Chip tone="universe">{name}</Chip>
+    </p>
+  );
 }
 
 // A time jump's kind: its icon and name, in mono capitals.
@@ -88,6 +108,7 @@ function EventDetails({ item, interactive }: { item: TimelineItem; interactive: 
         <Year>{formatYear(item.year)}</Year>
       </div>
       <h4 className="mt-2 font-display text-[17px] leading-[1.25] font-bold tracking-[-0.01em]">{item.text}</h4>
+      {item.source === "recap" ? <UniverseNote name={item.universeName} variant="popover" /> : null}
       {jump ? (
         <div className="mt-2 flex flex-wrap items-center gap-x-2.5 gap-y-1.5 text-[13px] leading-normal font-semibold text-ink-2">
           <Chip tone={kind === "none" ? "tag" : kind} dot>
@@ -104,11 +125,7 @@ function EventDetails({ item, interactive }: { item: TimelineItem; interactive: 
           Main story: {formatYear(jump.mainYear)}
         </p>
       ) : null}
-      {jump && jump.universeName ? (
-        <p className="mt-1.5 flex flex-wrap items-center gap-x-2 text-[13px] font-semibold text-ink-2">
-          Universe: <Chip tone="universe">{jump.universeName}</Chip>
-        </p>
-      ) : null}
+      {jump ? <UniverseNote name={jump.universeName} variant="popover" /> : null}
       {item.source === "event" && item.details ? (
         <p className="mt-1.5 text-sm leading-normal whitespace-pre-line text-ink-2">{item.details}</p>
       ) : null}
@@ -188,13 +205,7 @@ export function EventCard({ item, reorder }: { item: TimelineItem; reorder?: { h
           <span className="block">{item.titleName}</span>
         </span>
       ) : null}
-      {item.source === "jump" && item.universeName ? (
-        <span className="mb-1 block max-w-full">
-          <Chip tone="universe" className="max-w-full truncate font-mono text-[10px]">
-            {item.universeName}
-          </Chip>
-        </span>
-      ) : null}
+      {item.source !== "event" ? <UniverseNote name={item.universeName} variant="card" /> : null}
       {item.text}
     </button>
   );

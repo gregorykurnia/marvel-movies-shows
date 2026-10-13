@@ -34,10 +34,17 @@ import {
   type Zoom,
 } from "@/lib/timeline-layout";
 import { mergeTimeline } from "@/lib/timeline-merge";
+import {
+  hasUnsetUniverse,
+  matchesUniverse,
+  resolveUniverse,
+  universeOptions,
+} from "@/lib/timeline-filter";
 import { formatCount, formatYear } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 import { EventCard, SortableEvent } from "./event-pin";
+import { UniverseFilter } from "./universe-filter";
 
 export type TypeFilter = "all" | "movie" | "show" | "short";
 
@@ -56,6 +63,7 @@ export function TimelineView({
   initialType,
   initialTag,
   initialShowJumps,
+  initialUniverse,
 }: {
   events: TimelineEvent[];
   recaps: TimelineRecap[];
@@ -63,6 +71,7 @@ export function TimelineView({
   initialType: TypeFilter;
   initialTag: string | null;
   initialShowJumps: boolean;
+  initialUniverse: string | null;
 }) {
   const toast = useToast();
   const [, startTransition] = useTransition();
@@ -70,6 +79,9 @@ export function TimelineView({
   const [tag, setTag] = useState<string | null>(initialTag);
   // "Show flashbacks" (Phase 8). On by default. Off hides flashbacks, flash-forwards and time travel together.
   const [showJumps, setShowJumps] = useState(initialShowJumps);
+  // The universe the menu or the URL asked for. It's resolved against the universes on the timeline below, so an
+  // unknown name means no filter.
+  const [universe, setUniverse] = useState<string | null>(initialUniverse);
   const [zoom, setZoom] = useState<Zoom>("year");
   const [reordering, setReordering] = useState(false);
   const [jumpText, setJumpText] = useState("");
@@ -82,6 +94,10 @@ export function TimelineView({
   );
   // What is shown: events, recap items and time jump items in one timeline order.
   const displayed = useMemo<TimelineItem[]>(() => mergeTimeline(items, recaps, jumps), [items, recaps, jumps]);
+  // The universes on the timeline, for the universe filter, and the one filter that applies.
+  const universeNames = useMemo(() => universeOptions(displayed), [displayed]);
+  const universeIncludesNone = useMemo(() => hasUnsetUniverse(displayed), [displayed]);
+  const universeFilter = resolveUniverse(universe, universeNames, universeIncludesNone);
   // Set when a bucket is clicked, so the year it zooms into can be scrolled to after the zoom changes.
   const pendingScroll = useRef<number | null>(null);
 
@@ -96,9 +112,10 @@ export function TimelineView({
     if (type !== "all") params.set("type", type);
     if (tag) params.set("tag", tag);
     if (!showJumps) params.set("jumps", "off");
+    if (universeFilter) params.set("universe", universeFilter);
     const query = params.toString();
     window.history.replaceState(null, "", `${window.location.pathname}${query ? `?${query}` : ""}`);
-  }, [type, tag, showJumps]);
+  }, [type, tag, showJumps, universeFilter]);
 
   useEffect(() => {
     if (pendingScroll.current === null) return;
@@ -117,14 +134,15 @@ export function TimelineView({
         (item) =>
           (showJumps || item.source !== "jump") &&
           (type === "all" || item.titleKind === type) &&
-          (tag === null || item.tags.some((name) => name.toLowerCase() === tag.toLowerCase())),
+          (tag === null || item.tags.some((name) => name.toLowerCase() === tag.toLowerCase())) &&
+          matchesUniverse(item, universeFilter),
       ),
-    [displayed, type, tag, showJumps],
+    [displayed, type, tag, showJumps, universeFilter],
   );
   const axis = useMemo(() => layoutAxis(shown, zoom), [shown, zoom]);
   // Reordering needs every event of a year in view, so it's off while a filter hides some, and above year zoom.
-  // Hiding flashbacks counts as a filter.
-  const filtered = type !== "all" || tag !== null || !showJumps;
+  // Hiding flashbacks counts as a filter, and so does a universe.
+  const filtered = type !== "all" || tag !== null || !showJumps || universeFilter !== null;
   const reorderOn = reordering && zoom === "year" && !filtered;
 
   // The first and last years of everything on the timeline, which is sorted by year.
@@ -199,6 +217,7 @@ export function TimelineView({
     setType("all");
     setTag(null);
     setShowJumps(true);
+    setUniverse(null);
   }
 
   return (
@@ -236,6 +255,12 @@ export function TimelineView({
               options={TYPE_OPTIONS}
             />
             <TagFilter value={tag} options={tagOptions} onChange={setTag} />
+            <UniverseFilter
+              value={universeFilter}
+              names={universeNames}
+              includeNone={universeIncludesNone}
+              onChange={setUniverse}
+            />
             <div className="flex items-center gap-2.5">
               <span className="text-[13px] font-bold text-ink-2">Show flashbacks</span>
               <Segmented

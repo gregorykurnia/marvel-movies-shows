@@ -236,7 +236,7 @@ The global search box sits in the header on every page. Pressing `/` or `⌘K` f
   - Type and tag filters use the entry's title kind and tags. The header count includes these items. They are not sortable and not separate search results.
   - **Universe (Phase 9):** each time jump item carries a universe name: its own `universe_id`, or the recap's universe when that's empty. The card shows it as a universe chip on its own line under the kind label and title, and the popover adds a "Universe" line. Both are built in `event-pin.tsx`. No chip when neither is set.
 - **Universe on recap items (Phase 10):** `TimelineRecap` gets `universeName` (the entry's universe, already in `loadCatalog`). The card shows the same universe chip as a time jump card, on its own line under "From recap", and the popover adds the same "Universe" line. Both come from one helper in `event-pin.tsx`, shared by recap and jump items. No chip when null.
-- **Universe filter (Phase 10):** a `FilterMenu` labelled "Universe", beside the tag filter, built like `TagFilter`. Its options are the universes used by the items on the timeline (not the whole universes list), sorted by name, plus a "No universe set" choice at the end. Single choice; ✕ clears it.
+- **Universe filter (Phase 10):** a `FilterMenu` labelled "Universe", beside the tag filter, built like `TagFilter`. Its options are the universes used by the items on the timeline (not the whole universes list), sorted by name, plus a "No universe set" choice at the end, shown only when some item on the timeline has no universe. Single choice; ✕ clears it.
   - **Matching:** each item's universe is the one it shows. A recap item uses its recap's universe, a time jump its own or the recap's (Phase 9). A hand-written event uses the universe of its linked entry (`timeline_events.entry_id` → `entries.universe_id`), so `TimelineEvent` gets `universeName` from `loadTimelineEvents` with a left join. An event without a linked entry has none. No table change and no migration.
   - **Match by name, case-insensitive,** like the tag filter, because universe names are unique.
   - **URL:** `?universe=<name>`, or `?universe=none` for "No universe set". It's read on load like `type`, `tag` and `jumps`, and an unknown name falls back to no filter.
@@ -409,14 +409,14 @@ Phases match the product plan's build plan. Each phase ends with:
 - **Done when:** I can pick a universe on a flashback, flash-forward or time travel, and the timeline shows that universe on its card and popover (or the recap's universe when I leave it empty).
 
 ### Phase 10: Universe on recap items, and a universe filter on the timeline
-- [ ] Read model: `universeName` on `TimelineRecap` in `loadRecapItems`, and on `TimelineEvent` in `loadTimelineEvents` (left join through the linked entry to `universes`). No migration.
-- [ ] Recap item card and popover: the universe chip and "Universe" line from §5.2, through one helper in `event-pin.tsx` shared with time jump items. Tokens only.
-- [ ] Universe filter: a `UniverseFilter` on `FilterMenu`, beside the tag filter in `timeline-view.tsx`, with options from the items on the timeline and a "No universe set" choice.
-- [ ] Filtering: a pure `itemUniverse` helper and a filter function (e.g. in `src/lib/timeline-filter.ts`, new) that the `shown` memo calls, so the matching rules can be unit tested.
-- [ ] URL: `?universe=<name>` and `?universe=none`, read by the timeline page and written by the `replaceState` effect.
-- [ ] A universe filter turns reorder off, like the other filters. The header count follows it.
-- [ ] Tests: unit tests for the filter (recap item, jump with its own universe, jump falling back to the recap's, linked event, unlinked event, "No universe set", case-insensitive match); `tests/e2e/phase-10.spec.ts` (a recap item shows its universe chip and popover line; picking a universe hides items from other universes and keeps the URL; "No universe set" shows an unlinked event; clearing the filter brings everything back).
-- [ ] Design review (`DESIGN_GUIDE.md` §13) for the timeline at 390px and 1280px, light and dark, with the filter row wrapping cleanly at 390px. Screenshots go in `screenshots/phase-10/`.
+- [x] Read model: `universeName` on `TimelineRecap` in `loadRecapItems`, and on `TimelineEvent` in `loadTimelineEvents` (left join through the linked entry to `universes`). No migration.
+- [x] Recap item card and popover: the universe chip and "Universe" line from §5.2, through one helper in `event-pin.tsx` shared with time jump items. Tokens only.
+- [x] Universe filter: a `UniverseFilter` on `FilterMenu`, beside the tag filter in `timeline-view.tsx`, with options from the items on the timeline and a "No universe set" choice.
+- [x] Filtering: a pure `itemUniverse` helper and a filter function (e.g. in `src/lib/timeline-filter.ts`, new) that the `shown` memo calls, so the matching rules can be unit tested.
+- [x] URL: `?universe=<name>` and `?universe=none`, read by the timeline page and written by the `replaceState` effect.
+- [x] A universe filter turns reorder off, like the other filters. **Header count not done as written:** it still counts every item, as it does for the type and tag filters, until the owner decides whether all filters should change it.
+- [x] Tests: unit tests for the filter (recap item, jump with its own universe, jump falling back to the recap's, linked event, unlinked event, "No universe set", case-insensitive match); `tests/e2e/phase-10.spec.ts` (a recap item shows its universe chip and popover line; picking a universe hides items from other universes and keeps the URL; "No universe set" shows an unlinked event; clearing the filter brings everything back).
+- [ ] Design review (`DESIGN_GUIDE.md` §13) for the timeline at 390px and 1280px, light and dark, with the filter row wrapping cleanly at 390px. Screenshots are in `screenshots/phase-10/` (git-ignored, 12 captures from `tests/e2e/screenshots-phase-10.spec.ts`). Waiting for the owner's sign-off.
 - **Done when:** every recap item on the timeline shows its universe, and picking a universe in the filter leaves only the items in that universe.
 
 ---
