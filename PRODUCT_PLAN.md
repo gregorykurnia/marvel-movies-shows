@@ -94,6 +94,7 @@ Cross-cutting features: **watched tracking**, **global search**, **notes and tag
 - **Sort:** by any column, ascending or descending.
 - Several filters can be combined, and they can all be cleared in one click.
 - First and last appearance link to the matching recap.
+- **Bulk edit:** I can tick several characters, or every character the current filters show, and change them all in one step: importance, status, universe, predominant title, first or last appearance (each of the last four can also be set to none), add or remove tags, or delete them.
 - A character page shows the character's fields, my notes and tags, and their first and last appearance. The full list of every appearance is no longer shown or edited. Earlier data is kept.
 
 ---
@@ -215,6 +216,7 @@ This is the high-level view. The task-by-task checklist for each phase is in [`I
 | **9. Universe on flashbacks** | A universe on each flashback, flash-forward or time travel, picked in its row on the recap edit page. Shown on the recap page and on its timeline card and popover | A universe I pick on a flashback shows on the timeline next to it, or the recap's universe when I leave it empty |
 | **10. Universe on the timeline** | The recap's universe on each "From recap" card and popover. A universe filter beside the type and tag filters, with a "No universe set" choice, kept in the address | Every recap item shows its universe, and picking a universe in the filter leaves only the items in that universe |
 | **11. First appearances and inline adds** | First Appearance Characters on the recap edit page, with inline character add. Inline movie, short or episode add from First and Last appearance. Typed universes added on save. First and last appearance on the character page instead of the appearances list. Universe chips on the titles list | I can add a character's first appearance, including a title I haven't entered yet, and the titles list shows each title's universes |
+| **12. Bulk edit characters** | Checkboxes and select-all in the character directory. A bulk bar that sets importance, status, universe, predominant title, first or last appearance, adds or removes tags, or deletes the selected characters | I can tick several characters and change any of those fields for all of them in one step |
 
 **Suggested checkpoints**
 - After phase 1, I enter a handful of real titles to test the data entry flow. It matters because everything is typed by hand.
@@ -247,6 +249,7 @@ This is the high-level view. The task-by-task checklist for each phase is in [`I
 - 2026-10-13: Characters record their first and last appearance only. The full appearances list is no longer shown or edited, but its data is kept. A recap lists the characters who first appear in it. New characters, titles, episodes and universes can be added inline from the dropdowns that use them.
 - 2026-10-13: A character added from a recap's First Appearance Characters picker takes the importance chosen beside the picker, Major or Minor, Minor by default. It shows in the characters table with that importance.
 - 2026-10-13: The titles list shows a chip for each universe set on a title's movie, short or episodes.
+- 2026-10-13: The character directory gets bulk edit. Bulk tags add and remove the picked tags and keep the rest. Universe, predominant title and first and last appearance can be bulk set to none. Bulk delete is included, with the same typed DELETE confirm as a single delete.
 
 ---
 

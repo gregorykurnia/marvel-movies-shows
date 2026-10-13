@@ -248,6 +248,7 @@ The global search box sits in the header on every page. Pressing `/` or `⌘K` f
 - Search by name. Column filters for importance, status, universe, predominant title, first and last appearance. Click a header to sort, with direction toggling.
 - Filters and sort are stored in the **URL query string**, so a filtered view survives a refresh and can be bookmarked.
 - A "Clear all filters" button.
+- **Bulk edit (Phase 12):** a checkbox on each row and a select-all checkbox in the header for the rows the filters show. Selecting rows opens a bulk action bar that applies one change to every selected character in one transaction.
 
 ### 5.4 Forms (data entry)
 Everything is typed by hand, so data entry speed is a priority:
@@ -438,6 +439,24 @@ Phases match the product plan's build plan. Each phase ends with:
 - [x] Regression: `smoke`, `phase-1`, `phase-4`, `phase-5-backup`, `phase-6`, `phase-8`, `phase-9` and `shorts` pass (18 of 18).
 - [ ] Design review (`DESIGN_GUIDE.md` §13) for the recap edit page, recap page, character form, character page and titles list, at 390px and 1280px, light and dark. Screenshots are in `screenshots/phase-11/` (git-ignored, 24 captures from `tests/e2e/screenshots-phase-11.spec.ts`). Checked by eye: all six pages at 390px and 1280px, light and dark, with no sideways scroll. One fix came out of it: on phones the First and Last rows on the character page put the title on its own line, under the kind and watched chips. Waiting for the owner's sign-off.
 - **Done when:** I can add a character's first appearance from a recap or from the character form, including a movie, short or episode I haven't entered yet, and the titles list shows each title's universes.
+
+### Phase 12: Bulk edit in the character directory
+- [ ] Read model: no migration. Every bulk action writes the existing `characters` columns and `character_tags`.
+- [ ] Selection in `character-table.tsx`: a checkbox column first in the table, and a header checkbox that selects or clears every row the search, filters and tag filter show (indeterminate when some are). Selection is by character id and lives in component state, not the URL. Changing a filter keeps hidden rows selected, and the bar's count says "N selected (M hidden)" when some are filtered out. Escape and a "Clear selection" button empty it. Checkboxes are at least 40×40px hit targets (DESIGN_GUIDE §10).
+- [ ] Bulk action bar: shown while at least one row is selected, between the toolbar and the table, built from the existing panel, buttons and `FilterMenu`/`Combobox` pieces (no new look). Sticky to the bottom of the viewport at 390px. Actions:
+  - **Importance:** Major or Minor.
+  - **Status:** Alive, Deceased or Unknown.
+  - **Universe:** a universe combobox with a "None" choice. A typed name that isn't picked is found or added on save (`resolveUniverseId`), as on the character form.
+  - **Predominant title:** a title combobox with a "None" choice.
+  - **First appearance** and **Last appearance:** the entry combobox with a "None" choice, and "＋ Add new…" through `FirstAppearanceDialog`, as on the character form.
+  - **Tags:** a tag input for tags to add and one for tags to remove. A character's other tags are kept. A tag that doesn't exist is created (`tagIdsFor`). The remove list offers the tags the selected characters have.
+  - **Delete:** a dialog that lists how many characters will be deleted and asks for DELETE to be typed (`deleteConfirmSchema`), like the single delete.
+- [ ] Each action asks for one confirm click ("Set status to Deceased for 7 characters?") except delete, which uses the typed confirm. On success: a toast ("Updated 7 characters"), the table refreshes and the selection is kept so another action can follow. Delete clears the selection.
+- [ ] Server actions in `src/actions/characters.ts`: `bulkUpdateCharacters(ids, patch)` for the single-column fields, `bulkEditCharacterTags(ids, add, remove)` and `bulkDeleteCharacters(ids, confirm)`. Each validates with a new schema in `src/lib/schemas.ts` (1 to 500 uuids, the patch has exactly one field), runs in one transaction, and returns how many rows changed. Ids that no longer exist are skipped and counted, so the toast can say "Updated 6 characters, 1 no longer exists". A deleted reference (universe, title, entry) fails with the existing `referenceFailure` message. `revalidatePath("/", "layout")` once per action.
+- [ ] Tests: schema unit tests (id list limits, a patch with zero or two fields is rejected, "None" maps to null); database tests (`tests/db/bulk-characters.test.ts`: a status set on three characters; universe set to None; tags added and removed while other tags stay; a missing id is skipped and counted; bulk delete removes the characters and their tags); `tests/e2e/phase-12.spec.ts` (select two rows and set Major; select all under a filter and set a universe; add and remove a tag; bulk delete with DELETE typed); `tests/e2e/screenshots-phase-12.spec.ts`.
+- [ ] Regression: `smoke`, `phase-2`, `phase-4` and `phase-11` pass.
+- [ ] Design review (`DESIGN_GUIDE.md` §13) for `/characters` with nothing selected, rows selected, each action open, and the delete dialog, at 390px and 1280px, light and dark. Screenshots go in `screenshots/phase-12/` (git-ignored).
+- **Done when:** I can tick several characters (or all the filtered ones) and in one step set their importance, status, universe, predominant title, first or last appearance, add or remove tags, or delete them.
 
 ---
 
