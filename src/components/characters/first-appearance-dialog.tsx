@@ -22,11 +22,13 @@ const NAME_PLACEHOLDER: Record<"movie" | "short", string> = { movie: "e.g. Thor"
 export function FirstAppearanceDialog({
   which,
   shows,
+  description = "It's added when you save, and picked for this character.",
   onCreated,
   onOpenChange,
 }: {
   which: "First" | "Last";
   shows: ShowOption[];
+  description?: string;
   onCreated: (entry: CreatedEntry) => void;
   onOpenChange: (open: boolean) => void;
 }) {
@@ -76,7 +78,7 @@ export function FirstAppearanceDialog({
       eyebrow="Characters · New entry"
       accent="violet"
       title={`Add a ${which.toLowerCase()} appearance`}
-      description="It's added when you save, and picked for this character."
+      description={description}
     >
       <form onSubmit={onSubmit} noValidate className="grid gap-4">
         {message ? <FormAlert>{message}</FormAlert> : null}

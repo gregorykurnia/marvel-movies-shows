@@ -7,7 +7,7 @@ import { characters, entries, entryTimeJumps, titles, universes } from "@/db/sch
 import { KIND_LABEL, hasOneRecap, type TitleKind } from "@/lib/title-kind";
 
 import { loadCatalog, loadTitleRows as loadTitleRowsForOptions, type CatalogEntry } from "./catalog";
-import { loadCharacterTagNames } from "./tags";
+import { loadCharacterTagNames, loadTagNames } from "./tags";
 
 export type UniverseRow = { id: string; name: string; characters: number; recaps: number; otherYears: number };
 
@@ -221,4 +221,21 @@ export async function loadRecapCharacters(entryId: string): Promise<{ id: string
 export async function loadCharacterPickerOptions(): Promise<{ value: string; label: string }[]> {
   const rows = await loadCharacterOptions();
   return rows.map((row) => ({ value: row.id, label: `${row.name} · ${row.universeName ?? "No universe"}` }));
+}
+
+// The lists the bulk bar picks from: universes, titles (for predominant title, and the show list when adding an
+// appearance) and every tag. Entries come from the table's own read, so the catalog is only loaded once.
+export type BulkEditOptions = {
+  universes: { id: string; name: string }[];
+  titles: { id: string; name: string; kind: TitleKind }[];
+  tags: string[];
+};
+
+export async function loadBulkEditOptions(): Promise<BulkEditOptions> {
+  const [universeRows, titleRows, tagNames] = await Promise.all([loadUniverseOptions(), loadTitleRowsForOptions(), loadTagNames()]);
+  return {
+    universes: universeRows,
+    titles: titleRows.map((row) => ({ id: row.id, name: row.name, kind: row.kind })),
+    tags: tagNames,
+  };
 }

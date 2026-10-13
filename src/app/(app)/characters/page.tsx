@@ -7,7 +7,7 @@ import { CharacterTable } from "@/components/characters/character-table";
 import { PageHeader } from "@/components/layout/page-header";
 import { PageSkeleton } from "@/components/layout/page-skeleton";
 import { buttonVariants } from "@/components/ui/button";
-import { loadCharacterTable } from "@/lib/data/characters";
+import { loadBulkEditOptions, loadCharacterTable } from "@/lib/data/characters";
 import { formatCount } from "@/lib/format";
 
 export const metadata: Metadata = { title: "Characters" };
@@ -23,7 +23,7 @@ export default function CharactersPage() {
 
 async function CharactersContent() {
   await connection();
-  const { rows } = await loadCharacterTable();
+  const [{ rows, entries }, bulk] = await Promise.all([loadCharacterTable(), loadBulkEditOptions()]);
   const universes = new Set(rows.flatMap((row) => (row.universeId ? [row.universeId] : [])));
 
   return (
@@ -44,7 +44,7 @@ async function CharactersContent() {
         }
       />
       <Suspense fallback={<PageSkeleton rows={4} />}>
-        <CharacterTable rows={rows} />
+        <CharacterTable rows={rows} entries={entries} bulk={bulk} />
       </Suspense>
     </>
   );

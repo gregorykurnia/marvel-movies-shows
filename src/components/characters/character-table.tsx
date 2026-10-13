@@ -19,13 +19,15 @@ import {
 import { Search } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
+import { CharacterBulkBar } from "@/components/characters/character-bulk-bar";
 import { EmptyState } from "@/components/layout/empty-state";
 import { TagFilter } from "@/components/tags/tag-filter";
 import { buttonVariants } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Chip } from "@/components/ui/chip";
 import { FilterMenu } from "@/components/ui/filter-menu";
 import { Td, Th, Tr, Table, TableWrap } from "@/components/ui/table";
-import type { CharacterTableRow, EntryChip } from "@/lib/data/characters";
+import type { BulkEditOptions, CharacterTableRow, EntryChip } from "@/lib/data/characters";
 import { importanceLabel, statusLabel } from "@/lib/labels";
 import { cn } from "@/lib/utils";
 
@@ -133,7 +135,7 @@ const columns = columnHelper.columns([
 // The directory (IMPLEMENTATION_PLAN §5.3). Search by name, column filters, and sorting on any column. The search,
 // the filters and the sort all live in the URL, so a filtered view survives a reload and can be bookmarked. The URL
 // is updated with history.replaceState, so typing doesn't add history entries or make server requests.
-export function CharacterTable({ rows }: { rows: CharacterTableRow[] }) {
+export function CharacterTable({ rows, entries, bulk }: { rows: CharacterTableRow[]; entries: EntryChip[]; bulk: BulkEditOptions }) {
   const pathname = usePathname();
   const params = useSearchParams();
 
@@ -141,6 +143,22 @@ export function CharacterTable({ rows }: { rows: CharacterTableRow[] }) {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(() => filtersFrom(params));
   const [sorting, setSorting] = useState<SortingState>(() => sortingFrom(params));
   const [tag, setTag] = useState<string | null>(() => params.get("tag"));
+  // The ticked characters, by id (Phase 12). Not kept in the URL. A change of filter keeps hidden rows ticked. An id
+  // whose character was deleted is ignored, because the bar and the counts only look at rows that still exist.
+  const [selected, setSelected] = useState<ReadonlySet<string>>(() => new Set());
+
+  // Escape empties the selection, unless it is closing a list or a dialog or leaving a text field.
+  useEffect(() => {
+    if (selected.size === 0) return;
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key !== "Escape" || event.defaultPrevented) return;
+      if (document.querySelector('[role="dialog"]')) return;
+      if (event.target instanceof HTMLElement && event.target.closest("input, textarea, select, [role='combobox'], [role='listbox']")) return;
+      setSelected(new Set());
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [selected.size]);
 
   // Keep the address bar in step with what the table shows.
   useEffect(() => {
@@ -219,6 +237,31 @@ export function CharacterTable({ rows }: { rows: CharacterTableRow[] }) {
   });
 
   const visibleRows = table.getRowModel().rows;
+  const visibleIds = visibleRows.map((row) => row.original.id);
+  const visibleSelected = visibleIds.filter((id) => selected.has(id)).length;
+  const allVisibleState = visibleSelected === 0 ? false : visibleSelected === visibleIds.length ? true : "mixed";
+  const selectedRows = rows.filter((row) => selected.has(row.id));
+  const entryOptions = useMemo(() => entries.map((entry) => ({ id: entry.id, label: entry.label })), [entries]);
+
+  function toggleAllVisible(checked: boolean) {
+    setSelected((current) => {
+      const next = new Set(current);
+      for (const id of visibleIds) {
+        if (checked) next.add(id);
+        else next.delete(id);
+      }
+      return next;
+    });
+  }
+
+  function toggleOne(id: string, checked: boolean) {
+    setSelected((current) => {
+      const next = new Set(current);
+      if (checked) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  }
   const activeCount = columnFilters.length + (search.trim() ? 1 : 0) + (tag ? 1 : 0);
   const filterValue = (id: Filters) => (columnFilters.find((filter) => filter.id === id)?.value as string | undefined) ?? null;
 
@@ -272,6 +315,17 @@ export function CharacterTable({ rows }: { rows: CharacterTableRow[] }) {
         </span>
       </div>
 
+      {selectedRows.length > 0 ? (
+        <CharacterBulkBar
+          selected={selectedRows}
+          hiddenCount={selectedRows.length - visibleSelected}
+          options={bulk}
+          entries={entryOptions}
+          onClear={() => setSelected(new Set())}
+          onDeleted={() => setSelected(new Set())}
+        />
+      ) : null}
+
       {rows.length === 0 ? (
         <EmptyState
           icon="★"
@@ -302,6 +356,13 @@ export function CharacterTable({ rows }: { rows: CharacterTableRow[] }) {
             <thead>
               {table.getHeaderGroups().map((group) => (
                 <tr key={group.id}>
+                  <Th className="w-14 px-2">
+                    <Checkbox
+                      label="Select all shown characters"
+                      checked={allVisibleState}
+                      onCheckedChange={toggleAllVisible}
+                    />
+                  </Th>
                   {group.headers.map((header) => {
                     const sortable = (SORTABLE_IDS as readonly string[]).includes(header.column.id);
                     const direction = header.column.getIsSorted();
@@ -331,7 +392,14 @@ export function CharacterTable({ rows }: { rows: CharacterTableRow[] }) {
             </thead>
             <tbody>
               {visibleRows.map((row) => (
-                <Tr key={row.id}>
+                <Tr key={row.id} className={cn(selected.has(row.original.id) && "bg-violet-soft hover:bg-violet-soft")}>
+                  <Td className="w-14 px-2">
+                    <Checkbox
+                      label={`Select ${row.original.name}`}
+                      checked={selected.has(row.original.id)}
+                      onCheckedChange={(checked) => toggleOne(row.original.id, checked)}
+                    />
+                  </Td>
                   {row.getAllCells().map((cell) => (
                     <Td key={cell.id}>
                       <table.FlexRender cell={cell} />

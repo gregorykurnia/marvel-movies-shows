@@ -2,6 +2,9 @@ import { describe, expect, it } from "vitest";
 
 import { fieldErrorsFrom } from "@/lib/action-result";
 import {
+  bulkCharacterIdsSchema,
+  bulkCharacterPatchSchema,
+  bulkTagEditSchema,
   characterFormSchema,
   deleteConfirmSchema,
   episodeEditSchema,
@@ -434,5 +437,61 @@ describe("universes on other years", () => {
   it("still drops a row that is empty in every field, universe included", () => {
     const parsed = movieEditSchema.parse({ ...base, timeJumps: [row("", "flashback", "", ""), row("1988")] });
     expect(parsed.timeJumps).toEqual([{ year: 1988, kind: "time_travel", note: null, universeId: null }]);
+  });
+});
+
+describe("bulkCharacterIdsSchema", () => {
+  it("takes 1 to 500 ids and drops repeats", () => {
+    expect(bulkCharacterIdsSchema.parse([VALID_UUID, VALID_UUID])).toEqual([VALID_UUID]);
+    expect(errorsFor(bulkCharacterIdsSchema.safeParse([]))).toHaveProperty("form");
+    const many = Array.from({ length: 501 }, () => crypto.randomUUID());
+    expect(bulkCharacterIdsSchema.safeParse(many).success).toBe(false);
+    expect(bulkCharacterIdsSchema.safeParse(many.slice(0, 500)).success).toBe(true);
+  });
+
+  it("rejects an id that isn't a uuid", () => {
+    expect(bulkCharacterIdsSchema.safeParse(["nope"]).success).toBe(false);
+  });
+});
+
+describe("bulkCharacterPatchSchema", () => {
+  it("takes exactly one field", () => {
+    expect(bulkCharacterPatchSchema.parse({ status: "deceased" })).toEqual({ status: "deceased" });
+    expect(bulkCharacterPatchSchema.safeParse({}).success).toBe(false);
+    expect(bulkCharacterPatchSchema.safeParse({ status: "alive", importance: "major" }).success).toBe(false);
+  });
+
+  it("rejects a field the directory doesn't edit in bulk", () => {
+    expect(bulkCharacterPatchSchema.safeParse({ name: "Loki" }).success).toBe(false);
+  });
+
+  it("keeps null as 'clear it' for a universe, a title and an appearance", () => {
+    expect(bulkCharacterPatchSchema.parse({ universe: { id: null, name: "" } })).toEqual({ universe: { id: null, name: null } });
+    expect(bulkCharacterPatchSchema.parse({ predominantTitleId: null })).toEqual({ predominantTitleId: null });
+    expect(bulkCharacterPatchSchema.parse({ firstEntryId: null })).toEqual({ firstEntryId: null });
+    expect(bulkCharacterPatchSchema.parse({ lastEntryId: VALID_UUID })).toEqual({ lastEntryId: VALID_UUID });
+  });
+
+  it("trims a typed universe name", () => {
+    expect(bulkCharacterPatchSchema.parse({ universe: { id: null, name: "  Earth-838 " } })).toEqual({
+      universe: { id: null, name: "Earth-838" },
+    });
+  });
+
+  it("rejects an invalid importance, status or id", () => {
+    expect(bulkCharacterPatchSchema.safeParse({ importance: "huge" }).success).toBe(false);
+    expect(bulkCharacterPatchSchema.safeParse({ status: "gone" }).success).toBe(false);
+    expect(bulkCharacterPatchSchema.safeParse({ firstEntryId: "nope" }).success).toBe(false);
+  });
+});
+
+describe("bulkTagEditSchema", () => {
+  it("cleans the names and needs at least one tag", () => {
+    expect(bulkTagEditSchema.parse({ add: ["#rewatch", "Rewatch"], remove: [] })).toEqual({ add: ["rewatch"], remove: [] });
+    expect(bulkTagEditSchema.safeParse({ add: [], remove: [] }).success).toBe(false);
+  });
+
+  it("rejects a tag that is both added and removed, ignoring case", () => {
+    expect(bulkTagEditSchema.safeParse({ add: ["Favourite"], remove: ["favourite"] }).success).toBe(false);
   });
 });

@@ -360,6 +360,41 @@ export const eventMoveSchema = z.object({
 // Deleting needs the typed word on the server too, not just in the danger zone's button.
 export const deleteConfirmSchema = z.literal("DELETE", { error: "Type DELETE to confirm" });
 
+// Bulk edit in the character directory (Phase 12). Up to 500 characters at once. A patch changes exactly one thing.
+// A reference that is null clears the field. A typed universe that isn't picked is found by name or added on save.
+export const bulkCharacterIdsSchema = z
+  .array(uuid)
+  .min(1, "Select at least one character")
+  .max(500, "Select at most 500 characters at a time")
+  .transform((ids) => [...new Set(ids)]);
+
+export const bulkCharacterPatchSchema = z
+  .strictObject({
+    importance: importanceSchema.optional(),
+    status: statusSchema.optional(),
+    universe: z.strictObject({ id: uuid.nullable(), name: optionalUniverseName }).optional(),
+    predominantTitleId: uuid.nullable().optional(),
+    firstEntryId: uuid.nullable().optional(),
+    lastEntryId: uuid.nullable().optional(),
+  })
+  .refine((patch) => Object.values(patch).filter((value) => value !== undefined).length === 1, {
+    message: "Choose one thing to change",
+  });
+
+// Tags to add and tags to remove. A character's other tags are kept. A tag can't be in both lists.
+export const bulkTagEditSchema = z
+  .object({ add: tagNamesSchema, remove: tagNamesSchema })
+  .refine((edit) => edit.add.length + edit.remove.length > 0, { message: "Choose a tag to add or remove" })
+  .refine(
+    (edit) => {
+      const adding = new Set(edit.add.map((tag) => tag.toLowerCase()));
+      return !edit.remove.some((tag) => adding.has(tag.toLowerCase()));
+    },
+    { message: "A tag can't be both added and removed" },
+  );
+
+export type BulkCharacterPatch = z.infer<typeof bulkCharacterPatchSchema>;
+
 export type TitleFormInput = z.infer<typeof titleFormSchema>;
 export type EpisodeFormInput = z.infer<typeof episodeFormSchema>;
 export type EpisodeRangeInput = z.infer<typeof episodeRangeSchema>;

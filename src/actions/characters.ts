@@ -7,11 +7,15 @@ import { redirect } from "next/navigation";
 import { getDb } from "@/db";
 import { characters, universes } from "@/db/schema";
 import { fail, ok, validationFailure, type ActionResult } from "@/lib/action-result";
+import { applyCharacterPatch, deleteCharacters, editCharacterTags, type BulkResult } from "@/lib/data/bulk-characters";
 import { replaceCharacterTags, tagIdsFor } from "@/lib/data/tags";
 import { resolveUniverseId } from "@/lib/data/universes";
 import { isForeignKeyViolation } from "@/lib/db-errors";
 import { formStrings } from "@/lib/form";
 import {
+  bulkCharacterIdsSchema,
+  bulkCharacterPatchSchema,
+  bulkTagEditSchema,
   characterFormSchema,
   deleteConfirmSchema,
   inlineCharacterSchema,
@@ -149,6 +153,48 @@ export async function deleteCharacter(characterId: string, redirectTo: string, f
   await getDb().delete(characters).where(eq(characters.id, characterId));
   revalidatePath("/", "layout");
   redirect(redirectTo);
+}
+
+// Bulk edit from the directory (Phase 12). Each action is one transaction over the selected characters and returns how
+// many changed and how many no longer existed, so the toast can say so.
+export async function bulkUpdateCharacters(ids: unknown, patch: unknown): Promise<ActionResult<BulkResult>> {
+  const parsedIds = bulkCharacterIdsSchema.safeParse(ids);
+  if (!parsedIds.success) return validationFailure(parsedIds.error);
+  const parsedPatch = bulkCharacterPatchSchema.safeParse(patch);
+  if (!parsedPatch.success) return validationFailure(parsedPatch.error);
+
+  try {
+    const result = await getDb().transaction((tx) => applyCharacterPatch(tx, parsedIds.data, parsedPatch.data));
+    revalidatePath("/", "layout");
+    return ok(result);
+  } catch (error) {
+    return referenceFailure(error);
+  }
+}
+
+// Adds and removes tags on the selected characters. Their other tags stay.
+export async function bulkEditCharacterTags(ids: unknown, add: unknown, remove: unknown): Promise<ActionResult<BulkResult>> {
+  const parsedIds = bulkCharacterIdsSchema.safeParse(ids);
+  if (!parsedIds.success) return validationFailure(parsedIds.error);
+  const parsedTags = bulkTagEditSchema.safeParse({ add, remove });
+  if (!parsedTags.success) return validationFailure(parsedTags.error);
+
+  const result = await getDb().transaction((tx) =>
+    editCharacterTags(tx, parsedIds.data, parsedTags.data.add, parsedTags.data.remove),
+  );
+  revalidatePath("/", "layout");
+  return ok(result);
+}
+
+// Deletes the selected characters. The typed word is checked here too.
+export async function bulkDeleteCharacters(ids: unknown, confirm: unknown): Promise<ActionResult<BulkResult>> {
+  const parsedIds = bulkCharacterIdsSchema.safeParse(ids);
+  if (!parsedIds.success) return validationFailure(parsedIds.error);
+  if (!deleteConfirmSchema.safeParse(confirm).success) return fail("Type DELETE to confirm.", { confirm: "Type DELETE to confirm" });
+
+  const result = await getDb().transaction((tx) => deleteCharacters(tx, parsedIds.data));
+  revalidatePath("/", "layout");
+  return ok(result);
 }
 
 const MISSING_REFERENCE = "One of the linked items no longer exists. Pick it again.";

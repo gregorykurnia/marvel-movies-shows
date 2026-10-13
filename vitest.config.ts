@@ -12,5 +12,8 @@ export default defineConfig({
   test: {
     environment: "node",
     include: ["tests/unit/**/*.test.ts", "tests/db/**/*.test.ts"],
+    // The database tests share the test branch, and each one's cleanup removes every row named "E2E…". Run one file at a
+    // time, so one file's cleanup can't delete another's rows halfway through.
+    fileParallelism: false,
   },
 });
